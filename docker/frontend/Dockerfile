@@ -3,11 +3,11 @@ FROM node:18-alpine as build
 WORKDIR /app
 
 # Copy package files
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm install
 
 # Copy source code
-COPY frontend/ .
+COPY . .
 
 # Build the app
 RUN npm run build
@@ -17,9 +17,11 @@ FROM nginx:alpine
 # Copy built files
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configurations
-COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+# Create nginx config directory
+RUN mkdir -p /etc/nginx/conf.d
+
+# Copy nginx configuration
+COPY ../docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
 # Create required directories and set permissions
 RUN mkdir -p /var/cache/nginx \
@@ -36,5 +38,8 @@ RUN mkdir -p /var/cache/nginx \
                  /var/cache/nginx/uwsgi_temp \
                  /var/cache/nginx/scgi_temp \
                  /var/run
+
+# Remove user directive from nginx config
+RUN sed -i '/user/d' /etc/nginx/nginx.conf
 
 CMD ["nginx", "-g", "daemon off;"]
