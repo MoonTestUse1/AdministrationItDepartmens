@@ -13,7 +13,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: ../docker/backend/Dockerfile
+      dockerfile: Dockerfile
     container_name: support-backend
     restart: unless-stopped
     environment:
