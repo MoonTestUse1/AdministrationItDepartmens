@@ -3,23 +3,27 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
 
   backend:
     build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
+      context: ./backend
+      dockerfile: ../docker/backend/Dockerfile
     container_name: support-backend
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
     volumes:
+      - ./backend:/app
       - sqlite_data:/app/instance
 
   nginx:

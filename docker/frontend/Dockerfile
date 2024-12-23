@@ -2,17 +2,23 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
+# Копируем только package.json и package-lock.json
+COPY package*.json ./
 RUN npm install
 
-COPY frontend/ .
+# Копируем исходники
+COPY . .
 RUN npm run build
 
 FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Создаем необходимые директории и назначаем права
+# Копируем собранные файлы из build stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Копируем конфиг nginx
+COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+
+# Создаем директории и назначаем права
 RUN mkdir -p /var/cache/nginx \
              /var/cache/nginx/client_temp \
              /var/cache/nginx/proxy_temp \
