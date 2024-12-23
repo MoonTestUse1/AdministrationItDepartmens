@@ -7,8 +7,6 @@ services:
       dockerfile: ../docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
-    depends_on:
-      - backend
 
   backend:
     build:
@@ -18,18 +16,17 @@ services:
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
-      - TELEGRAM_CHAT_ID=5057752127
-    volumes:
-      - sqlite_data:/app/instance
+      - TELEGRAM_CHAT_ID=-1002037023574
 
   nginx:
-    build:
-      context: ./frontend
-      dockerfile: ../docker/frontend/Dockerfile
+    image: nginx:alpine
     container_name: support-nginx
     restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - frontend
       - backend
