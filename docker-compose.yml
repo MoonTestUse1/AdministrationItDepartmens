@@ -33,7 +33,7 @@ services:
       - "8081:80"
     volumes:
       - ./frontend/dist:/usr/share/nginx/html
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      
     depends_on:
       - frontend
       - backend
