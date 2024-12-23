@@ -1,7 +1,6 @@
 # Build stage
 FROM node:18-alpine as build
 
-WORKDIR /app
 
 # Install dependencies using npm install instead of npm ci
 COPY package*.json ./
