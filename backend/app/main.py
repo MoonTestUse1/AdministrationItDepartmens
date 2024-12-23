@@ -41,10 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(auth.router, prefix="/api")
-app.include_router(employees.router, prefix="/api")
-app.include_router(requests.router, prefix="/api")
-app.include_router(statistics.router, prefix="/api")
 
 # Auth endpoints
 @app.post("/api/auth/login")
