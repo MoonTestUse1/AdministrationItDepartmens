@@ -6,7 +6,7 @@
           <div class="p-2 bg-blue-50 rounded-lg">
             <component 
               :is="employee ? UserIcon : UserPlusIcon"
-              size="24"
+              :size="24"
               class="text-blue-600"
             />
           </div>
@@ -18,7 +18,7 @@
           @click="$emit('close')"
           class="text-gray-400 hover:text-gray-500 transition-colors"
         >
-          <XIcon size="20" />
+          <XIcon :size="20" />
         </button>
       </div>
 
@@ -45,7 +45,7 @@
             label="Отдел"
             type="select"
             required
-            :options="departments"
+            :options="departmentOptions"
             :icon="BuildingIcon"
           />
 
@@ -76,14 +76,14 @@
             @click="$emit('close')"
             class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
           >
-            <XIcon size="16" />
+            <XIcon :size="16" />
             Отмена
           </button>
           <button
             type="submit"
             class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
           >
-            <component :is="employee ? SaveIcon : UserPlusIcon" size="16" />
+            <component :is="employee ? SaveIcon : UserPlusIcon" :size="16" />
             {{ employee ? 'Сохранить' : 'Добавить' }}
           </button>
         </div>
@@ -98,9 +98,23 @@ import { XIcon, UserIcon, BuildingIcon, DoorClosedIcon, LockIcon, UserPlusIcon, 
 import { departments } from '@/utils/constants';
 import FormField from '@/components/ui/FormField.vue';
 
+interface Employee {
+  id: number;
+  first_name: string;
+  last_name: string;
+  department: string;
+  office: string;
+}
+
 const props = defineProps<{
-  employee?: any;
+  employee?: Employee;
 }>();
+
+const departmentOptions = departments.map(d => ({
+  value: d.value,
+  label: d.label
+}));
+
 
 const emit = defineEmits<{
   (e: 'close'): void;
@@ -130,7 +144,7 @@ onMounted(() => {
 function handleSubmit() {
   const data = { ...formData.value };
   if (props.employee && !data.password) {
-    delete data.password;
+    formData.value.password = ''; // Вместо delete используем присваивание пустой строки
   }
   emit('submit', data);
 }
