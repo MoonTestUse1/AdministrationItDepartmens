@@ -1,25 +1,23 @@
-# Этап сборки
-FROM node:18-alpine as builder
+# Build stage
+FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Копируем файлы package.json и package-lock.json
+# Install dependencies using npm install instead of npm ci
 COPY package*.json ./
-
-# Устанавливаем зависимости
 RUN npm install
 
-# Копируем исходный код
+# Copy source and build
 COPY . .
-
-# Собираем приложение
 RUN npm run build
 
-# Этап production
+# Production stage
 FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Копируем собранные файлы из этапа сборки
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Add health check endpoint
+RUN echo "health_check() { echo 'OK'; } && health_check > /usr/share/nginx/html/health" > /docker-entrypoint.d/40-health-check.sh
 
-# Указываем команду для запуска nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use non-root user
+USER nginx
