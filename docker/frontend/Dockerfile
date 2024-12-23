@@ -14,6 +14,6 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
-# Nginx этап
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+# Этап копирования
+FROM scratch
+COPY --from=build /app/dist /dist
