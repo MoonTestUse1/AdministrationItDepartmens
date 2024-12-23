@@ -29,14 +29,7 @@ bot_thread.start()
 # CORS middleware
 app.add_middleware(
     CORSMiddleware, 
-    allow_origins=[
-        "http://localhost:5173",
-        "http://185.139.70.62:5173",
-        "http://46.233.242.206:5173",
-        "http://185.139.70.62",
-        "http://46.233.242.206",
-        "http://0.0.0.0",
-        ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
