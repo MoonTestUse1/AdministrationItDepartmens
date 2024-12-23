@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
-      - TELEGRAM_CHAT_ID=-1002037023574в
+      - TELEGRAM_CHAT_ID=-1002037023574вы
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
