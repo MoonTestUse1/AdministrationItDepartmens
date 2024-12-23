@@ -3,8 +3,8 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
     depends_on:
@@ -23,15 +23,13 @@ services:
       - sqlite_data:/app/instance
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
     container_name: support-nginx
     restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
     depends_on:
       - frontend
       - backend
