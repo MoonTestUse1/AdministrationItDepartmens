@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+const { priority } = defineProps<{
   priority: 'low' | 'medium' | 'high' | 'critical'
 }>();
 

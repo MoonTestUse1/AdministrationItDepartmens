@@ -7,7 +7,7 @@
           @click="$emit('close')"
           class="text-gray-400 hover:text-gray-500"
         >
-          <XIcon size="20" />
+          <XIcon :size="20" />
         </button>
       </div>
       

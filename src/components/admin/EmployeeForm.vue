@@ -6,7 +6,7 @@
           <div class="p-2 bg-blue-50 rounded-lg">
             <component 
               :is="employee ? UserIcon : UserPlusIcon"
-              size="24"
+              :size="24"
               class="text-blue-600"
             />
           </div>
@@ -18,7 +18,7 @@
           @click="$emit('close')"
           class="text-gray-400 hover:text-gray-500 transition-colors"
         >
-          <XIcon size="20" />
+          <XIcon :size="20" />
         </button>
       </div>
 
@@ -30,7 +30,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon size="18" class="text-gray-400" />
+                <UserIcon :size="18" class="text-gray-400" />
               </div>
               <input
                 v-model="formData.last_name"
@@ -48,7 +48,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon size="18" class="text-gray-400" />
+                <UserIcon :size="18" class="text-gray-400" />
               </div>
               <input
                 v-model="formData.first_name"
@@ -66,7 +66,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <BuildingIcon size="18" class="text-gray-400" />
+                <BuildingIcon :size="18" class="text-gray-400" />
               </div>
               <select
                 v-model="formData.department"
@@ -87,7 +87,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <DoorClosedIcon size="18" class="text-gray-400" />
+                <DoorClosedIcon :size="18" class="text-gray-400" />
               </div>
               <input
                 v-model="formData.office"
@@ -105,7 +105,7 @@
             </label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <LockIcon size="18" class="text-gray-400" />
+                <LockIcon :size="18" class="text-gray-400" />
               </div>
               <input
                 v-model="formData.password"
@@ -127,14 +127,14 @@
             @click="$emit('close')"
             class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
           >
-            <XIcon size="16" />
+            <XIcon :size="16" />
             Отмена
           </button>
           <button
             type="submit"
             class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center gap-2"
           >
-            <component :is="employee ? SaveIcon : UserPlusIcon" size="16" />
+            <component :is="employee ? SaveIcon : UserPlusIcon" :size="16" />
             {{ employee ? 'Сохранить' : 'Добавить' }}
           </button>
         </div>
@@ -147,6 +147,8 @@
 import { ref, onMounted } from 'vue';
 import { XIcon, UserIcon, BuildingIcon, DoorClosedIcon, LockIcon, UserPlusIcon, SaveIcon } from 'lucide-vue-next';
 import { departments } from '@/utils/constants';
+import type { EmployeeFormData } from '@/types/employee';
+
 
 const props = defineProps<{
   employee?: any;
@@ -157,13 +159,14 @@ const emit = defineEmits<{
   (e: 'submit', data: any): void;
 }>();
 
-const formData = ref({
+const formData = ref<EmployeeFormData>({
   first_name: '',
   last_name: '',
   department: '',
   office: '',
   password: ''
 });
+
 
 onMounted(() => {
   if (props.employee) {
@@ -180,7 +183,7 @@ onMounted(() => {
 function handleSubmit() {
   const data = { ...formData.value };
   if (props.employee && !data.password) {
-    delete data.password;
+    delete data.password; // Теперь это безопасно, так как password опциональный
   }
   emit('submit', data);
 }

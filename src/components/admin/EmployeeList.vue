@@ -1,12 +1,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { UserPlusIcon, PencilIcon } from 'lucide-vue-next';
 import { departments } from '@/utils/constants';
-import EmployeeForm from './EmployeeForm.vue';
+import EmployeeFormModal from './employee/EmployeeFormModal.vue';
+import Notification from '@/components/ui/Notification.vue';
+import type { Employee } from '@/types/employee';
 
-const employees = ref([]);
+const employees = ref<Employee[]>([]); // Добавляем типизацию массива сотрудников
 const showAddForm = ref(false);
-const editingEmployee = ref(null);
+const editingEmployee = ref<Employee | null>(null);
+const showNotification = ref(false);
+const notificationMessage = ref('');
 
 function getDepartmentLabel(value: string) {
   return departments.find(d => d.value === value)?.label || value;

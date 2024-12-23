@@ -46,16 +46,17 @@
 
 <script setup lang="ts">
 import RequestStatusBadge from './RequestStatusBadge.vue';
+import type { RequestStatus } from '@/types/request';
 
 const props = defineProps<{
-  currentStatus: string;
+  currentStatus: RequestStatus;
 }>();
 
 const emit = defineEmits(['close', 'update']);
 
-const allStatuses = ['new', 'in_progress', 'resolved', 'closed'] as const;
+const allStatuses: RequestStatus[] = ['new', 'in_progress', 'resolved', 'closed'];
 
-function handleStatusSelect(newStatus: string) {
+function handleStatusSelect(newStatus: RequestStatus) {
   if (newStatus === props.currentStatus) return;
   emit('update', newStatus);
   emit('close');

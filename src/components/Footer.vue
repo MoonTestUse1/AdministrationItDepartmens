@@ -4,7 +4,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
-            <PhoneIcon size="16" class="text-blue-400" />
+            <PhoneIcon :size="16" class="text-blue-400" />
             Контактная информация
           </h3>
           <div class="space-y-1 text-sm text-slate-300">
@@ -14,7 +14,7 @@
         </div>
         <div>
           <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
-            <ClockIcon size="16" class="text-blue-400" />
+            <ClockIcon :size="16" class="text-blue-400" />
             Режим работы
           </h3>
           <div class="space-y-1 text-sm text-slate-300">
@@ -24,7 +24,7 @@
         </div>
         <div>
           <h3 class="text-sm font-semibold mb-2 flex items-center gap-2">
-            <MailIcon size="16" class="text-blue-400" />
+            <MailIcon :size="16" class="text-blue-400" />
             Техподдержка
           </h3>
           <div class="space-y-1 text-sm text-slate-300">

@@ -105,16 +105,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import type { Request } from '@/types/request';
 import RequestStatusBadge from './RequestStatusBadge.vue';
 import RequestPriorityBadge from './RequestPriorityBadge.vue';
 import RequestStatusModal from './RequestStatusModal.vue';
 import RequestDescriptionModal from './RequestDescriptionModal.vue';
 import Notification from '@/components/ui/Notification.vue';
 import { getRequestTypeLabel } from '@/utils/constants';
-
-const requests = ref([]);
-const selectedRequest = ref(null);
-const selectedDescription = ref(null);
+const requests = ref<Request[]>([]); // Типизируем массив запросов
+const selectedRequest = ref<Request | null>(null);
+const selectedDescription = ref<Request | null>(null);
 const showNotification = ref(false);
 const filter = ref('all');
 const searchQuery = ref('');
@@ -134,6 +134,7 @@ const filteredRequests = computed(() => {
   
   return result;
 });
+
 
 function formatDate(date: string) {
   return new Date(date).toLocaleString('ru-RU');

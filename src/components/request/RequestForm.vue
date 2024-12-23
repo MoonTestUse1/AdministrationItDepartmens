@@ -55,7 +55,7 @@
       class="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
     >
       <component :is="isSubmitting ? LoaderIcon : SendIcon" 
-        size="18" 
+        :size="18" 
         :class="{ 'animate-spin': isSubmitting }" 
       />
       {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
