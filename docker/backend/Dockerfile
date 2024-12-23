@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Копируем только requirements.txt сначала
-COPY ./backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем остальные файлы
