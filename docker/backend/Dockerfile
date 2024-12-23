@@ -6,9 +6,11 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Копируем только requirements.txt сначала
+COPY ./backend/requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Копируем остальные файлы
+COPY ./backend /app/
 
 CMD ["python", "run.py"]
