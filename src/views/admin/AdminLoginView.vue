@@ -9,7 +9,7 @@
         </label>
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <UserIcon size="18" class="text-slate-400" />
+            <UserIcon :size="18" class="text-slate-400" />
           </div>
           <input
             v-model="username"
@@ -27,7 +27,7 @@
         </label>
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <LockIcon size="18" class="text-slate-400" />
+            <LockIcon :size="18" class="text-slate-400" />
           </div>
           <input
             v-model="password"
@@ -42,8 +42,13 @@
       <button
         type="submit"
         :disabled="isLoading"
-        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
       >
+        <component 
+          :is="isLoading ? LoaderIcon : LogInIcon" 
+          :size="18"
+          :class="{ 'animate-spin': isLoading }" 
+        />
         {{ isLoading ? 'Вход...' : 'Войти' }}
       </button>
 
@@ -63,7 +68,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { UserIcon, LockIcon } from 'lucide-vue-next';
+import { UserIcon, LockIcon, LogInIcon, LoaderIcon } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();

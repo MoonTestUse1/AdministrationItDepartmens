@@ -46,7 +46,11 @@ defineProps<{
   label: string;
   type?: string;
   required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  help?: string;
   icon?: Component;
+  size?: number | string; // Добавляем поддержку как числа, так и строки
   options?: Array<{ value: string; label: string }>;
 }>();
 
