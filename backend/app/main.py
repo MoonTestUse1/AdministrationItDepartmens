@@ -28,13 +28,23 @@ bot_thread.start()
 
 # CORS middleware
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
+    CORSMiddleware, 
+    allow_origins=[
+        "http://localhost:5173",
+        "http://185.139.70.62:5173",
+        "http://46.233.242.206:5173",
+        "http://185.139.70.62",
+        "http://46.233.242.206",
+        "http://0.0.0.0",
+        ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(auth.router, prefix="/api")
+app.include_router(employees.router, prefix="/api")
+app.include_router(requests.router, prefix="/api")
+app.include_router(statistics.router, prefix="/api")
 
 # Auth endpoints
 @app.post("/api/auth/login")
