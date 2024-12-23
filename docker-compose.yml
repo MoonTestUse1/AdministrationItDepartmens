@@ -3,37 +3,35 @@ version: '3.8'
 services:
   frontend:
     build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: support-frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
+    volumes:
+      - frontend_build:/app/dist
 
   backend:
     build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: support-backend
-    restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
-    volumes:
-      - ./backend:/app
-      - sqlite_data:/app/instance
+    ports:
+      - "8000:8000"
 
   nginx:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
+    image: nginx:alpine
     container_name: support-nginx
-    restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - frontend_build:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - frontend
       - backend
 
 volumes:
-  sqlite_data:
+  frontend_build:
