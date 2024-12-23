@@ -14,8 +14,6 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
-# Настраиваем nginx
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Копируем собранные файлы в volume
+VOLUME ["/dist"]
+CMD ["cp", "-r", "/app/dist/.", "/dist/"]
