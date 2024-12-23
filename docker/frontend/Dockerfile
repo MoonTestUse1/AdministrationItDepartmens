@@ -1,19 +1,18 @@
-FROM node:18-alpine as build
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Копируем файлы package.json и package-lock.json
-COPY package*.json ./
+# Copy package files
+COPY frontend/package*.json ./
 
-# Устанавливаем зависимости
+# Install dependencies
 RUN npm install
 
-# Копируем исходный код
-COPY . .
+# Copy source code
+COPY frontend/ .
 
-# Собираем приложение
+# Build the app
 RUN npm run build
 
-# Этап копирования
-FROM scratch
-COPY --from=build /app/dist /dist
+# Keep container running and serve the built files
+CMD ["npm", "run", "preview"]
