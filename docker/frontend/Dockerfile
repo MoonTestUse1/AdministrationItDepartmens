@@ -2,23 +2,25 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Копируем только package.json и package-lock.json
-COPY package*.json ./
+# Copy package files
+COPY frontend/package*.json ./
 RUN npm install
 
-# Копируем исходники
-COPY . .
+# Copy source code
+COPY frontend/ .
+
+# Build the app
 RUN npm run build
 
 FROM nginx:alpine
 
-# Копируем собранные файлы из build stage
+# Copy built files
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Копируем конфиг nginx
-COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Создаем директории и назначаем права
+# Create directories and set permissions
 RUN mkdir -p /var/cache/nginx \
              /var/cache/nginx/client_temp \
              /var/cache/nginx/proxy_temp \
@@ -34,7 +36,7 @@ RUN mkdir -p /var/cache/nginx \
                  /var/cache/nginx/scgi_temp \
                  /var/run
 
-# Удаляем директиву user из конфига nginx
+# Remove user directive
 RUN sed -i '/user/d' /etc/nginx/nginx.conf
 
 CMD ["nginx", "-g", "daemon off;"]
