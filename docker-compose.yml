@@ -2,13 +2,12 @@ version: '3.8'
 
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: ../docker/frontend/Dockerfile
-    container_name: support-frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
+  build:
+    context: .
+    dockerfile: docker/frontend/Dockerfile
+  volumes:
+    - frontend_build:/usr/share/nginx/html
+
 
   backend:
     build:

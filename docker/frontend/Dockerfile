@@ -14,6 +14,6 @@ COPY . .
 # Собираем приложение
 RUN npm run build
 
-# Копируем собранные файлы в volume
-VOLUME ["/dist"]
-CMD ["cp", "-r", "/app/dist/.", "/dist/"]
+# Nginx этап
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
