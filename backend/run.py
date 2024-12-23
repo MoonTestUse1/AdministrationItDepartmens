@@ -17,7 +17,7 @@ async def run_bot():
 
 async def run_api():
     """Run FastAPI application"""
-    config = uvicorn.Config(app, host="localhost", port=8080, reload=True)
+    config = uvicorn.Config(app, host=["localhost", "185.139.70.62"], port=8080, reload=True)
     server = uvicorn.Server(config)
     try:
         await server.serve()
