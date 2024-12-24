@@ -19,4 +19,4 @@ RUN mkdir -p /var/cache/nginx \
 
 EXPOSE 8000
 
-CMD ["nginx", "-g", "daemon off;"]d
+CMD ["nginx", "-g", "daemon off;"]
