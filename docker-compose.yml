@@ -6,7 +6,6 @@ services:
       context: .
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
-    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
@@ -17,7 +16,6 @@ services:
       context: .
       dockerfile: docker/backend/Dockerfile
     container_name: support-backend
-    restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
@@ -25,7 +23,7 @@ services:
       - ./backend:/app
       - sqlite_data:/app/instance
     ports:
-      - "8088:8000"
+      - "8000:8000"
 
 volumes:
   sqlite_data:
