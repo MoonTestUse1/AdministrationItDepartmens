@@ -17,8 +17,6 @@ build
 .idea
 
 # Database
-*.db
-*.sqlite
 
 # Logs
 *.log
