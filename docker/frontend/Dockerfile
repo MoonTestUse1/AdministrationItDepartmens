@@ -13,8 +13,8 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy configuration files
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
 RUN mkdir -p /var/cache/nginx \
              /var/cache/nginx/client_temp \
