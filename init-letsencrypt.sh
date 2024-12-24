@@ -1,34 +1,27 @@
 #!/bin/bash
 
-domains=(itformhelp.ru www.itformhelp.ru)
-email="admin@itformhelp.ru"
-staging=0 # Set to 1 if you're testing your setup
+# Остановить все контейнеры
+docker compose down
 
-# Create dummy certificates
-path="/etc/letsencrypt/live/$domains"
-docker compose run --rm --entrypoint "\
-  openssl req -x509 -nodes -newkey rsa:4096 -days 1\
-    -keyout '$path/privkey.pem' \
-    -out '$path/fullchain.pem' \
-    -subj '/CN=localhost'" certbot
+# Создать временную директорию для webroot
+mkdir -p ./docker/certbot/www
 
-echo "### Starting nginx ..."
-docker compose up --force-recreate -d frontend
+# Запустить nginx
+docker compose up -d frontend
 
-echo "### Deleting dummy certificate ..."
-docker compose run --rm --entrypoint "\
-  rm -Rf /etc/letsencrypt/live/$domains && \
-  rm -Rf /etc/letsencrypt/archive/$domains && \
-  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
+# Подождать, пока nginx запустится
+echo "Waiting for nginx to start..."
+sleep 5
 
-echo "### Requesting Let's Encrypt certificate ..."
-docker compose run --rm --entrypoint "\
-  certbot certonly --webroot -w /var/www/html \
-    --email $email \
-    --agree-tos \
-    --no-eff-email \
-    --force-renewal \
-    ${staging:+--staging}" certbot
+# Получить тестовый сертификат
+docker compose run --rm certbot
 
-echo "### Reloading nginx ..."
-docker compose exec frontend nginx -s reload
+# Если тестовый сертификат получен успешно, получить боевой сертификат
+if [ $? -eq 0 ]; then
+    echo "Test certificate obtained successfully. Getting production certificate..."
+    docker compose run --rm certbot certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email --force-renewal -d itformhelp.ru -d www.itformhelp.ru
+fi
+
+# Перезапустить все сервисы
+docker compose down
+docker compose up -d
