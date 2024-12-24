@@ -29,6 +29,8 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
+    ports:
+      - "8000:8000"
 
   certbot:
     image: certbot/certbot
@@ -37,9 +39,8 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - webroot:/var/www/html
-    depends_on:
-      - frontend
-    command: certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email -d itformhelp.ru -d www.itformhelp.ru
+    command: certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email --force-renewal --staging -d itformhelp.ru -d www.itformhelp.ru
+
 volumes:
   sqlite_data:
   certbot-etc:
