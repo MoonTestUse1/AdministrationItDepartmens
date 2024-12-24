@@ -18,6 +18,8 @@ services:
       - webroot:/var/www/html
     depends_on:
       - backend
+    networks:
+      - app-network
 
   backend:
     build:
@@ -31,11 +33,11 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
-    ports:
-      - "8000:8000"
+    networks:
+      - app-network
 
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:latest
     container_name: certbot
     volumes:
       - certbot-etc:/etc/letsencrypt
@@ -43,7 +45,13 @@ services:
       - webroot:/var/www/html
     depends_on:
       - frontend
-    command: certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email --force-renewal --staging -d itformhelp.ru -d www.itformhelp.ru
+    networks:
+      - app-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   sqlite_data:
