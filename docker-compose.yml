@@ -40,7 +40,6 @@ services:
     depends_on:
       - frontend
     command: certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email -d itformhelp.ru -d www.itformhelp.ru
-
 volumes:
   sqlite_data:
   certbot-etc:
