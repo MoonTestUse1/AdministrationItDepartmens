@@ -12,11 +12,22 @@ RUN npm run build
 
 FROM nginx:alpine
 
-# Скопируйте собранные файлы в Nginx
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy configuration files
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Убедитесь, что конфигурация Nginx корректна
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+RUN mkdir -p /var/cache/nginx \
+             /var/cache/nginx/client_temp \
+             /var/cache/nginx/proxy_temp \
+             /var/cache/nginx/fastcgi_temp \
+             /var/cache/nginx/uwsgi_temp \
+             /var/cache/nginx/scgi_temp \
+             /var/run \
+    && chmod -R 755 /var/cache/nginx \
+    && chmod -R 755 /etc/nginx \
+    && chown -R nginx:nginx /var/cache/nginx \
+    && chown -R nginx:nginx /etc/nginx
 
-# Убедитесь, что Nginx запускается
+EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
