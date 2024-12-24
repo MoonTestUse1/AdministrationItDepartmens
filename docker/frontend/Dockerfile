@@ -9,7 +9,7 @@ RUN npm install
 # Скопируйте исходный код и соберите приложение
 COPY frontend/ .
 RUN npm run build
-
+s
 FROM nginx:alpine
 
 # Скопируйте собранные файлы в Nginx
