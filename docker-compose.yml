@@ -9,10 +9,9 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - certbot-etc:/etc/letsencrypt:ro
-      - webroot:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - backend
 
@@ -28,22 +27,8 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
-    expose:
-      - "8000"
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-etc:/etc/letsencrypt
-      - certbot-var:/var/lib/letsencrypt
-      - webroot:/var/www/html
-    depends_on:
-      - frontend
-    command: certonly --webroot --webroot-path=/var/www/html --email admin@itformhelp.ru --agree-tos --no-eff-email --force-renewal --staging -d itformhelp.ru -d www.itformhelp.ru
+    ports:
+      - "8000:8000"
 
 volumes:
   sqlite_data:
-  certbot-etc:
-  certbot-var:
-  webroot:
