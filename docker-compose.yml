@@ -1,26 +1,14 @@
 version: '3.8'
 
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: support-nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
-      - frontend_build:/usr/share/nginx/html
-    depends_on:
-      - frontend
-      - backend
-
   frontend:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
-    volumes:
-      - frontend_build:/app/dist
+    restart: unless-stopped
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -34,9 +22,20 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
-    expose:
-      - "8000"
+    ports:
+      - "8081:8000"
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: support-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
 
 volumes:
   sqlite_data:
-  frontend_build:
