@@ -36,20 +36,26 @@ app.add_middleware(
 )
 
 # Auth endpoints
+@app.post("/api/test/create-user")
+def create_test_user(db: Session = Depends(get_db)):
+    test_user = employee_models.EmployeeCreate(
+        first_name="Test",
+        last_name="User",
+        department="general",
+        office="101",
+        password="test123"
+    )
+    return employees.create_employee(db=db, employee=test_user)
 @app.post("/api/auth/login")
 def login(credentials: dict, db: Session = Depends(get_db)):
-    employee = auth.authenticate_employee(
-        db, credentials["lastName"], credentials["password"]
-    )
+    print(f"Login attempt for: {credentials['lastName']}")  # Добавьте для отладки
+    employee = auth.authenticate_employee(db, credentials["lastName"], credentials["password"])
     if not employee:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {
-        "id": employee.id,
-        "firstName": employee.first_name,
-        "lastName": employee.last_name,
-        "department": employee.department,
-        "createdAt": employee.created_at,
-    }
+        raise HTTPException(
+            status_code=401, 
+            detail="Неверная фамилия или пароль"
+        )
+    return employee
 
 
 @app.post("/api/auth/admin")
