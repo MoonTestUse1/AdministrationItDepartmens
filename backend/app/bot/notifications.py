@@ -19,13 +19,13 @@ async def send_request_notification(request_data: dict):
         async with AiohttpSession() as session:
             bot.session = session
             await bot.send_message(
-                chat_id=settings.TELEGRAM_CHAT_ID,
+                chat_id=5057752127,
                 text=message,
                 parse_mode="HTML",
                 reply_markup=keyboard,
             )
     except Exception as e:
-        logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
+        logger.error(f"Error sending Telegram notification1: {e}", exc_info=True)
         raise
 
 
