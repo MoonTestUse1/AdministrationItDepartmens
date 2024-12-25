@@ -36,7 +36,7 @@ COPY --from=build /app/dist/ /usr/share/nginx/html/
 # Copy nginx configuration
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Debug: Show copied files
+# Debug: Show copied filesы
 RUN echo "Files in nginx html dir:" && ls -la /usr/share/nginx/html/
 
 EXPOSE 80
