@@ -28,6 +28,6 @@ RUN mkdir -p /var/cache/nginx \
     && chown -R nginx:nginx /var/cache/nginx \
     && chown -R nginx:nginx /etc/nginx
 
-EXPOSE 80
+EXPOSE 83
 
 CMD ["nginx", "-g", "daemon off;"]
