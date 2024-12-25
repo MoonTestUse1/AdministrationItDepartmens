@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    container_name: support-frontend
+    container_name: frontend
     restart: unless-stopped
     networks:
       - app-network
@@ -14,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
-    container_name: support-backend
+    container_name: backend
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
@@ -29,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
-    container_name: support-nginx
+    container_name: nginx
     restart: unless-stopped
     ports:
       - "80:80"
