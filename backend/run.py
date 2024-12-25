@@ -9,10 +9,11 @@ logger = getLogger(__name__)
 
 async def run_bot():
     """Run Telegram bot"""
-    try:
-        await start_bot()
-    except Exception as e:
-        logger.error(f"Bot crashed: {e}", exc_info=True)
+    print("Bot started")
+    # try:
+    #     await start_bot()
+    # except Exception as e:
+    #     logger.error(f"Bot crashed: {e}", exc_info=True)
 
 
 async def run_api():
