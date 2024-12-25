@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     restart: unless-stopped
     depends_on:
       - backend
@@ -24,13 +27,13 @@ services:
       - "8000"
 
   nginx:
-    build:
-      context: ./docker/nginx
-      dockerfile: Dockerfile
+    image: nginx:alpine
     container_name: support-nginx
-    restart: unless-stopped
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
     ports:
-      - "80:80"  # Меняем на стандартный порт 80
+      - "8080:80"
     depends_on:
       - frontend
       - backend
