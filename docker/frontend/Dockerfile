@@ -3,6 +3,9 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
+# Debug: Show working directory
+RUN pwd && ls -la
+
 # Copy package files
 COPY frontend/package*.json ./
 
@@ -12,8 +15,14 @@ RUN npm install
 # Copy source code
 COPY frontend/ ./
 
+# Debug: Show files before build
+RUN echo "Files before build:" && ls -la
+
 # Build the app
 RUN npm run build
+
+# Debug: Show build output
+RUN echo "Build output:" && ls -la dist/
 
 # Production stage
 FROM nginx:alpine
@@ -27,14 +36,8 @@ COPY --from=build /app/dist/ /usr/share/nginx/html/
 # Copy nginx configuration
 COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Ensure correct permissions
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d
-
-USER nginx
+# Debug: Show copied files
+RUN echo "Files in nginx html dir:" && ls -la /usr/share/nginx/html/
 
 EXPOSE 80
 
