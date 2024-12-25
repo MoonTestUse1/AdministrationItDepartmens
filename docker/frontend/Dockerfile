@@ -3,12 +3,16 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Install dependencies
+# Copy package files
 COPY frontend/package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy source and build
-COPY frontend/ .
+# Copy source code
+COPY frontend/ ./
+
+# Build the app
 RUN npm run build
 
 # Production stage
@@ -20,7 +24,13 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy static assets from builder stage
 COPY --from=build /app/dist/ /usr/share/nginx/html/
 
-# Expose port
+# Copy nginx configuration
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/
+
+# Ensure correct permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
