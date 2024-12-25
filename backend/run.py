@@ -10,25 +10,29 @@ from logging import getLogger
 
 logger = getLogger(__name__)
 
-async def run_bot():
-    """Run Telegram bot"""
-    try:
-        await start_bot()
-    except Exception as e:
-        logger.error(f"Bot crashed: {e}", exc_info=True)
-
 async def run_api():
     """Run FastAPI application"""
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, reload=True)
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
     server = uvicorn.Server(config)
-    try:
-        await server.serve()
-    except Exception as e:
-        logger.error(f"API crashed: {e}", exc_info=True)
+    await server.serve()
 
-async def run_all():
-    """Run both bot and API"""
-    await asyncio.gather(run_bot(), run_api())
+async def main():
+    """Run both bot and API in the main thread"""
+    try:
+        # Создаем задачи для бота и API
+        bot_task = asyncio.create_task(start_bot())
+        api_task = asyncio.create_task(run_api())
+        
+        # Запускаем обе задачи
+        await asyncio.gather(bot_task, api_task)
+    except Exception as e:
+        logger.error(f"Application crashed: {e}", exc_info=True)
 
 if __name__ == "__main__":
-    asyncio.run(run_all())
+    # Запускаем в основном потоке
+    asyncio.run(main())
