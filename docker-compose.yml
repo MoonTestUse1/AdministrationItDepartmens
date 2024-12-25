@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -7,8 +5,8 @@ services:
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
-    depends_on:
-      - backend
+    networks:
+      - app-network
 
   backend:
     build:
@@ -22,8 +20,8 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
-    ports:
-      - "8000:8000"
+    networks:
+      - app-network
 
   nginx:
     build:
@@ -36,6 +34,12 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   sqlite_data:
