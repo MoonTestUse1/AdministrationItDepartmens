@@ -5,8 +5,8 @@ services:
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
-    networks:
-      - app-network
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -20,26 +20,20 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
-    networks:
-      - app-network
 
   nginx:
     build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+      context: ./docker/nginx
+      dockerfile: Dockerfile
     container_name: support-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "80:80"  # Вернем на стандартный порт 80
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - frontend
       - backend
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
 
 volumes:
   sqlite_data:
