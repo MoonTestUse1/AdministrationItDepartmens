@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   frontend:
     build:
@@ -5,6 +7,8 @@ services:
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
     restart: unless-stopped
+    networks:
+      - app-network
     depends_on:
       - backend
 
@@ -12,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
-    container_name: backend
+    container_name: support-backend
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
@@ -23,16 +27,18 @@ services:
       - app-network
 
   nginx:
-       build:
-         context: .
-         dockerfile: docker/nginx/Dockerfile
-       container_name: support-nginx
-       restart: unless-stopped
-       ports:
-         - "80:80"
-       depends_on:
-         - frontend
-         - backend
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: support-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      - frontend
+      - backend
 
 networks:
   app-network:
