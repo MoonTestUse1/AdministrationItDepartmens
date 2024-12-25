@@ -20,17 +20,16 @@ services:
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
+    ports:
+      - "8081:8000"
 
   nginx:
     build:
       context: ./docker/nginx
-      dockerfile: Dockerfile
     container_name: support-nginx
     restart: unless-stopped
     ports:
-      - "80:80"  # Вернем на стандартный порт 80
-    volumes:
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - "8080:80"
     depends_on:
       - frontend
       - backend
