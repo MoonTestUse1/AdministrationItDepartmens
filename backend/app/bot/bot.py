@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher
 from app.bot.config import settings
 
-bot = Bot(token="7677506032:AAHB2QtrxKdgUXLWlE2xXaVxs9V7BPz1fhc")
+bot = Bot(token="7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
 dp = Dispatcher()
 from .handlers import start, status
 
