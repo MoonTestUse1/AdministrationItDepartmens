@@ -1,32 +1,31 @@
+# Build stage
 FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Копируем только package.json и package-lock.json сначала
+# Install dependencies
 COPY frontend/package*.json ./
-
-# Устанавливаем зависимости
 RUN npm install
 
-# Копируем все остальные файлы фронтенда
+# Copy source and build
 COPY frontend/ .
-
-# Собираем приложение
 RUN npm run build
 
-# Используем nginx для раздачи статики
+# Production stage
 FROM nginx:alpine
 
-# Копируем собранные файлы из этапа сборки
+# Remove default nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy static assets from builder stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Создаем необходимые директории для nginx
-RUN mkdir -p /var/cache/nginx \
-             /var/cache/nginx/client_temp \
-             /var/cache/nginx/proxy_temp \
-             /var/cache/nginx/fastcgi_temp \
-             /var/cache/nginx/uwsgi_temp \
-             /var/cache/nginx/scgi_temp
+# Copy nginx configuration
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+
+# Ensure correct permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
 EXPOSE 80
 
