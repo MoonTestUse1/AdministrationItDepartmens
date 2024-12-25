@@ -114,7 +114,7 @@ def create_request(
 
     # Send notification to Telegram (non-blocking)
     try:
-        send_notification(notification_data)
+        await send_notification(notification_data)
     except Exception as e:
         print(f"Failed to send Telegram notification: {e}")
 
