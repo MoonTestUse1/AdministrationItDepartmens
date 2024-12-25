@@ -20,6 +20,8 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
+    ports:
+      - "8000:8000"  # Добавляем это
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance

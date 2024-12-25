@@ -21,12 +21,6 @@ FROM nginx:alpine
 # Копируем собранные файлы
 COPY --from=build /app/dist /usr/share/nginx/html/
 
-# Удаляем дефолтную страницу nginx
-RUN rm -rf /usr/share/nginx/html/50x.html
-
-# Копируем конфигурацию nginx
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/
-
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
