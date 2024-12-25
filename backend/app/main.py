@@ -90,7 +90,7 @@ def update_employee(employee_id: int, data: dict, db: Session = Depends(get_db))
 
 # Request endpoints
 @app.post("/api/requests/")
-def create_request(
+async def create_request(
     request: request_models.RequestCreate, db: Session = Depends(get_db)
 ):
     # Create request in database
