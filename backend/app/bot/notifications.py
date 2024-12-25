@@ -1,19 +1,10 @@
-"""
-Notifications module for the Telegram bot.
-Handles sending notifications about new requests and status updates.
-"""
-from aiogram import types
-from .config import NOTIFICATION_CHAT_ID
+"""Notifications module for the Telegram bot"""
+from .config import settings
 from . import bot
 from .handlers import get_updated_keyboard
 
 async def send_notification(request_data: dict):
-    """
-    Send notification about new request to Telegram chat.
-    
-    Args:
-        request_data (dict): Request data including id, description, etc.
-    """
+    """Send notification about new request to Telegram chat"""
     message_text = (
         f"Новая заявка №{request_data['id']}\n"
         f"Отдел: {request_data['department']}\n"
@@ -24,7 +15,7 @@ async def send_notification(request_data: dict):
     
     try:
         await bot.send_message(
-            chat_id=NOTIFICATION_CHAT_ID,
+            chat_id=settings.chat_id,
             text=message_text,
             reply_markup=get_updated_keyboard(request_data['id'], "new")
         )

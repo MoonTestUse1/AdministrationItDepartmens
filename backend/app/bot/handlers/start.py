@@ -1,12 +1,11 @@
-from aiogram import types
-from aiogram.filters import CommandStart
-from ..bot import dp
+"""Handler for start command and other basic commands"""
+from aiogram import Router, types
+from aiogram.filters import Command
+from ..config import settings
 
+router = Router()
 
-@dp.message(CommandStart())
-async def start_command(message: types.Message):
+@router.message(Command("start"))
+async def cmd_start(message: types.Message):
     """Handle /start command"""
-    await message.answer(
-        "👋 Привет! Я бот технической поддержки.\n"
-        "Я буду отправлять уведомления о новых заявках и позволю менять их статус."
-    )
+    await message.answer("Бот для обработки заявок запущен!")
