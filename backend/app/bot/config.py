@@ -1,12 +1,17 @@
-from pydantic_settings import BaseSettings
+"""
+Configuration module for the Telegram bot.
+Contains all necessary settings and constants.
+"""
 
+# Bot token from environment variables
+BOT_TOKEN = "7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34"
 
-class Settings(BaseSettings):
-    TELEGRAM_BOT_TOKEN: str = "7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34"
-    TELEGRAM_CHAT_ID: int = 5057752127
+# Chat ID for notifications
+NOTIFICATION_CHAT_ID = "-1002037023574"
 
-    class Config:
-        env_file = ".env"
-
-
-settings = Settings()
+# Request status constants
+class RequestStatus:
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"

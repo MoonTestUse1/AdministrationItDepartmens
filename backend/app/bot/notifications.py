@@ -1,41 +1,32 @@
-import asyncio
-from logging import getLogger
-from aiogram.client.session.aiohttp import AiohttpSession
-from .bot import bot
-from .keyboards import create_status_keyboard
-from .messages import format_request_message
-from .config import settings
+"""
+Notifications module for the Telegram bot.
+Handles sending notifications about new requests and status updates.
+"""
+from aiogram import types
+from .config import NOTIFICATION_CHAT_ID
+from . import bot
+from .handlers import get_updated_keyboard
 
-logger = getLogger(__name__)
-
-
-async def send_request_notification(request_data: dict):
+async def send_notification(request_data: dict):
+    """
+    Send notification about new request to Telegram chat.
+    
+    Args:
+        request_data (dict): Request data including id, description, etc.
+    """
+    message_text = (
+        f"Новая заявка №{request_data['id']}\n"
+        f"Отдел: {request_data['department']}\n"
+        f"Тип: {request_data['request_type']}\n"
+        f"Приоритет: {request_data['priority']}\n"
+        f"Описание: {request_data['description']}"
+    )
+    
     try:
-        message = format_request_message(request_data)
-        keyboard = create_status_keyboard(
-            request_data["id"], request_data.get("status", "new")
+        await bot.send_message(
+            chat_id=NOTIFICATION_CHAT_ID,
+            text=message_text,
+            reply_markup=get_updated_keyboard(request_data['id'], "new")
         )
-
-        async with AiohttpSession() as session:
-            bot.session = session
-            await bot.send_message(
-                chat_id=5057752127,
-                text=message,
-                parse_mode="HTML",
-                reply_markup=keyboard,
-            )
     except Exception as e:
-        logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
-        raise
-
-
-def send_notification(request_data: dict):
-    try:
-
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(send_request_notification(request_data))
-        loop.close()
-    except Exception as e:
-        logger.error(f"Failed to send notification: {e}", exc_info=True)
-        raise
+        print(f"Error sending notification: {e}")
