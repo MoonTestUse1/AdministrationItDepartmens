@@ -3,26 +3,29 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
+# Копируем package.json и package-lock.json
 COPY frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Устанавливаем зависимости
+RUN npm install
 
-# Copy source code
+# Копируем исходный код
 COPY frontend/ ./
 
-# Build the app
+# Собираем приложение
 RUN npm run build
 
 # Production stage
 FROM nginx:alpine
 
-# Copy built files
-COPY --from=build /app/dist /usr/share/nginx/html
+# Копируем собранные файлы
+COPY --from=build /app/dist /usr/share/nginx/html/
 
-# Add nginx config
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+# Удаляем дефолтную страницу nginx
+RUN rm -rf /usr/share/nginx/html/50x.html
+
+# Копируем конфигурацию nginx
+COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/
 
 EXPOSE 80
 

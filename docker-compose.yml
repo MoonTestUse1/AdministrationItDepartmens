@@ -3,9 +3,10 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    container_name: frontend
-    networks:
-      - app-network
+    container_name: support-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -22,17 +23,16 @@ services:
       - app-network
 
   nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
-    container_name: nginx
-    ports:
-      - "80:80"
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - app-network
+       build:
+         context: .
+         dockerfile: docker/nginx/Dockerfile
+       container_name: support-nginx
+       restart: unless-stopped
+       ports:
+         - "80:80"
+       depends_on:
+         - frontend
+         - backend
 
 networks:
   app-network:
