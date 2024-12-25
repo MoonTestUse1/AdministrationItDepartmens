@@ -25,12 +25,12 @@ services:
 
   nginx:
     build:
-      context: ./docker/nginx
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     container_name: support-nginx
     restart: unless-stopped
     ports:
-      - "80:80"  # Возвращаем стандартный порт
+      - "80:80"
     depends_on:
       - frontend
       - backend
