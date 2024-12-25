@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: docker/frontend/Dockerfile
     container_name: frontend
-    restart: unless-stopped
     networks:
       - app-network
 
@@ -13,7 +12,6 @@ services:
       context: .
       dockerfile: docker/backend/Dockerfile
     container_name: backend
-    restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
@@ -28,11 +26,8 @@ services:
       context: .
       dockerfile: docker/nginx/Dockerfile
     container_name: nginx
-    restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - frontend
       - backend
