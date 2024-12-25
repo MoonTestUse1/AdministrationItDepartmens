@@ -1,13 +1,19 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 
-# Создаем обработчик нажатия кнопки
-@dp.callback_query_handler(lambda c: c.data.startswith('status_'))
+# Создаем роутер для обработки callback'ов
+from aiogram import Router
+router = Router()
+
+# Обработчик нажатия кнопки
+@router.callback_query(lambda c: c.data.startswith('status_'))
 async def process_status_button(callback_query: types.CallbackQuery):
     try:
+        print(f"Hello world: {callback_query.data}")
         # Получаем ID заявки и новый статус из callback_data
         _, request_id, new_status = callback_query.data.split('_')
         request_id = int(request_id)
@@ -37,18 +43,26 @@ async def process_status_button(callback_query: types.CallbackQuery):
         await callback_query.answer("Произошла ошибка при обновлении статуса", show_alert=True)
 
 def get_updated_keyboard(request_id: int, current_status: str) -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup()
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     
     if current_status != "in_progress":
-        keyboard.add(InlineKeyboardButton(
-            "В работе", 
-            callback_data=f"status_{request_id}_in_progress"
-        ))
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton(
+                text="В работе", 
+                callback_data=f"status_{request_id}_in_progress"
+            )
+        ])
     
     if current_status != "completed":
-        keyboard.add(InlineKeyboardButton(
-            "Завершено", 
-            callback_data=f"status_{request_id}_completed"
-        ))
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton(
+                text="Завершено", 
+                callback_data=f"status_{request_id}_completed"
+            )
+        ])
     
     return keyboard
+
+# В основном файле бота (где создается диспетчер)
+dp = Dispatcher()
+dp.include_router(router)
