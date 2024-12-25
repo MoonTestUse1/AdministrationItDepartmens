@@ -23,9 +23,10 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - sqlite_data:/app/instance
+      - ./sql_app.db:/app/sql_app.db:rw  # Изменяем путь к базе данных
     networks:
       - app-network
+    restart: unless-stopped
 
   nginx:
     build:
@@ -48,5 +49,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlite_data:
   frontend_build:
