@@ -6,11 +6,10 @@ services:
       context: .
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
-    restart: unless-stopped
+    volumes:
+      - frontend_build:/app/dist
     networks:
       - app-network
-    depends_on:
-      - backend
 
   backend:
     build:
@@ -21,7 +20,7 @@ services:
       - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
       - TELEGRAM_CHAT_ID=-1002037023574
     ports:
-      - "8000:8000"  # Добавляем это
+      - "8000:8000"
     volumes:
       - ./backend:/app
       - sqlite_data:/app/instance
@@ -36,6 +35,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - frontend_build:/usr/share/nginx/html
     networks:
       - app-network
     depends_on:
@@ -48,3 +49,4 @@ networks:
 
 volumes:
   sqlite_data:
+  frontend_build:
