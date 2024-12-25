@@ -25,7 +25,7 @@ async def send_request_notification(request_data: dict):
                 reply_markup=keyboard,
             )
     except Exception as e:
-        logger.error(f"Error sending Telegram notification1: {e}", exc_info=True)
+        logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
         raise
 
 
