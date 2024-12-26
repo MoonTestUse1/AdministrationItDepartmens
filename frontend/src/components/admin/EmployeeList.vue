@@ -3,10 +3,12 @@
 import { ref, onMounted } from 'vue';
 import { departments } from '@/utils/constants';
 import type { Employee } from '@/types/employee';
+import EmployeeForm from './EmployeeForm.vue'; // Добавляем импорт
 
-const employees = ref<Employee[]>([]); // Добавляем типизацию массива сотрудников
+const employees = ref<Employee[]>([]);
 const showAddForm = ref(false);
 const editingEmployee = ref<Employee | null>(null);
+
 
 function getDepartmentLabel(value: string) {
   return departments.find(d => d.value === value)?.label || value;
