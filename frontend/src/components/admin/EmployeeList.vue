@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-lg font-semibold">Сотрудники</h2>
+      <h2 class="text-lg font-semibold">Сотрудники222</h2>
       <button
         type="button"
         @click="showAddForm = true"
