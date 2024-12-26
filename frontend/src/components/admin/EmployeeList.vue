@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-lg font-semibold">Сотрудники</h2>
       <button
-        @click="showAddForm = true"
+        @click="openAddForm"
         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
       >
         <UserPlusIcon :size="18" />
@@ -51,9 +51,9 @@
     </div>
 
     <!-- Модальное окно -->
-    <div v-show="showAddForm || editingEmployee" class="fixed inset-0 overflow-y-auto" style="z-index: 100;">
+    <div v-if="showAddForm || editingEmployee" class="fixed inset-0 overflow-y-auto" style="z-index: 100;">
       <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="closeForm">
           <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
@@ -167,6 +167,12 @@ const formData = ref<EmployeeFormData>({
   password: ''
 });
 
+function openAddForm() {
+  console.log('Opening add form');
+  showAddForm.value = true;
+  console.log('showAddForm value:', showAddForm.value);
+}
+
 // Сброс формы при закрытии
 function resetForm() {
   formData.value = {
@@ -178,8 +184,14 @@ function resetForm() {
   };
 }
 
+// Наблюдаем за изменением showAddForm
+watch(showAddForm, (newValue) => {
+  console.log('showAddForm changed:', newValue);
+});
+
 // Наблюдаем за изменением editingEmployee
 watch(editingEmployee, (newEmployee) => {
+  console.log('editingEmployee changed:', newEmployee);
   if (newEmployee) {
     formData.value = {
       first_name: newEmployee.first_name,
@@ -198,17 +210,20 @@ function getDepartmentLabel(value: string) {
 }
 
 function editEmployee(employee: Employee) {
+  console.log('Editing employee:', employee);
   editingEmployee.value = employee;
   showAddForm.value = true;
 }
 
 function closeForm() {
+  console.log('Closing form');
   showAddForm.value = false;
   editingEmployee.value = null;
   resetForm();
 }
 
 async function handleSubmit() {
+  console.log('Submitting form:', formData.value);
   try {
     const data = { ...formData.value };
     if (editingEmployee.value && !data.password) {
@@ -260,6 +275,17 @@ async function fetchEmployees() {
 }
 
 onMounted(() => {
+  console.log('Component mounted');
   fetchEmployees();
 });
 </script>
+
+<style scoped>
+.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+</style>
