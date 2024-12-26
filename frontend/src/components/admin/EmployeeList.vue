@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { departments } from '@/utils/constants';
 import type { Employee, EmployeeFormData } from '@/types/employee';
-import EmployeeFormModal from './employee/EmployeeFormModal.vue';
+import EmployeeForm from './EmployeeForm.vue';
 
 const employees = ref<Employee[]>([]);
 const showAddForm = ref(false);
@@ -121,11 +121,13 @@ onMounted(fetchEmployees);
       </table>
     </div>
 
-    <EmployeeFormModal
-      v-if="showAddForm || editingEmployee"
-      :employee="editingEmployee || undefined"
-      @close="closeForm"
-      @submit="handleSubmit"
-    />
+    <Teleport to="body">
+      <EmployeeForm
+        v-if="showAddForm || editingEmployee"
+        :employee="editingEmployee"
+        @close="closeForm"
+        @submit="handleSubmit"
+      />
+    </Teleport>
   </div>
 </template>
