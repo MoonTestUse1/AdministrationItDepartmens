@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { departments } from '@/utils/constants';
-import type { Employee } from '@/types/employee';
-import EmployeeForm from './EmployeeForm.vue'; // Добавляем импорт
+import type { Employee, EmployeeFormData } from '@/types/employee';
+import EmployeeForm from './EmployeeForm.vue';
 
 const employees = ref<Employee[]>([]);
 const showAddForm = ref(false);
 const editingEmployee = ref<Employee | null>(null);
 
-
 function getDepartmentLabel(value: string) {
   return departments.find(d => d.value === value)?.label || value;
 }
 
-function editEmployee(employee: any) {
+function editEmployee(employee: Employee) {
   editingEmployee.value = employee;
 }
 
@@ -22,15 +21,20 @@ function closeForm() {
   editingEmployee.value = null;
 }
 
-async function handleSubmit(data: any) {
+async function handleSubmit(data: EmployeeFormData) {
   try {
     if (editingEmployee.value) {
       // Update existing employee
-      await fetch(`/api/employees/${editingEmployee.value.id}`, {
+      const response = await fetch(`/api/employees/${editingEmployee.value.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update employee');
+      }
     } else {
       // Create new employee
       const response = await fetch('/api/employees/', {
@@ -48,6 +52,7 @@ async function handleSubmit(data: any) {
     closeForm();
     alert(editingEmployee.value ? 'Сотрудник обновлен' : 'Сотрудник добавлен');
   } catch (error: any) {
+    console.error('Error:', error);
     alert(`Ошибка: ${error.message}`);
   }
 }
@@ -115,7 +120,6 @@ onMounted(fetchEmployees);
       </table>
     </div>
 
-    <!-- Employee form modal -->
     <EmployeeForm
       v-if="showAddForm || editingEmployee"
       :employee="editingEmployee"
