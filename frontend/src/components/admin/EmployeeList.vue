@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { departments } from '@/utils/constants';
 import type { Employee, EmployeeFormData } from '@/types/employee';
-import EmployeeForm from './EmployeeForm.vue';
+import EmployeeFormModal from './employee/EmployeeFormModal.vue';
 
 const employees = ref<Employee[]>([]);
 const showAddForm = ref(false);
@@ -14,6 +14,7 @@ function getDepartmentLabel(value: string) {
 
 function editEmployee(employee: Employee) {
   editingEmployee.value = employee;
+  showAddForm.value = true;
 }
 
 function closeForm() {
@@ -120,9 +121,9 @@ onMounted(fetchEmployees);
       </table>
     </div>
 
-    <EmployeeForm
+    <EmployeeFormModal
       v-if="showAddForm || editingEmployee"
-      :employee="editingEmployee"
+      :employee="editingEmployee || undefined"
       @close="closeForm"
       @submit="handleSubmit"
     />
