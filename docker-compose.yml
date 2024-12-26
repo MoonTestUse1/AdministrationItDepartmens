@@ -7,7 +7,10 @@ services:
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
     volumes:
-      - frontend_build:/app/dist
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
     networks:
       - app-network
 
@@ -36,9 +39,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"  # Добавляем порт для HTTPS
+      - "443:443"
     volumes:
-      - frontend_build:/usr/share/nginx/html
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
@@ -60,6 +62,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  frontend_build:
