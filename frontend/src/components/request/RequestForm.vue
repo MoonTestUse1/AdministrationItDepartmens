@@ -10,7 +10,7 @@
         :disabled="isSubmitting"
         class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        <option value="">Выберите тип обращения</option>
+        <option value="">Выберите тип обращенияss</option>
         <option v-for="type in requestTypes" :key="type.value" :value="type.value">
           {{ type.label }}
         </option>
