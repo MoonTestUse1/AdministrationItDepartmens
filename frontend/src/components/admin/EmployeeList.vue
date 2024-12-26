@@ -8,7 +8,7 @@
         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
       >
         <UserPlusIcon :size="18" />
-        Добавить сотрудника
+        Добавить1 сотрудника
       </button>
     </div>
 
@@ -57,7 +57,7 @@
         <div class="modal-wrapper">
           <div class="modal">
             <div class="modal-header">
-              <h3 class="text-lg font-medium">{{ editingEmployee ? 'Редактировать сотрудника' : 'Добавить сотрудника' }}</h3>
+              <h3 class="text-lg font-medium">{{ editingEmployee ? 'Редактировать сотрудника' : 'Добавить1 сотрудника' }}</h3>
               <button @click="closeForm" class="text-gray-400 hover:text-gray-500">
                 <span class="sr-only">Закрыть</span>
                 ×
