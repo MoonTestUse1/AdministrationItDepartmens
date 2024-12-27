@@ -27,3 +27,21 @@ yarn-error.log*
 # System
 .DS_Store
 Thumbs.db
+
+# Python virtual environments
+.venv/
+venv/
+.bolt/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+.env.local
+
+# IDE specific files
+.idea/
+.vscode/
