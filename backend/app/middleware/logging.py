@@ -12,7 +12,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         
         # Log request
         logger.info(
-            "Request started",
+            "Request started 1",
             extra={
                 "client_addr": request.client.host,
                 "request_line": f"{request.method} {request.url.path}",
