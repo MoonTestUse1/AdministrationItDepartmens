@@ -24,7 +24,6 @@ services:
     volumes:
       - ./backend:/app
       - ./sql_app.db:/app/sql_app.db:rw
-      - ./logs:/app/logs:rw
     networks:
       - app-network
     restart: unless-stopped
@@ -37,7 +36,7 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
+      - "443:443"  # Добавляем порт для HTTPS
     volumes:
       - frontend_build:/usr/share/nginx/html
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
