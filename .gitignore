@@ -3,10 +3,10 @@ node_modules
 __pycache__
 *.pyc
 
-# Environment
-.env
-.env.local
-.env.*.local
+# # Environment
+# .env
+# .env.local
+# .env.*.local
 
 # Build
 dist

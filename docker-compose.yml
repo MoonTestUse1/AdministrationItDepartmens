@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: support-postgres
+    environment:
+      POSTGRES_DB: support_db
+      POSTGRES_USER: support_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support_user -d support_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   frontend:
     build:
       context: .
@@ -17,15 +36,19 @@ services:
       dockerfile: docker/backend/Dockerfile
     container_name: support-backend
     environment:
-      - TELEGRAM_BOT_TOKEN=7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo
-      - TELEGRAM_CHAT_ID=-1002037023574
+      - DATABASE_URL=postgresql://support_user:${POSTGRES_PASSWORD}@postgres:5432/support_db
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - ./sql_app.db:/app/sql_app.db:rw
+      - ./logs:/app/logs:rw
     networks:
       - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   nginx:
@@ -36,7 +59,7 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"  # Добавляем порт для HTTPS
+      - "443:443"
     volumes:
       - frontend_build:/usr/share/nginx/html
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
@@ -47,7 +70,6 @@ services:
     depends_on:
       - frontend
       - backend
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     image: certbot/certbot
@@ -62,4 +84,5 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   frontend_build:
