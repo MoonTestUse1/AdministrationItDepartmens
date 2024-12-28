@@ -1,4 +1,4 @@
 """API routes package"""
-from . import auth
+from . import auth, requests
 
-__all__ = ['auth']
+__all__ = ['auth', 'requests']

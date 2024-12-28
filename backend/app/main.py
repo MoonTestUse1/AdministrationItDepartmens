@@ -6,7 +6,7 @@ import logging
 from logging.config import dictConfig
 from .logging_config import logging_config
 from .middleware import LoggingMiddleware
-from .routers import auth
+from .routers import auth, requests
 
 # Configure logging
 dictConfig(logging_config)
@@ -34,6 +34,7 @@ app.add_middleware(LoggingMiddleware)
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
 
 # Custom OpenAPI documentation
 @app.get("/api/docs", include_in_schema=False)
