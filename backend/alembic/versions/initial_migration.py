@@ -14,13 +14,18 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    # Drop existing enum types if they exist
+    connection = op.get_bind()
+    connection.execute(sa.text('DROP TYPE IF EXISTS requeststatus CASCADE;'))
+    connection.execute(sa.text('DROP TYPE IF EXISTS requestpriority CASCADE;'))
+    
     # Create RequestStatus enum type
     request_status = sa.Enum(RequestStatus, name='requeststatus')
-    request_status.create(op.get_bind(), checkfirst=True)
+    request_status.create(op.get_bind(), checkfirst=False)
     
     # Create RequestPriority enum type
     request_priority = sa.Enum(RequestPriority, name='requestpriority')
-    request_priority.create(op.get_bind(), checkfirst=True)
+    request_priority.create(op.get_bind(), checkfirst=False)
 
     # Create employees table
     op.create_table(
@@ -45,7 +50,7 @@ def upgrade() -> None:
         sa.Column('department', sa.String(), nullable=False),
         sa.Column('request_type', sa.String(), nullable=False),
         sa.Column('priority', request_priority, nullable=False),
-        sa.Column('status', request_status, nullable=False, server_default='NEW'),
+        sa.Column('status', request_status, nullable=False, server_default=sa.text("'NEW'")),
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
         sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ),
@@ -58,5 +63,6 @@ def downgrade() -> None:
     op.drop_table('employees')
     
     # Drop enum types
-    sa.Enum(RequestStatus, name='requeststatus').drop(op.get_bind(), checkfirst=True)
-    sa.Enum(RequestPriority, name='requestpriority').drop(op.get_bind(), checkfirst=True)
+    connection = op.get_bind()
+    connection.execute(sa.text('DROP TYPE IF EXISTS requeststatus CASCADE;'))
+    connection.execute(sa.text('DROP TYPE IF EXISTS requestpriority CASCADE;'))
