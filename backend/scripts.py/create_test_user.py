@@ -1,5 +1,10 @@
 """Script to create a test user in the database"""
-from sqlalchemy.orm import Session
+import sys
+from pathlib import Path
+
+# Add the parent directory to sys.path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from app.database import SessionLocal
 from app.crud import employees
 from app.models.employee import EmployeeCreate
@@ -28,6 +33,7 @@ def create_test_employee():
         
     except Exception as e:
         print(f"Error creating test employee: {e}")
+        raise e
     finally:
         db.close()
 
