@@ -7,12 +7,14 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     """Bot configuration settings"""
-    bot_token: str = Field(..., env="TELEGRAM_BOT_TOKEN")
-    chat_id: str = Field(..., env="TELEGRAM_CHAT_ID")
+    bot_token: str = Field(..., alias="TELEGRAM_BOT_TOKEN")
+    chat_id: str = Field(..., alias="TELEGRAM_CHAT_ID")
+    database_url: str = Field(..., alias="DATABASE_URL")
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        case_sensitive = True
 
 # Create settings instance
 settings = Settings()

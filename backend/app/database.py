@@ -1,12 +1,11 @@
+"""Database connection module"""
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://support_user:support_password@localhost:5432/support_db")
+from .bot.config import settings
 
 engine = create_engine(
-    DATABASE_URL,
+    settings.database_url,
     pool_size=5,
     max_overflow=10,
     pool_timeout=30,
@@ -17,6 +16,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def get_db():
+    """Get database session"""
     db = SessionLocal()
     try:
         yield db
