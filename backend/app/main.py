@@ -5,6 +5,8 @@ from fastapi.openapi.utils import get_openapi
 import logging
 from logging.config import dictConfig
 from .logging_config import logging_config
+from .middleware import LoggingMiddleware
+from .routers import auth
 
 # Configure logging
 dictConfig(logging_config)
@@ -17,6 +19,21 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None
 )
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
+
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 # Custom OpenAPI documentation
 @app.get("/api/docs", include_in_schema=False)
@@ -35,5 +52,3 @@ async def get_open_api_endpoint():
         description="API for managing support requests and employees",
         routes=app.routes
     )
-
-# Existing middleware and routes...
