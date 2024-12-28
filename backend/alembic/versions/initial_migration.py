@@ -14,6 +14,14 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    # Create RequestStatus enum type
+    request_status = sa.Enum(RequestStatus, name='requeststatus')
+    request_status.create(op.get_bind(), checkfirst=True)
+    
+    # Create RequestPriority enum type
+    request_priority = sa.Enum(RequestPriority, name='requestpriority')
+    request_priority.create(op.get_bind(), checkfirst=True)
+
     # Create employees table
     op.create_table(
         'employees',
@@ -36,8 +44,8 @@ def upgrade() -> None:
         sa.Column('employee_id', sa.Integer(), nullable=True),
         sa.Column('department', sa.String(), nullable=False),
         sa.Column('request_type', sa.String(), nullable=False),
-        sa.Column('priority', sa.Enum(RequestPriority), nullable=False),
-        sa.Column('status', sa.Enum(RequestStatus), nullable=False, server_default='new'),
+        sa.Column('priority', 'requestpriority', nullable=False),
+        sa.Column('status', 'requeststatus', nullable=False, server_default=sa.text("'NEW'")),
         sa.Column('description', sa.String(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
         sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ),
@@ -48,3 +56,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table('requests')
     op.drop_table('employees')
+    
+    # Drop enum types
+    sa.Enum(RequestStatus, name='requeststatus').drop(op.get_bind(), checkfirst=True)
+    sa.Enum(RequestPriority, name='requestpriority').drop(op.get_bind(), checkfirst=True)
