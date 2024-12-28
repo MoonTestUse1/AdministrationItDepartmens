@@ -99,7 +99,7 @@ async def create_request(
     # Get employee details for the notification
     employee = employees.get_employee(db, new_request.employee_id)
 
-    # Prepare notification data
+    # Prepare notification data2
     notification_data = {
         "id": new_request.id,
         "employee_last_name": employee.last_name,
