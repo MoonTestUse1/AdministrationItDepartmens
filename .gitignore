@@ -39,8 +39,8 @@ __pycache__/
 *$py.class
 
 # Environment variables
-.env
-.env.local
+# .env
+# .env.local
 
 # IDE specific files
 .idea/
