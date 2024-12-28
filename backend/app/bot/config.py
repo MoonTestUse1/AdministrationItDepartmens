@@ -7,8 +7,8 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     """Bot configuration settings"""
-    bot_token: str = Field("7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34", env="TELEGRAM_BOT_TOKEN")
-    chat_id: str = Field("5057752127", env="TELEGRAM_CHAT_ID")
+    bot_token: str = Field(..., env="TELEGRAM_BOT_TOKEN")
+    chat_id: str = Field(..., env="TELEGRAM_CHAT_ID")
 
     class Config:
         env_file = ".env"
