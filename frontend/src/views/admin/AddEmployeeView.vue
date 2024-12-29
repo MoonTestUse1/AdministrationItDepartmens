@@ -80,6 +80,7 @@ template>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { departments } from '@/utils/constants';
+type Department = typeof departments[number];
 
 const router = useRouter();
 const isSubmitting = ref(false);
@@ -92,6 +93,7 @@ const form = ref({
   password: ''
 });
 
+// @vue-ignore
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
