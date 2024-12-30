@@ -4,7 +4,6 @@ from . import bot
 from .handlers import get_updated_keyboard
 from .messages import format_request_message
 
-bot = Bot(token="7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
 
 
 async def send_notification(request_data: dict):
