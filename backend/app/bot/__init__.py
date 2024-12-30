@@ -4,7 +4,7 @@ from .config import settings
 from .handlers import callbacks_router, start_router
 
 # Initialize bot and dispatcher
-bot = Bot(token=settings.bot_token)
+bot = Bot(token="7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo")
 dp = Dispatcher()
 
 # Include routers only once during initialization
