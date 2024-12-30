@@ -11,13 +11,13 @@ from app.models.employee import EmployeeCreate
 def init_db():
     db = SessionLocal()
     try:
-        # Create default employee
+        # Create default employee with valid password (min 6 chars)
         employee = EmployeeCreate(
             first_name="Сотрудник",
             last_name="Лесников",
             department="general",
             office="101",
-            password="1111"
+            password="111111"  # Changed to meet 6 character minimum
         )
         
         existing = employees.get_employee_by_lastname(db, employee.last_name)
