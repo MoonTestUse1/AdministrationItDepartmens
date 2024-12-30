@@ -35,8 +35,8 @@ services:
     container_name: support-backend
     environment:
       - DATABASE_URL=postgresql://support_user:${POSTGRES_PASSWORD}@postgres:5432/support_db
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - TELEGRAM_BOT_TOKEN=7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34
+      - TELEGRAM_CHAT_ID=5057752127
     ports:
       - "8000:8000"
     volumes:
