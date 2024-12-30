@@ -1,4 +1,4 @@
-template>
+<template>
   <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
     <h1 class="text-2xl font-bold mb-6">Добавить работника</h1>
     
@@ -80,7 +80,6 @@ template>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { departments } from '@/utils/constants';
-type Department = typeof departments[number];
 
 const router = useRouter();
 const isSubmitting = ref(false);
@@ -93,7 +92,6 @@ const form = ref({
   password: ''
 });
 
-// @vue-ignore
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
