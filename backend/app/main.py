@@ -7,7 +7,7 @@ import logging
 from logging.config import dictConfig
 from .logging_config import logging_config
 from .middleware import LoggingMiddleware
-from .routers import auth, employees, requests
+from .routers import auth, employees, requests, admin
 
 # Configure logging
 dictConfig(logging_config)
@@ -37,6 +37,7 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 # Custom OpenAPI documentation
 @app.get("/api/docs", include_in_schema=False)
