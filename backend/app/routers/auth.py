@@ -3,40 +3,37 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..crud import auth as auth_crud
-from ..models.employee import EmployeeBase
-from logging import getLogger
+from ..utils.loggers import auth_logger
 
 router = APIRouter()
-logger = getLogger(__name__)
 
 @router.post("/login")
 async def login(credentials: dict, db: Session = Depends(get_db)):
     """Employee login endpoint"""
     try:
+        # Validate required fields
+        if not credentials.get("lastName") or not credentials.get("password"):
+            raise HTTPException(
+                status_code=400,
+                detail="Необходимо указать фамилию и пароль"
+            )
+
         employee = auth_crud.authenticate_employee(
             db, 
-            credentials.get("lastName"), 
-            credentials.get("password")
+            credentials["lastName"], 
+            credentials["password"]
         )
+        
         if not employee:
-            raise HTTPException(status_code=401, detail="Неверные учетные данные")
+            raise HTTPException(
+                status_code=401,
+                detail="Неверные учетные данные"
+            )
+            
         return employee
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Login error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Ошибка сервера")
-
-@router.post("/admin")
-async def admin_login(credentials: dict, db: Session = Depends(get_db)):
-    """Admin login endpoint"""
-    try:
-        is_valid = auth_crud.authenticate_admin(
-            db,
-            credentials.get("username"),
-            credentials.get("password")
-        )
-        if not is_valid:
-            raise HTTPException(status_code=401, detail="Неверные учетные данные")
-        return {"status": "success"}
-    except Exception as e:
-        logger.error(f"Admin login error: {e}", exc_info=True)
+        auth_logger.error(f"Login error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ошибка сервера")

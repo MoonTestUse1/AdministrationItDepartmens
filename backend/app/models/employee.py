@@ -1,17 +1,16 @@
-from pydantic import BaseModel
+"""Employee models"""
+from pydantic import BaseModel, Field
 from datetime import datetime
-
+from typing import Optional
 
 class EmployeeBase(BaseModel):
-    last_name: str
-    first_name: str
-    department: str
-    office: str
-
+    first_name: str = Field(..., min_length=1)
+    last_name: str = Field(..., min_length=1)
+    department: str = Field(..., pattern="^(aho|gkh|general)$")
+    office: str = Field(..., min_length=1)
 
 class EmployeeCreate(EmployeeBase):
-    password: str
-
+    password: str = Field(..., min_length=6)
 
 class Employee(EmployeeBase):
     id: int

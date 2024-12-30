@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
+"""Main application module"""
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
@@ -6,7 +7,7 @@ import logging
 from logging.config import dictConfig
 from .logging_config import logging_config
 from .middleware import LoggingMiddleware
-from .routers import auth, requests
+from .routers import auth, employees, requests
 
 # Configure logging
 dictConfig(logging_config)
@@ -34,6 +35,7 @@ app.add_middleware(LoggingMiddleware)
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
 
 # Custom OpenAPI documentation
@@ -41,8 +43,7 @@ app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
 async def custom_swagger_ui_html():
     return get_swagger_ui_html(
         openapi_url="/api/openapi.json",
-        title="Support Portal API Documentation",
-        swagger_favicon_url="/favicon.ico"
+        title="Support Portal API Documentation"
     )
 
 @app.get("/api/openapi.json", include_in_schema=False)
