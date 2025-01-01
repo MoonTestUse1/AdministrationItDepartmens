@@ -18,20 +18,17 @@ services:
       timeout: 5s
       retries: 5
 
-
   frontend:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - frontend_build:/app/dist
-    environment:
-      - NODE_ENV=production
-    command: sh -c "npm run build && cp -r dist/* /app/dist/"
+    container_name: support-frontend
+    ports:
+      - "80:80"
     networks:
       - app-network
+    depends_on:
+      - backend
 
   backend:
     build:
@@ -40,8 +37,6 @@ services:
     container_name: support-backend
     environment:
       - DATABASE_URL=postgresql://support_user:${POSTGRES_PASSWORD}@postgres:5432/support_db
-      - TELEGRAM_BOT_TOKEN=7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34
-      - TELEGRAM_CHAT_ID=5057752127
     ports:
       - "8000:8000"
     volumes:
@@ -54,38 +49,9 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
-    container_name: support-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - frontend_build:/usr/share/nginx/html
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    networks:
-      - app-network
-    depends_on:
-      - frontend
-      - backend
-
-  certbot:
-    image: certbot/certbot
-    container_name: support-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
 networks:
   app-network:
     driver: bridge
 
 volumes:
   postgres_data:
-  frontend_build:
