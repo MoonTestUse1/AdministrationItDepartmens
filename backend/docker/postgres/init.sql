@@ -1,8 +1,8 @@
--- Create the postgres superuser
-CREATE USER postgres WITH PASSWORD 'postgres' SUPERUSER;
-
--- Create the database
+-- Create database
 CREATE DATABASE support_db;
 
--- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE support_db TO postgres; 
+-- Connect to the database
+\c support_db;
+
+-- Create extensions if needed
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; 
