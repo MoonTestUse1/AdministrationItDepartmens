@@ -37,13 +37,13 @@ def upgrade() -> None:
     op.create_table(
         'requests',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('employee_id', sa.Integer(), nullable=True),
-        sa.Column('department', sa.String(), nullable=False),
-        sa.Column('request_type', sa.String(), nullable=False),
-        sa.Column('priority', request_priority, nullable=False),
+        sa.Column('title', sa.String(), nullable=False),
+        sa.Column('description', sa.String(), nullable=False),
         sa.Column('status', request_status, nullable=False, server_default=RequestStatus.NEW.name),
-        sa.Column('description', sa.String(), nullable=True),
+        sa.Column('priority', request_priority, nullable=False),
+        sa.Column('employee_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), onupdate=sa.text('now()')),
         sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
