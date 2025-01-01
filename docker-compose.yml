@@ -23,6 +23,7 @@ services:
         condition: service_healthy
     networks:
       - support-network
+    restart: unless-stopped
 
   postgres:
     image: postgres:15
@@ -40,8 +41,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 5s
     networks:
       - support-network
+    restart: unless-stopped
 
 networks:
   support-network:

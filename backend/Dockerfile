@@ -19,8 +19,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Create script to run migrations and start app
+RUN echo '#!/bin/sh\n\
+echo "Waiting for database..."\n\
+sleep 5\n\
+echo "Running migrations..."\n\
+alembic upgrade head\n\
+echo "Starting application..."\n\
+python run.py' > /app/start.sh && chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 8000
 
 # Run migrations and start application
-CMD ["sh", "-c", "alembic upgrade head && python run.py"] 
+CMD ["/app/start.sh"] 
