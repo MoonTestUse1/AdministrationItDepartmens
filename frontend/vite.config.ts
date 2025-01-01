@@ -10,9 +10,14 @@ export default defineConfig({
     }
   },
   server: {
+    host: true, // Важно для Docker
+    port: 5173, // Стандартный порт Vite
+    watch: {
+      usePolling: true // Важно для Docker на Windows/MacOS
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://backend:8000',
         changeOrigin: true
       }
     }

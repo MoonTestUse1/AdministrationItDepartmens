@@ -18,6 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
+
   frontend:
     build:
       context: .
@@ -27,6 +28,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+    ports:
+      - "5173:5173"
     command: npm run dev
     networks:
       - app-network
