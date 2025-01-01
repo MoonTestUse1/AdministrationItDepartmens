@@ -23,6 +23,18 @@ def request_to_dict(request: Request) -> dict:
         "updated_at": request.updated_at
     }
 
+@router.get("/", response_model=List[RequestResponse])
+def get_requests(
+    db: Session = Depends(get_db),
+    _: dict = Depends(get_current_admin)
+):
+    """Get all requests"""
+    try:
+        requests = db.query(Request).all()
+        return [request_to_dict(request) for request in requests]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/", response_model=RequestResponse)
 def create_request(
     request: RequestCreate,
