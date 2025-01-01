@@ -5,16 +5,15 @@ from fastapi.testclient import TestClient
 from app.database import Base, get_db
 from app.main import app
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres123@postgres:5432/support_db_test"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture
 def db_session():
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.drop_all(bind=engine)  # Сначала удаляем все таблицы
+    Base.metadata.create_all(bind=engine)  # Создаем таблицы заново
     session = TestingSessionLocal()
     try:
         yield session
