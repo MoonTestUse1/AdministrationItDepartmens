@@ -55,12 +55,41 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { PlusCircle } from 'lucide-vue-next';
 
+interface Statistic {
+  period: string;
+  label: string;
+  value: number | string;
+}
+
+interface Request {
+  id: number;
+  employee_last_name: string;
+  request_type: string;
+  status: string;
+  created_at: string;
+}
+
 const router = useRouter();
-const statistics = ref([]);
-const requests = ref([]);
+const statistics = ref<Statistic[]>([]);
+const requests = ref<Request[]>([]);
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('ru-RU');
+};
+
+const fetchStatistics = async () => {
+  try {
+    const response = await fetch('/api/admin/statistics?period=week');
+    if (!response.ok) throw new Error('Failed to fetch statistics');
+    const data = await response.json();
+    statistics.value = [
+      { period: 'total', label: 'Всего заявок', value: data.totalRequests },
+      { period: 'resolved', label: 'Решено', value: data.resolvedRequests },
+      { period: 'avgTime', label: 'Среднее время', value: data.averageResolutionTime }
+    ];
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+  }
 };
 
 const fetchRequests = async () => {
@@ -74,6 +103,7 @@ const fetchRequests = async () => {
 };
 
 onMounted(() => {
+  fetchStatistics();
   fetchRequests();
 });
 </script>
