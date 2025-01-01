@@ -7,7 +7,6 @@ from ..database import Base
 class Employee(Base):
     __tablename__ = "employees"
     __table_args__ = {'extend_existing': True}
-    __module__ = "app.models.employee"
 
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, nullable=False)
@@ -17,4 +16,9 @@ class Employee(Base):
     password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    requests = relationship("Request", back_populates="employee", lazy="dynamic")
+    requests = relationship(
+        "app.models.request.Request",
+        back_populates="employee",
+        lazy="dynamic",
+        primaryjoin="Employee.id == app.models.request.Request.employee_id"
+    )

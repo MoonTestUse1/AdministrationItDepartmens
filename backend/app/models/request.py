@@ -30,4 +30,8 @@ class Request(Base):
     status = Column(Enum(RequestStatus), default=RequestStatus.new)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    employee = relationship("Employee", back_populates="requests")
+    employee = relationship(
+        "app.models.employee.Employee",
+        back_populates="requests",
+        primaryjoin="Request.employee_id == app.models.employee.Employee.id"
+    )
