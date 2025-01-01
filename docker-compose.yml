@@ -26,11 +26,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - frontend_build:/app/dist
     environment:
-      - NODE_ENV=development
-    ports:
-      - "5173:5173"
-    command: npm run dev
+      - NODE_ENV=production
+    command: sh -c "npm run build && cp -r dist/* /app/dist/"
     networks:
       - app-network
 
