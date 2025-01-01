@@ -49,7 +49,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { PlusCircle } from 'lucide-vue-next';
-import { useRouter } from 'vue-router';
 
 interface Employee {
   id: number;
@@ -59,7 +58,6 @@ interface Employee {
   office: string;
 }
 
-const router = useRouter();
 const employees = ref<Employee[]>([]);
 
 const fetchEmployees = async () => {
@@ -75,10 +73,6 @@ const fetchEmployees = async () => {
 const editEmployee = (employee: Employee) => {
   // Implement edit functionality
   console.log('Edit employee:', employee);
-};
-
-const addEmployee = () => {
-  router.push('/admin/employees/add');
 };
 
 onMounted(() => {
