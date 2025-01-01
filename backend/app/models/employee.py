@@ -1,5 +1,8 @@
 """Employee model"""
-from .base import Base, Column, Integer, String, DateTime, func, relationship
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from ..database import Base
 
 class Employee(Base):
     __tablename__ = "employees"
@@ -14,4 +17,8 @@ class Employee(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Определяем отношение к Request
-    requests = relationship("Request", back_populates="employee")
+    requests = relationship(
+        "app.models.request.Request",
+        back_populates="employee",
+        lazy="dynamic"
+    )

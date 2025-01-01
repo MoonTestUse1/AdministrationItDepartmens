@@ -1,11 +1,12 @@
 """Main application module"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth, employees, requests, admin
+from . import models
+from .routers import admin, employees, requests
 
 app = FastAPI()
 
-# Configure CORS
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +16,6 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(employees.router, prefix="/api", tags=["employees"])
-app.include_router(requests.router, prefix="/api", tags=["requests"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
+app.include_router(requests.router, prefix="/api/requests", tags=["requests"])

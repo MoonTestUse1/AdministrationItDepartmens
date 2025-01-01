@@ -1,5 +1,8 @@
 """Request model"""
-from .base import Base, Column, Integer, String, DateTime, ForeignKey, Enum, func, relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from ..database import Base
 import enum
 
 class RequestStatus(str, enum.Enum):
@@ -27,4 +30,7 @@ class Request(Base):
     status = Column(Enum(RequestStatus), nullable=False, default=RequestStatus.NEW)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    employee = relationship("Employee", back_populates="requests")
+    employee = relationship(
+        "app.models.employee.Employee",
+        back_populates="requests"
+    )

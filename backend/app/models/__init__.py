@@ -1,9 +1,7 @@
-"""Models package"""
+"""Models initialization"""
+from ..database import Base, engine
 from .employee import Employee
-from .request import Request, RequestStatus, RequestPriority
+from .request import Request
 
-# Регистрируем модели в правильном порядке
-Employee.requests  # Инициализируем отношение
-Request.employee  # Инициализируем отношение
-
-__all__ = ['Employee', 'Request', 'RequestStatus', 'RequestPriority'] 
+# Create all tables
+Base.metadata.create_all(bind=engine) 
