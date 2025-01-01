@@ -16,16 +16,33 @@ interface Employee {
   last_name: string
   department: string
   office: string
+  position: string
   created_at: string
 }
 
 interface Request {
   id: number
-  employee_id: number
+  employee: Employee
   department: string
   request_type: string
-  priority: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
   description: string
-  status: string
+  status: 'new' | 'in_progress' | 'resolved'
   created_at: string
+}
+
+interface Statistics {
+  new: number
+  inProgress: number
+  resolved: number
+}
+
+interface EmployeeForm {
+  id: number | null
+  first_name: string
+  last_name: string
+  department: string
+  office: string
+  position: string
+  password: string
 } 
