@@ -12,10 +12,12 @@ def get_statistics(db: Session = Depends(get_db)):
     # Получаем количество заявок по статусам
     new_requests = db.query(Request).filter(Request.status == RequestStatus.NEW).count()
     in_progress = db.query(Request).filter(Request.status == RequestStatus.IN_PROGRESS).count()
-    resolved = db.query(Request).filter(Request.status == RequestStatus.RESOLVED).count()
+    completed = db.query(Request).filter(Request.status == RequestStatus.COMPLETED).count()
+    rejected = db.query(Request).filter(Request.status == RequestStatus.REJECTED).count()
     
     return {
         "new": new_requests,
         "inProgress": in_progress,
-        "resolved": resolved
+        "completed": completed,
+        "rejected": rejected
     } 
