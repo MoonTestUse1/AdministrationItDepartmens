@@ -1,50 +1,26 @@
-from pydantic import BaseModel
-from datetime import datetime
-from enum import Enum
+"""Request model"""
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from ..database import Base
+import enum
 
+class RequestStatus(str, enum.Enum):
+    new = "new"
+    in_progress = "in_progress"
+    resolved = "resolved"
+    closed = "closed"
 
-class RequestStatus(str, Enum):
-    NEW = "new"
-    IN_PROGRESS = "in_progress"
-    RESOLVED = "resolved"
-    CLOSED = "closed"
+class Request(Base):
+    __tablename__ = "requests"
 
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    department = Column(String, nullable=False)
+    request_type = Column(String, nullable=False)
+    priority = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    status = Column(Enum(RequestStatus), default=RequestStatus.new)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-class RequestPriority(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-class StatusUpdate(BaseModel):
-    status: RequestStatus
-
-
-class RequestBase(BaseModel):
-    department: str
-    request_type: str
-    priority: RequestPriority
-    description: str
-
-
-class RequestCreate(RequestBase):
-    employee_id: int
-
-
-class Request(RequestBase):
-    id: int
-    status: RequestStatus
-    created_at: datetime
-    employee_id: int
-
-    class Config:
-        from_attributes = True
-
-
-class RequestWithEmployee(Request):
-    employee_last_name: str
-    employee_first_name: str
-
-    class Config:
-        from_attributes = True
+    employee = relationship("Employee", back_populates="requests")
