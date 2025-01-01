@@ -24,7 +24,9 @@ services:
       dockerfile: docker/frontend/Dockerfile
     container_name: support-frontend
     volumes:
-      - frontend_build:/app/dist
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
     networks:
       - app-network
 
