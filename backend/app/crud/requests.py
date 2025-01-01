@@ -1,13 +1,13 @@
-"""Request management database operations"""
+"""Request CRUD operations"""
 from sqlalchemy.orm import Session
-from ..models import request as models
-from ..schemas import tables
+from ..models.request import Request
+from ..schemas.request import RequestCreate
 from ..utils.loggers import request_logger
 
-def create_request(db: Session, request: models.RequestCreate):
+def create_request(db: Session, request: RequestCreate):
     """Create new request"""
     try:
-        db_request = tables.Request(
+        db_request = Request(
             employee_id=request.employee_id,
             department=request.department,
             request_type=request.request_type,
@@ -34,9 +34,9 @@ def create_request(db: Session, request: models.RequestCreate):
 def get_request_details(db: Session, request_id: int):
     """Get detailed request information including employee details"""
     request = (
-        db.query(tables.Request)
-        .join(tables.Employee)
-        .filter(tables.Request.id == request_id)
+        db.query(Request)
+        .join(Request.employee)
+        .filter(Request.id == request_id)
         .first()
     )
 
