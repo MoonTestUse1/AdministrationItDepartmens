@@ -32,5 +32,6 @@ class Request(Base):
 
     employee = relationship(
         "app.models.employee.Employee",
-        back_populates="requests"
+        back_populates="requests",
+        lazy="joined"
     )

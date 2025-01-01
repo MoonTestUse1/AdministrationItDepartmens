@@ -20,5 +20,6 @@ class Employee(Base):
     requests = relationship(
         "app.models.request.Request",
         back_populates="employee",
-        lazy="dynamic"
+        lazy="dynamic",
+        cascade="all, delete-orphan"
     )

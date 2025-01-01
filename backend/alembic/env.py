@@ -10,7 +10,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 # Import your models
-from app.schemas import tables
+from app.models.employee import Employee
+from app.models.request import Request
 from app.database import Base
 
 # this is the Alembic Config object
@@ -23,7 +24,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def get_url():
-    return os.getenv("DATABASE_URL", "postgresql://support_user:support_password@localhost:5432/support_db")
+    return os.getenv("DATABASE_URL", "postgresql://postgres:postgres123@postgres:5432/support_db")
 
 def run_migrations_offline() -> None:
     url = get_url()
@@ -49,7 +50,8 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
+            compare_type=True
         )
 
         with context.begin_transaction():
