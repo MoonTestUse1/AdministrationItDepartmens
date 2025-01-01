@@ -11,6 +11,12 @@ class RequestStatus(str, enum.Enum):
     resolved = "resolved"
     closed = "closed"
 
+class RequestPriority(str, enum.Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
 class Request(Base):
     __tablename__ = "requests"
     __table_args__ = {'extend_existing': True}
@@ -19,7 +25,7 @@ class Request(Base):
     employee_id = Column(Integer, ForeignKey("employees.id"))
     department = Column(String, nullable=False)
     request_type = Column(String, nullable=False)
-    priority = Column(String, nullable=False)
+    priority = Column(Enum(RequestPriority), nullable=False)
     description = Column(String, nullable=False)
     status = Column(Enum(RequestStatus), default=RequestStatus.new)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
