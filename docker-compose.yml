@@ -22,10 +22,11 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    container_name: support-frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - NODE_ENV=development
     command: npm run dev
     networks:
       - app-network
