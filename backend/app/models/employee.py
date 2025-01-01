@@ -8,6 +8,7 @@ from .request import Request
 class Employee(Base):
     __tablename__ = "employees"
     __table_args__ = {'extend_existing': True}
+    __module__ = "app.models.employee"
 
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, nullable=False)

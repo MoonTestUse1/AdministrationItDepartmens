@@ -1,56 +1,37 @@
-"""Employee management routes"""
+"""Employee routes"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from typing import List
+
 from ..database import get_db
-from pydantic import BaseModel
-from ..utils.loggers import auth_logger
-from ..models.employee import Employee
+from ..crud import employees as employees_crud
+from ..schemas.employee import EmployeeCreate, Employee
+from ..utils.auth import get_password_hash
 
 router = APIRouter()
 
-class EmployeeCreate(BaseModel):
-    first_name: str
-    last_name: str
-    department: str
-    office: str
-    password: str
-
-@router.get("/")
-async def get_employees(db: Session = Depends(get_db)):
-    """Get all employees"""
-    try:
-        return db.query(Employee).all()
-    except Exception as e:
-        auth_logger.error(f"Error fetching employees: {e}")
-        raise HTTPException(status_code=500, detail="Ошибка при получении списка сотрудников")
-
-@router.post("/")
-async def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
+@router.post("/employees/", response_model=Employee)
+def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
     """Create new employee"""
     try:
-        # Создаем запись в БД
-        db_employee = Employee(
-            first_name=employee.first_name,
-            last_name=employee.last_name,
-            department=employee.department,
-            office=employee.office,
-            password=employee.password  # В реальном приложении пароль нужно хешировать
-        )
+        # Check if employee already exists
+        db_employee = employees_crud.get_employee_by_lastname(db, employee.last_name)
+        if db_employee:
+            raise HTTPException(
+                status_code=400,
+                detail="Сотрудник с такой фамилией уже существует"
+            )
+
+        # Hash password
+        employee_dict = employee.model_dump()
+        employee_dict["password"] = get_password_hash(employee_dict["password"])
         
-        db.add(db_employee)
-        db.commit()
-        db.refresh(db_employee)
-        
-        return db_employee
-        
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="Сотрудник с такими данными уже существует"
-        )
+        # Create employee
+        return employees_crud.create_employee(db=db, employee_data=employee_dict)
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback()
-        auth_logger.error(f"Error creating employee: {e}")
-        raise HTTPException(status_code=500, detail="Ошибка при создании сотрудника")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при создании сотрудника: {str(e)}"
+        )
