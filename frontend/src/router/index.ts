@@ -23,26 +23,30 @@ const router = createRouter({
       name: 'requests',
       component: () => import('@/views/RequestsView.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/dashboard',
+      name: 'admin-dashboard',
+      component: () => import('@/views/AdminDashboardView.vue'),
+      meta: { requiresAdmin: true }
     }
   ]
 });
 
 router.beforeEach((to, from, next) => {
-  console.log('Проверка маршрута:', to.path)
-  
-  if (to.meta.requiresAuth) {
-    console.log('Маршрут требует авторизации')
+  if (to.meta.requiresAdmin) {
+    const adminToken = localStorage.getItem('admin_token')
+    if (!adminToken) {
+      next('/admin')
+      return
+    }
+  } else if (to.meta.requiresAuth) {
     const token = localStorage.getItem('token')
-    console.log('Токен:', token ? 'Присутствует' : 'Отсутствует')
-    
     if (!token) {
-      console.log('Перенаправление на /login')
       next('/login')
       return
     }
   }
-  
-  console.log('Разрешаем переход')
   next()
 })
 
