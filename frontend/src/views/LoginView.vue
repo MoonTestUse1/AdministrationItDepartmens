@@ -69,19 +69,23 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
+    console.log('Отправка запроса на авторизацию...')
     const response = await axios.post('/api/auth/login', {
       last_name: lastName.value,
       password: password.value
     })
+    console.log('Ответ от сервера:', response.data)
 
     // Сохраняем данные сотрудника и токен
     localStorage.setItem('employee', JSON.stringify(response.data))
     localStorage.setItem('token', response.data.access_token)
 
+    console.log('Перенаправление на /requests...')
     // Перенаправляем на страницу заявок
-    router.push('/requests')
+    await router.push('/requests')
   } catch (e: any) {
-    error.value = e.response?.data?.detail || 'Произошла ошибка при входе'
+    console.error('Ошибка при авторизации:', e)
+    error.value = e.response?.data?.detail || 'Неверная фамилия или пароль'
   } finally {
     loading.value = false
   }
