@@ -486,4 +486,3 @@ const getStatusClass = (status: Request['status']) => {
 // Загрузка данных при монтировании
 onMounted(fetchData)
 </script> 
-</script> 
