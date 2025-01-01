@@ -5,6 +5,22 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/',
+      component: () => import('@/layouts/MainLayout.vue'),
+      children: [
+        {
+          path: '',
+          name: 'Home',
+          component: () => import('@/views/HomeView.vue')
+        },
+        {
+          path: 'login',
+          name: 'Login',
+          component: () => import('@/views/LoginView.vue')
+        }
+      ]
+    },
+    {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
       meta: { requiresAdmin: true },

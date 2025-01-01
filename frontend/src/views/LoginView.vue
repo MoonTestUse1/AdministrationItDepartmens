@@ -1,98 +1,89 @@
 <template>
-  <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-    <h2 class="text-2xl font-semibold text-slate-800 mb-4">Вход в систему</h2>
-    
-    <form @submit.prevent="handleSubmit" class="space-y-4">
+  <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Фамилия
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <UserIcon :size="18" class="text-slate-400" />
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Вход для сотрудников
+        </h2>
+      </div>
+      <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
+        <div class="rounded-md shadow-sm -space-y-px">
+          <div>
+            <label for="last-name" class="sr-only">Фамилия</label>
+            <input
+              id="last-name"
+              v-model="lastName"
+              name="last-name"
+              type="text"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Фамилия"
+            />
           </div>
-          <input
-            v-model="lastName"
-            type="text"
-            required
-            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
-            placeholder="Введите фамилию"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Пароль
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <LockIcon :size="18" class="text-slate-400" />
+          <div>
+            <label for="password" class="sr-only">Пароль</label>
+            <input
+              id="password"
+              v-model="password"
+              name="password"
+              type="password"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Пароль"
+            />
           </div>
-          <input
-            v-model="password"
-            type="password"
-            required
-            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
-            placeholder="Введите пароль"
-          />
         </div>
-      </div>
 
-      <button
-        type="submit"
-        :disabled="isLoading"
-        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        <component 
-          :is="isLoading ? LoaderIcon : LogInIcon" 
-          :size="18"
-          :class="{ 'animate-spin': isLoading }" 
-        />
-        {{ isLoading ? 'Вход...' : 'Войти' }}
-      </button>
+        <div>
+          <button
+            type="submit"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            :disabled="loading"
+          >
+            <span v-if="loading">Загрузка...</span>
+            <span v-else>Войти</span>
+          </button>
+        </div>
 
-      <div class="text-center">
-        <router-link 
-          to="/admin" 
-          class="text-sm text-blue-600 hover:text-blue-800"
-        >
-          Вход для администраторов
-        </router-link>
-      </div>
-    </form>
+        <div v-if="error" class="text-red-600 text-center">
+          {{ error }}
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import { UserIcon, LockIcon, LogInIcon, LoaderIcon } from 'lucide-vue-next';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
+const lastName = ref('')
+const password = ref('')
+const loading = ref(false)
+const error = ref('')
 
-const lastName = ref('');
-const password = ref('');
-const isLoading = ref(false);
+const handleLogin = async () => {
+  loading.value = true
+  error.value = ''
 
-async function handleSubmit() {
-  if (isLoading.value) return;
-  
-  isLoading.value = true;
   try {
-    const success = await authStore.login(lastName.value, password.value);
-    if (success) {
-      router.push('/support');
-    } else {
-      alert('Неверная фамилия или пароль');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Ошибка авторизации');
+    const response = await axios.post('/api/auth/login', {
+      last_name: lastName.value,
+      password: password.value
+    })
+
+    // Сохраняем данные сотрудника и токен
+    localStorage.setItem('employee', JSON.stringify(response.data))
+    localStorage.setItem('token', response.data.access_token)
+
+    // Перенаправляем на страницу заявок
+    router.push('/requests')
+  } catch (e: any) {
+    error.value = e.response?.data?.detail || 'Произошла ошибка при входе'
   } finally {
-    isLoading.value = false;
+    loading.value = false
   }
 }
 </script>
