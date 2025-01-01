@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from ..models.employee import Employee
 from ..utils.loggers import auth_logger
 
+def get_employees(db: Session):
+    """Get all employees"""
+    return db.query(Employee).all()
+
 def get_employee(db: Session, employee_id: int):
     """Get employee by ID"""
     return db.query(Employee).filter(Employee.id == employee_id).first()

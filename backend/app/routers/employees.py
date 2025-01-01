@@ -10,6 +10,17 @@ from ..utils.auth import get_password_hash
 
 router = APIRouter()
 
+@router.get("/employees/", response_model=List[Employee])
+def get_employees(db: Session = Depends(get_db)):
+    """Get all employees"""
+    try:
+        return employees_crud.get_employees(db)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка при получении списка сотрудников: {str(e)}"
+        )
+
 @router.post("/employees/", response_model=Employee)
 def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
     """Create new employee"""
