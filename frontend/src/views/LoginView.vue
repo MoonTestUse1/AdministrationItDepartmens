@@ -56,7 +56,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+
+interface LoginResponse {
+  access_token: string
+  token_type: string
+  [key: string]: any
+}
 
 const router = useRouter()
 const lastName = ref('')
@@ -70,7 +76,7 @@ const handleLogin = async () => {
 
   try {
     console.log('Отправка запроса на авторизацию...')
-    const response = await axios.post('/api/auth/login', {
+    const response = await axios.post<LoginResponse>('/api/auth/login', {
       last_name: lastName.value,
       password: password.value
     })
@@ -83,9 +89,10 @@ const handleLogin = async () => {
     console.log('Перенаправление на /requests...')
     // Перенаправляем на страницу заявок
     await router.push('/requests')
-  } catch (e: any) {
+  } catch (e) {
     console.error('Ошибка при авторизации:', e)
-    error.value = e.response?.data?.detail || 'Неверная фамилия или пароль'
+    const axiosError = e as AxiosError<{ detail: string }>
+    error.value = axiosError.response?.data?.detail || 'Неверная фамилия или пароль'
   } finally {
     loading.value = false
   }
