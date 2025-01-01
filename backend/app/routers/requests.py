@@ -1,24 +1,35 @@
-"""Request routes"""
+"""Requests router"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-
 from ..database import get_db
-from ..crud import requests as requests_crud
-from ..schemas.request import RequestCreate, Request, RequestWithEmployee
-from ..models.request import RequestStatus
+from ..models.request import Request, RequestStatus, RequestPriority
+from ..schemas.request import RequestCreate, RequestResponse
 
 router = APIRouter()
 
-@router.post("/requests/", response_model=Request)
+@router.get("/", response_model=List[RequestResponse])
+def get_requests(db: Session = Depends(get_db)):
+    """Get all requests"""
+    requests = db.query(Request).all()
+    return requests
+
+@router.post("/", response_model=RequestResponse)
 def create_request(request: RequestCreate, db: Session = Depends(get_db)):
     """Create new request"""
-    return requests_crud.create_request(db=db, request=request)
-
-@router.get("/requests/{request_id}", response_model=RequestWithEmployee)
-def get_request(request_id: int, db: Session = Depends(get_db)):
-    """Get request by ID"""
-    request = requests_crud.get_request_details(db, request_id)
-    if request is None:
-        raise HTTPException(status_code=404, detail="Request not found")
-    return request
+    # Создаем новую заявку
+    db_request = Request(
+        employee_id=request.employee_id,
+        department=request.department,
+        request_type=request.request_type,
+        priority=request.priority,
+        description=request.description,
+        status=RequestStatus.NEW
+    )
+    
+    # Сохраняем в базу данных
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    
+    return db_request

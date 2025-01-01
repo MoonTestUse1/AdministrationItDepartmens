@@ -1,41 +1,23 @@
 """Request schemas"""
 from pydantic import BaseModel
 from datetime import datetime
-from enum import Enum
-
-class RequestStatus(str, Enum):
-    NEW = "new"
-    IN_PROGRESS = "in_progress"
-    RESOLVED = "resolved"
-    CLOSED = "closed"
-
-class RequestPriority(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+from typing import Optional
+from ..models.request import RequestStatus, RequestPriority
 
 class RequestBase(BaseModel):
+    employee_id: int
     department: str
     request_type: str
     priority: RequestPriority
     description: str
 
 class RequestCreate(RequestBase):
-    employee_id: int
+    pass
 
-class Request(RequestBase):
+class RequestResponse(RequestBase):
     id: int
     status: RequestStatus
     created_at: datetime
-    employee_id: int
-
-    class Config:
-        from_attributes = True
-
-class RequestWithEmployee(Request):
-    employee_last_name: str
-    employee_first_name: str
 
     class Config:
         from_attributes = True 
