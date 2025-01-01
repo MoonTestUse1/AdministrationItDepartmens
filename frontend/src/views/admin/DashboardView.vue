@@ -2,18 +2,11 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Панель администратора</h1>
-      <button 
-        @click="router.push('/admin/employees/add')"
-        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
-      >
-        <PlusCircle class="w-5 h-5" />
-        Добавить работника
-      </button>
     </div>
 
     <!-- Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div v-for="stat in statistics" :key="stat.period" class="bg-white p-4 rounded-lg shadow">
+      <div v-for="stat in statisticsCards" :key="stat.period" class="bg-white p-4 rounded-lg shadow">
         <h3 class="text-lg font-semibold">{{ stat.label }}</h3>
         <p class="text-2xl font-bold">{{ stat.value }}</p>
       </div>
@@ -39,8 +32,8 @@
             <tr v-for="request in requests" :key="request.id">
               <td class="px-6 py-4 whitespace-nowrap">{{ request.id }}</td>
               <td class="px-6 py-4 whitespace-nowrap">{{ request.employee_last_name }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ request.request_type }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ request.status }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ getRequestTypeLabel(request.request_type) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ getStatusLabel(request.status) }}</td>
               <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(request.created_at) }}</td>
             </tr>
           </tbody>
@@ -52,54 +45,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { PlusCircle } from 'lucide-vue-next';
+import { useRequests } from '@/composables/useRequests';
+import { useStatistics } from '@/composables/useStatistics';
+import { getRequestTypeLabel, getStatusLabel } from '@/utils/labels';
 
-interface Statistic {
-  period: string;
-  label: string;
-  value: number | string;
-}
-
-interface Request {
-  id: number;
-  employee_last_name: string;
-  request_type: string;
-  status: string;
-  created_at: string;
-}
-
-const router = useRouter();
-const statistics = ref<Statistic[]>([]);
-const requests = ref<Request[]>([]);
+const { requests, fetchRequests } = useRequests();
+const { statistics, statisticsCards, fetchStatistics } = useStatistics();
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('ru-RU');
-};
-
-const fetchStatistics = async () => {
-  try {
-    const response = await fetch('/api/admin/statistics?period=week');
-    if (!response.ok) throw new Error('Failed to fetch statistics');
-    const data = await response.json();
-    statistics.value = [
-      { period: 'total', label: 'Всего заявок', value: data.totalRequests },
-      { period: 'resolved', label: 'Решено', value: data.resolvedRequests },
-      { period: 'avgTime', label: 'Среднее время', value: data.averageResolutionTime }
-    ];
-  } catch (error) {
-    console.error('Error fetching statistics:', error);
-  }
-};
-
-const fetchRequests = async () => {
-  try {
-    const response = await fetch('/api/admin/requests');
-    if (!response.ok) throw new Error('Failed to fetch requests');
-    requests.value = await response.json();
-  } catch (error) {
-    console.error('Error fetching requests:', error);
-  }
 };
 
 onMounted(() => {

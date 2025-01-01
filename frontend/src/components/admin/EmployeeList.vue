@@ -67,7 +67,7 @@ onMounted(fetchEmployees);
 <template>
   <div class="space-y-4">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-lg font-semibold">Сотрудники</h2>
+      <h2 class="text-lg font-semibold">Сотрудники88</h2>
       <button
         @click="showAddForm = true"
         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
