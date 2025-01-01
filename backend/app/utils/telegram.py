@@ -12,7 +12,7 @@ from .constants import (
 logger = getLogger(__name__)
 
 # Initialize bot with token
-bot = Bot(token="7677506032:AAHEqNUr1lIUfNVbLwaWIaPeKKShsCyz3eo")
+bot = Bot(token="7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
 
 # Chat ID for notifications 
 CHAT_ID = "5057752127"
