@@ -74,7 +74,7 @@
         <!-- Статистика -->
         <div v-if="activeSection === 'statistics'" class="space-y-6">
           <h2 class="text-2xl font-medium text-gray-900">Статистика</h2>
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div class="text-sm font-medium text-gray-500 mb-1">Новые заявки</div>
               <div class="text-2xl font-medium text-gray-900">{{ statistics.new || 0 }}</div>
@@ -84,8 +84,12 @@
               <div class="text-2xl font-medium text-gray-900">{{ statistics.inProgress || 0 }}</div>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div class="text-sm font-medium text-gray-500 mb-1">Решенные</div>
-              <div class="text-2xl font-medium text-gray-900">{{ statistics.resolved || 0 }}</div>
+              <div class="text-sm font-medium text-gray-500 mb-1">Завершенные</div>
+              <div class="text-2xl font-medium text-gray-900">{{ statistics.completed || 0 }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div class="text-sm font-medium text-gray-500 mb-1">Отклоненные</div>
+              <div class="text-2xl font-medium text-gray-900">{{ statistics.rejected || 0 }}</div>
             </div>
           </div>
         </div>
@@ -130,7 +134,7 @@
                         Подробнее
                       </button>
                       <button
-                        v-if="request.status !== 'resolved'"
+                        v-if="request.status !== 'completed'"
                         @click="updateRequestStatus(request)"
                         class="text-blue-600 hover:text-blue-700"
                       >
@@ -246,7 +250,7 @@
             Закрыть
           </button>
           <button
-            v-if="selectedRequest?.status !== 'resolved'"
+            v-if="selectedRequest?.status !== 'completed'"
             @click="updateRequestStatus(selectedRequest)"
             class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
           >
@@ -347,7 +351,8 @@ import axios from 'axios'
 interface Statistics {
   new: number
   inProgress: number
-  resolved: number
+  completed: number
+  rejected: number
 }
 
 interface Employee {
@@ -366,7 +371,7 @@ interface Request {
   request_type: string
   priority: 'low' | 'medium' | 'high' | 'critical'
   description: string
-  status: 'new' | 'in_progress' | 'resolved'
+  status: 'new' | 'in_progress' | 'completed' | 'rejected'
   created_at: string
 }
 
@@ -381,7 +386,7 @@ interface EmployeeForm {
 
 const router = useRouter()
 const activeSection = ref('statistics')
-const statistics = ref<Statistics>({ new: 0, inProgress: 0, resolved: 0 })
+const statistics = ref<Statistics>({ new: 0, inProgress: 0, completed: 0, rejected: 0 })
 const requests = ref<Request[]>([])
 const employees = ref<Employee[]>([])
 const showRequestModal = ref(false)
@@ -407,7 +412,8 @@ const priorityClasses = {
 const statusClasses = {
   new: 'px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800',
   in_progress: 'px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800',
-  resolved: 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800'
+  completed: 'px-2 py-1 text-xs rounded-full bg-green-100 text-green-800',
+  rejected: 'px-2 py-1 text-xs rounded-full bg-red-100 text-red-800'
 } as const
 
 const getPriorityClass = (priority: Request['priority'] | undefined) => {
@@ -521,7 +527,9 @@ const updateRequestStatus = async (request: Request | null) => {
     if (request.status === 'new') {
       newStatus = 'in_progress'
     } else if (request.status === 'in_progress') {
-      newStatus = 'resolved'
+      newStatus = 'completed'
+    } else if (request.status === 'completed') {
+      newStatus = 'rejected'
     }
 
     await axios.put(`/api/requests/${request.id}`, { status: newStatus }, { headers })

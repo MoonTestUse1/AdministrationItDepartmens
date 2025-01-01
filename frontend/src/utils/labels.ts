@@ -13,8 +13,8 @@ export const getStatusLabel = (status: string): string => {
   const statuses: Record<string, string> = {
     new: 'Новая',
     in_progress: 'В работе',
-    resolved: 'Решена',
-    closed: 'Закрыта'
+    completed: 'Завершена',
+    rejected: 'Отклонена'
   };
   return statuses[status] || status;
 };

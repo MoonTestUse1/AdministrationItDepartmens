@@ -62,7 +62,12 @@ const employees = ref<Employee[]>([]);
 
 const fetchEmployees = async () => {
   try {
-    const response = await fetch('/api/employees/');
+    const token = localStorage.getItem('admin_token');
+    const response = await fetch('/api/employees/', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     if (!response.ok) throw new Error('Failed to fetch employees');
     employees.value = await response.json();
   } catch (error) {

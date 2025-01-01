@@ -113,10 +113,12 @@ const form = ref({
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
+    const token = localStorage.getItem('admin_token');
     const response = await fetch('/api/employees/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(form.value)
     });
