@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
@@ -44,13 +45,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useRequests } from '@/composables/useRequests';
 import { useStatistics } from '@/composables/useStatistics';
 import { getRequestTypeLabel, getStatusLabel } from '@/utils/labels';
 
 const { requests, fetchRequests } = useRequests();
-const { statistics, statisticsCards, fetchStatistics } = useStatistics();
+const { statisticsCards, fetchStatistics } = useStatistics();
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleString('ru-RU');
@@ -61,3 +62,4 @@ onMounted(() => {
   fetchRequests();
 });
 </script>
+```
