@@ -5,7 +5,6 @@ Create Date: 2024-03-14 12:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from app.models.request import RequestStatus, RequestPriority
 
 # revision identifiers, used by Alembic.
 revision = 'initial_migration'
@@ -14,10 +13,6 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Create enum types
-    request_status = sa.Enum(RequestStatus, name='requeststatus')
-    request_priority = sa.Enum(RequestPriority, name='requestpriority')
-
     # Create employees table
     op.create_table(
         'employees',
@@ -39,8 +34,8 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('title', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=False),
-        sa.Column('status', request_status, nullable=False, server_default=RequestStatus.NEW.name),
-        sa.Column('priority', request_priority, nullable=False),
+        sa.Column('status', sa.String(), nullable=False, server_default='new'),
+        sa.Column('priority', sa.String(), nullable=False),
         sa.Column('employee_id', sa.Integer(), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
         sa.Column('updated_at', sa.DateTime(timezone=True), onupdate=sa.text('now()')),
@@ -52,7 +47,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table('requests')
     op.drop_table('employees')
-    
-    # Drop enum types
-    sa.Enum(RequestStatus, name='requeststatus').drop(op.get_bind(), checkfirst=True)
-    sa.Enum(RequestPriority, name='requestpriority').drop(op.get_bind(), checkfirst=True)
