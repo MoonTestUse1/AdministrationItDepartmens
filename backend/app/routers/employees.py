@@ -1,4 +1,3 @@
-
 """Employee management routes"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -6,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from ..database import get_db
 from ..crud import employees as employees_crud
 from ..models.employee import EmployeeCreate
+from ..schemas import tables
 from ..utils.loggers import auth_logger
 
 router = APIRouter()
@@ -14,7 +14,7 @@ router = APIRouter()
 async def get_employees(db: Session = Depends(get_db)):
     """Get all employees"""
     try:
-        employees_list = db.query(employees_crud.Employee).all()
+        employees_list = db.query(tables.Employee).all()
         return [
             {
                 "id": emp.id,
