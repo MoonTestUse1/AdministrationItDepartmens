@@ -1,7 +1,7 @@
 """Database initialization"""
 from .database import Base, engine
 from .models.employee import Employee
-from .models.request import Request
+from .models.request import Request, RequestStatus, RequestPriority
 
 def init_db():
     """Initialize database"""
