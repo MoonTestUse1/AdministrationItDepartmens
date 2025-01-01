@@ -16,9 +16,4 @@ class Employee(Base):
     password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    requests = relationship(
-        "app.models.request.Request",
-        back_populates="employee",
-        lazy="dynamic",
-        primaryjoin="Employee.id == app.models.request.Request.employee_id"
-    )
+    requests = relationship("Request", back_populates="employee")

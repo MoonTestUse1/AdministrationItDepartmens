@@ -6,16 +6,16 @@ from ..database import Base
 import enum
 
 class RequestStatus(str, enum.Enum):
-    new = "new"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    closed = "closed"
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
 
 class RequestPriority(str, enum.Enum):
-    low = "low"
-    medium = "medium"
-    high = "high"
-    critical = "critical"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
 
 class Request(Base):
     __tablename__ = "requests"
@@ -27,11 +27,7 @@ class Request(Base):
     request_type = Column(String, nullable=False)
     priority = Column(Enum(RequestPriority), nullable=False)
     description = Column(String, nullable=False)
-    status = Column(Enum(RequestStatus), default=RequestStatus.new)
+    status = Column(Enum(RequestStatus), nullable=False, default=RequestStatus.NEW)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    employee = relationship(
-        "app.models.employee.Employee",
-        back_populates="requests",
-        primaryjoin="Request.employee_id == app.models.employee.Employee.id"
-    )
+    employee = relationship("Employee", back_populates="requests")
