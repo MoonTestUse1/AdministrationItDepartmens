@@ -55,6 +55,12 @@ const router = createRouter({
       path: '/admin/login',
       name: 'AdminLogin',
       component: () => import('@/views/admin/AdminLoginView.vue')
+    },
+    {
+      path: '/requests',
+      name: 'requests',
+      component: () => import('@/views/RequestsView.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 });
@@ -64,6 +70,12 @@ router.beforeEach((to, _, next) => {
 
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next({ name: 'AdminLogin' });
+  } else if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      next('/login');
+      return;
+    }
   } else {
     next();
   }
