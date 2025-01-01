@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..crud import auth as auth_crud
-from ..schemas.auth import AdminLogin
+from ..schemas.auth import AdminLogin, EmployeeLogin
+from ..models.employee import Employee
+from passlib.context import CryptContext
 
 router = APIRouter()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/admin")
 def admin_login(login_data: AdminLogin, db: Session = Depends(get_db)):
@@ -13,3 +16,25 @@ def admin_login(login_data: AdminLogin, db: Session = Depends(get_db)):
     if login_data.username == "admin" and login_data.password == "admin123":
         return {"access_token": "admin_token"}
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+@router.post("/employee")
+def employee_login(login_data: EmployeeLogin, db: Session = Depends(get_db)):
+    """Employee login endpoint"""
+    # Ищем сотрудника по фамилии
+    employee = db.query(Employee).filter(Employee.last_name == login_data.last_name).first()
+    
+    if not employee:
+        raise HTTPException(status_code=401, detail="Сотрудник не найден")
+    
+    # Проверяем пароль
+    if not pwd_context.verify(login_data.password, employee.password):
+        raise HTTPException(status_code=401, detail="Неверный пароль")
+    
+    # Возвращаем данные сотрудника
+    return {
+        "id": employee.id,
+        "first_name": employee.first_name,
+        "last_name": employee.last_name,
+        "department": employee.department,
+        "office": employee.office
+    }
