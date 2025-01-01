@@ -1,25 +1,33 @@
 <template>
   <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold mb-6">Добавить работника</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Добавить сотрудника</h1>
+      <button
+        @click="router.back()"
+        class="text-gray-600 hover:text-gray-800"
+      >
+        <XIcon class="w-6 h-6" />
+      </button>
+    </div>
     
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700">Имя</label>
         <input
-          v-model="form.firstName"
+          v-model="form.first_name"
           type="text"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700">Фамилия</label>
         <input
-          v-model="form.lastName"
+          v-model="form.last_name"
           type="text"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -28,8 +36,9 @@
         <select
           v-model="form.department"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         >
+          <option value="">Выберите отдел</option>
           <option v-for="dept in departments" :key="dept.value" :value="dept.value">
             {{ dept.label }}
           </option>
@@ -42,7 +51,7 @@
           v-model="form.office"
           type="text"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -52,7 +61,7 @@
           v-model="form.password"
           type="password"
           required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
@@ -66,9 +75,11 @@
         </button>
         <button
           type="submit"
-          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
           :disabled="isSubmitting"
         >
+          <LoaderIcon v-if="isSubmitting" class="animate-spin w-5 h-5" />
+          <SaveIcon v-else class="w-5 h-5" />
           {{ isSubmitting ? 'Сохранение...' : 'Сохранить' }}
         </button>
       </div>
@@ -79,14 +90,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { departments } from '@/utils/constants';
+import { XIcon, SaveIcon, LoaderIcon } from 'lucide-vue-next';
 
 const router = useRouter();
 const isSubmitting = ref(false);
 
+const departments = [
+  { value: 'it', label: 'IT отдел' },
+  { value: 'hr', label: 'HR отдел' },
+  { value: 'finance', label: 'Финансовый отдел' },
+  { value: 'sales', label: 'Отдел продаж' }
+];
+
 const form = ref({
-  firstName: '',
-  lastName: '',
+  first_name: '',
+  last_name: '',
   department: '',
   office: '',
   password: ''
@@ -95,7 +113,7 @@ const form = ref({
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
-    const response = await fetch('/api/employees', {
+    const response = await fetch('/api/employees/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -107,7 +125,7 @@ const handleSubmit = async () => {
       throw new Error('Ошибка при создании сотрудника');
     }
 
-    router.push('/admin/dashboard');
+    router.push('/admin/employees');
   } catch (error) {
     console.error('Error creating employee:', error);
     alert('Произошла ошибка при создании сотрудника');
