@@ -1,64 +1,95 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Панель администратора</h1>
-      <button
-        @click="handleLogout"
-        class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+      <button 
+        @click="router.push('/admin/employees/add')"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
       >
-        Выйти
+        <PlusCircle class="w-5 h-5" />
+        Добавить работника
       </button>
     </div>
 
-    <div class="bg-white rounded-lg shadow-lg p-6">
-      <div class="border-b border-gray-200">
-        <nav class="-mb-px flex space-x-8">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="currentTab = tab.id"
-            :class="[
-              currentTab === tab.id
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-            ]"
-          >
-            {{ tab.name }}
-          </button>
-        </nav>
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div v-for="stat in statistics" :key="stat.period" class="bg-white p-4 rounded-lg shadow">
+        <h3 class="text-lg font-semibold">{{ stat.label }}</h3>
+        <p class="text-2xl font-bold">{{ stat.value }}</p>
       </div>
+    </div>
 
-      <div class="mt-6">
-        <StatisticsPanel v-if="currentTab === 'statistics'" />
-        <RequestList v-if="currentTab === 'requests'" />
-        <EmployeeList v-if="currentTab === 'employees'" />
+    <!-- Requests -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-4">
+        <h2 class="text-xl font-semibold">Последние заявки</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сотрудник</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="request in requests" :key="request.id">
+              <td class="px-6 py-4 whitespace-nowrap">{{ request.id }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ request.employee_last_name }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ request.request_type }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ request.status }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(request.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import RequestList from '@/components/admin/RequestList.vue';
-import EmployeeList from '@/components/admin/EmployeeList.vue';
-import StatisticsPanel from '@/components/admin/StatisticsPanel.vue';
+import { PlusCircle } from 'lucide-vue-next';
 
 const router = useRouter();
-const authStore = useAuthStore();
+const statistics = ref([]);
+const requests = ref([]);
 
-const tabs = [
-  { id: 'statistics', name: 'Статистика' },
-  { id: 'requests', name: 'Заявки' },
-  { id: 'employees', name: 'Сотрудники' }
-];
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleString('ru-RU');
+};
 
-const currentTab = ref('statistics');
+const fetchStatistics = async () => {
+  try {
+    const response = await fetch('/api/admin/statistics?period=week');
+    if (!response.ok) throw new Error('Failed to fetch statistics');
+    const data = await response.json();
+    statistics.value = [
+      { period: 'total', label: 'Всего заявок', value: data.totalRequests },
+      { period: 'resolved', label: 'Решено', value: data.resolvedRequests },
+      { period: 'avgTime', label: 'Среднее время', value: data.averageResolutionTime }
+    ];
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+  }
+};
 
-function handleLogout() {
-  authStore.logout();
-  router.push('/admin');
-}
+const fetchRequests = async () => {
+  try {
+    const response = await fetch('/api/admin/requests');
+    if (!response.ok) throw new Error('Failed to fetch requests');
+    requests.value = await response.json();
+  } catch (error) {
+    console.error('Error fetching requests:', error);
+  }
+};
+
+onMounted(() => {
+  fetchStatistics();
+  fetchRequests();
+});
 </script>
