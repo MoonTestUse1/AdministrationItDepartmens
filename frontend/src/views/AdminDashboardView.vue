@@ -1,139 +1,181 @@
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <!-- Верхняя панель -->
-    <header class="bg-navy-900 border-b border-navy-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <h1 class="text-xl font-medium text-white">Панель администратора</h1>
-          <button 
-            @click="handleLogout"
-            class="text-gray-300 hover:text-white font-medium transition-colors"
-          >
-            Выйти
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Статистика -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-        <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
-          <div class="text-sm font-medium text-gray-400 mb-1">Новые заявки</div>
-          <div class="text-2xl font-medium text-white">{{ statistics.new || 0 }}</div>
-        </div>
-        <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
-          <div class="text-sm font-medium text-gray-400 mb-1">В работе</div>
-          <div class="text-2xl font-medium text-white">{{ statistics.inProgress || 0 }}</div>
-        </div>
-        <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
-          <div class="text-sm font-medium text-gray-400 mb-1">Решенные</div>
-          <div class="text-2xl font-medium text-white">{{ statistics.resolved || 0 }}</div>
-        </div>
-      </div>
-
-      <!-- Заявки -->
-      <div class="mb-8">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-medium text-white">Заявки</h2>
-        </div>
-        <div class="bg-navy-800 rounded-lg overflow-hidden border border-navy-700">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-navy-700">
-              <thead>
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">ID</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Сотрудник</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Отдел</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Тип</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Приоритет</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Статус</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Действия</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-navy-700">
-                <tr v-for="request in requests" :key="request.id" class="hover:bg-navy-700">
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ request.id }}</td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-300">{{ request.employee?.last_name }}</div>
-                    <div class="text-sm text-gray-400">{{ request.employee?.first_name }}</div>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ request.department }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ request.request_type }}</td>
-                  <td class="px-6 py-4">
-                    <span :class="getPriorityClass(request.priority)">{{ request.priority }}</span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span :class="getStatusClass(request.status)">{{ request.status }}</span>
-                  </td>
-                  <td class="px-6 py-4 text-sm">
-                    <button
-                      @click="openRequestDetails(request)"
-                      class="text-blue-400 hover:text-blue-300 mr-3"
-                    >
-                      Подробнее
-                    </button>
-                    <button
-                      v-if="request.status !== 'resolved'"
-                      @click="updateRequestStatus(request)"
-                      class="text-blue-400 hover:text-blue-300"
-                    >
-                      {{ request.status === 'new' ? 'Взять в работу' : 'Завершить' }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+  <div class="min-h-screen bg-gray-900 flex">
+    <!-- Основной контент -->
+    <div class="flex-1">
+      <!-- Верхняя панель -->
+      <header class="bg-navy-900 border-b border-navy-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <h1 class="text-xl font-medium text-white">Панель администратора</h1>
+            <button 
+              @click="handleLogout"
+              class="text-gray-300 hover:text-white font-medium transition-colors"
+            >
+              Выйти
+            </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <!-- Сотрудники -->
-      <div>
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-medium text-white">Сотрудники</h2>
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Статистика -->
+        <div v-if="activeSection === 'statistics'" class="space-y-8">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
+              <div class="text-sm font-medium text-gray-400 mb-1">Новые заявки</div>
+              <div class="text-2xl font-medium text-white">{{ statistics.new || 0 }}</div>
+            </div>
+            <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
+              <div class="text-sm font-medium text-gray-400 mb-1">В работе</div>
+              <div class="text-2xl font-medium text-white">{{ statistics.inProgress || 0 }}</div>
+            </div>
+            <div class="bg-navy-800 p-6 rounded-lg border border-navy-700">
+              <div class="text-sm font-medium text-gray-400 mb-1">Решенные</div>
+              <div class="text-2xl font-medium text-white">{{ statistics.resolved || 0 }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Заявки -->
+        <div v-if="activeSection === 'requests'" class="space-y-8">
+          <div class="bg-navy-800 rounded-lg overflow-hidden border border-navy-700">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-navy-700">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Сотрудник</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Отдел</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Тип</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Приоритет</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Статус</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Действия</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-navy-700">
+                  <tr v-for="request in requests" :key="request.id" class="hover:bg-navy-700">
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ request.id }}</td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm text-gray-300">{{ request.employee?.last_name }}</div>
+                      <div class="text-sm text-gray-400">{{ request.employee?.first_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ request.department }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ request.request_type }}</td>
+                    <td class="px-6 py-4">
+                      <span :class="getPriorityClass(request.priority)">{{ request.priority }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span :class="getStatusClass(request.status)">{{ request.status }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                      <button
+                        @click="openRequestDetails(request)"
+                        class="text-blue-400 hover:text-blue-300 mr-3"
+                      >
+                        Подробнее
+                      </button>
+                      <button
+                        v-if="request.status !== 'resolved'"
+                        @click="updateRequestStatus(request)"
+                        class="text-blue-400 hover:text-blue-300"
+                      >
+                        {{ request.status === 'new' ? 'Взять в работу' : 'Завершить' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сотрудники -->
+        <div v-if="activeSection === 'employees'" class="space-y-8">
+          <div class="flex justify-end mb-4">
+            <button
+              @click="openAddEmployeeModal"
+              class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              + Добавить сотрудника
+            </button>
+          </div>
+          <div class="bg-navy-800 rounded-lg overflow-hidden border border-navy-700">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-navy-700">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Имя</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Фамилия</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Отдел</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Кабинет</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Действия</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-navy-700">
+                  <tr v-for="employee in employees" :key="employee.id" class="hover:bg-navy-700">
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ employee.id }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ employee.first_name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ employee.last_name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ employee.department }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-300">{{ employee.office }}</td>
+                    <td class="px-6 py-4 text-sm">
+                      <button
+                        @click="openEditEmployeeModal(employee)"
+                        class="text-blue-400 hover:text-blue-300"
+                      >
+                        Редактировать
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Боковое меню -->
+    <div class="w-64 bg-navy-900 border-l border-navy-700">
+      <div class="p-4">
+        <nav class="space-y-2">
           <button
-            @click="openAddEmployeeModal"
-            class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
+            @click="activeSection = 'statistics'"
+            :class="[
+              'w-full px-4 py-2 text-left rounded-lg text-sm font-medium transition-colors',
+              activeSection === 'statistics'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-300 hover:bg-navy-800'
+            ]"
           >
-            + Добавить сотрудника
+            Статистика
           </button>
-        </div>
-        <div class="bg-navy-800 rounded-lg overflow-hidden border border-navy-700">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-navy-700">
-              <thead>
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">ID</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Имя</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Фамилия</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Отдел</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Кабинет</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider bg-navy-900">Действия</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-navy-700">
-                <tr v-for="employee in employees" :key="employee.id" class="hover:bg-navy-700">
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ employee.id }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ employee.first_name }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ employee.last_name }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ employee.department }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-300">{{ employee.office }}</td>
-                  <td class="px-6 py-4 text-sm">
-                    <button
-                      @click="openEditEmployeeModal(employee)"
-                      class="text-blue-400 hover:text-blue-300"
-                    >
-                      Редактировать
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <button
+            @click="activeSection = 'requests'"
+            :class="[
+              'w-full px-4 py-2 text-left rounded-lg text-sm font-medium transition-colors',
+              activeSection === 'requests'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-300 hover:bg-navy-800'
+            ]"
+          >
+            Заявки
+          </button>
+          <button
+            @click="activeSection = 'employees'"
+            :class="[
+              'w-full px-4 py-2 text-left rounded-lg text-sm font-medium transition-colors',
+              activeSection === 'employees'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-300 hover:bg-navy-800'
+            ]"
+          >
+            Сотрудники
+          </button>
+        </nav>
       </div>
-    </main>
+    </div>
 
     <!-- Модальное окно для заявки -->
     <div v-if="showRequestModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4">
@@ -321,6 +363,7 @@ interface EmployeeForm {
 }
 
 const router = useRouter()
+const activeSection = ref('statistics')
 const statistics = ref<Statistics>({ new: 0, inProgress: 0, resolved: 0 })
 const requests = ref<Request[]>([])
 const employees = ref<Employee[]>([])
