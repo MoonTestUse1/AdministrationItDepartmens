@@ -20,6 +20,8 @@ services:
     container_name: support-backend
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres/support_db
+    ports:
+      - "8000:8000"
     depends_on:
       - postgres
     networks:
