@@ -1,15 +1,14 @@
-
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Панель администратора</h1>
-      <RouterLink 
+      <router-link 
         to="/admin/employees/add"
         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-flex items-center gap-2"
       >
         <PlusCircle class="w-5 h-5" />
         Добавить сотрудника
-      </RouterLink>
+      </router-link>
     </div>
 
     <!-- Statistics -->
@@ -53,7 +52,6 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
 import { PlusCircle } from 'lucide-vue-next';
 import { useRequests } from '@/composables/useRequests';
 import { useStatistics } from '@/composables/useStatistics';
