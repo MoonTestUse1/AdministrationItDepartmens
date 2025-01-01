@@ -1,35 +1,46 @@
 <template>
-  <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-2xl p-8">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">
           Вход для сотрудников
         </h2>
+        <p class="mt-2 text-gray-600">
+          Введите свои учетные данные
+        </p>
       </div>
-      <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
-        <div class="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label for="last-name" class="sr-only">Фамилия</label>
+
+      <form @submit.prevent="handleLogin" class="space-y-6">
+        <div>
+          <label for="last-name" class="block text-sm font-medium text-gray-700">
+            Фамилия
+          </label>
+          <div class="mt-1">
             <input
               id="last-name"
               v-model="lastName"
               name="last-name"
               type="text"
               required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Фамилия"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Введите фамилию"
             />
           </div>
-          <div>
-            <label for="password" class="sr-only">Пароль</label>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">
+            Пароль
+          </label>
+          <div class="mt-1">
             <input
               id="password"
               v-model="password"
               name="password"
               type="password"
               required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Пароль"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Введите пароль"
             />
           </div>
         </div>
@@ -37,16 +48,32 @@
         <div>
           <button
             type="submit"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            :class="{ 'opacity-75 cursor-not-allowed': loading }"
             :disabled="loading"
           >
-            <span v-if="loading">Загрузка...</span>
+            <span v-if="loading">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Вход...
+            </span>
             <span v-else>Войти</span>
           </button>
         </div>
 
-        <div v-if="error" class="text-red-600 text-center">
+        <div v-if="error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
           {{ error }}
+        </div>
+
+        <div class="text-center">
+          <router-link 
+            to="/" 
+            class="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            Вернуться на главную
+          </router-link>
         </div>
       </form>
     </div>
@@ -56,13 +83,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios, { AxiosError } from 'axios'
-
-interface LoginResponse {
-  access_token: string
-  token_type: string
-  [key: string]: any
-}
+import axios from 'axios'
 
 const router = useRouter()
 const lastName = ref('')
@@ -76,7 +97,7 @@ const handleLogin = async () => {
 
   try {
     console.log('Отправка запроса на авторизацию...')
-    const response = await axios.post<LoginResponse>('/api/auth/login', {
+    const response = await axios.post('/api/auth/login', {
       last_name: lastName.value,
       password: password.value
     })
@@ -89,10 +110,9 @@ const handleLogin = async () => {
     console.log('Перенаправление на /requests...')
     // Перенаправляем на страницу заявок
     await router.push('/requests')
-  } catch (e) {
+  } catch (e: any) {
     console.error('Ошибка при авторизации:', e)
-    const axiosError = e as AxiosError<{ detail: string }>
-    error.value = axiosError.response?.data?.detail || 'Неверная фамилия или пароль'
+    error.value = e.response?.data?.detail || 'Неверная фамилия или пароль'
   } finally {
     loading.value = false
   }

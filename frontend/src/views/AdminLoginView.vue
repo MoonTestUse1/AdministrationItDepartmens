@@ -1,35 +1,46 @@
 <template>
-  <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-      <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Вход для администратора
+  <div class="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-500 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-2xl p-8">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">
+          Панель администратора
         </h2>
+        <p class="mt-2 text-gray-600">
+          Вход в систему управления
+        </p>
       </div>
-      <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
-        <div class="rounded-md shadow-sm -space-y-px">
-          <div>
-            <label for="username" class="sr-only">Имя пользователя</label>
+
+      <form @submit.prevent="handleLogin" class="space-y-6">
+        <div>
+          <label for="username" class="block text-sm font-medium text-gray-700">
+            Имя пользователя
+          </label>
+          <div class="mt-1">
             <input
               id="username"
               v-model="username"
               name="username"
               type="text"
               required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Имя пользователя"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              placeholder="Введите имя пользователя"
             />
           </div>
-          <div>
-            <label for="password" class="sr-only">Пароль</label>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">
+            Пароль
+          </label>
+          <div class="mt-1">
             <input
               id="password"
               v-model="password"
               name="password"
               type="password"
               required
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Пароль"
+              class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              placeholder="Введите пароль"
             />
           </div>
         </div>
@@ -37,16 +48,32 @@
         <div>
           <button
             type="submit"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200"
+            :class="{ 'opacity-75 cursor-not-allowed': loading }"
             :disabled="loading"
           >
-            <span v-if="loading">Загрузка...</span>
-            <span v-else>Войти</span>
+            <span v-if="loading">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Вход...
+            </span>
+            <span v-else>Войти в панель управления</span>
           </button>
         </div>
 
-        <div v-if="error" class="text-red-600 text-center">
+        <div v-if="error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">
           {{ error }}
+        </div>
+
+        <div class="text-center">
+          <router-link 
+            to="/" 
+            class="text-sm text-purple-600 hover:text-purple-500"
+          >
+            Вернуться на главную
+          </router-link>
         </div>
       </form>
     </div>
