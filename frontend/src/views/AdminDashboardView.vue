@@ -465,17 +465,8 @@ const openRequestDetails = (request: Request) => {
 }
 
 const openAddEmployeeModal = () => {
-  isEditingEmployee.value = false
-  employeeForm.value = {
-    id: null,
-    first_name: '',
-    last_name: '',
-    department: '',
-    office: '',
-    password: ''
-  }
-  showEmployeeModal.value = true
-}
+  router.push('/admin/employees/add');
+};
 
 const openEditEmployeeModal = (employee: Employee) => {
   isEditingEmployee.value = true

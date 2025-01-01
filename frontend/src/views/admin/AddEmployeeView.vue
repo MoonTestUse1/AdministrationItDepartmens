@@ -114,6 +114,13 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
     const token = localStorage.getItem('admin_token');
+    
+    if (!token) {
+      throw new Error('Не найден токен авторизации');
+    }
+
+    console.log('Отправляем данные:', form.value);
+    
     const response = await fetch('/api/employees/', {
       method: 'POST',
       headers: {
@@ -123,14 +130,21 @@ const handleSubmit = async () => {
       body: JSON.stringify(form.value)
     });
 
+    console.log('Статус ответа:', response.status);
+    
     if (!response.ok) {
-      throw new Error('Ошибка при создании сотрудника');
+      const errorData = await response.json();
+      console.error('Ошибка от сервера:', errorData);
+      throw new Error(errorData.detail || 'Ошибка при создании сотрудника');
     }
 
-    router.push('/admin/employees');
+    const data = await response.json();
+    console.log('Успешный ответ:', data);
+
+    router.push('/admin/dashboard');
   } catch (error) {
     console.error('Error creating employee:', error);
-    alert('Произошла ошибка при создании сотрудника');
+    alert(error instanceof Error ? error.message : 'Произошла ошибка при создании сотрудника');
   } finally {
     isSubmitting.value = false;
   }
