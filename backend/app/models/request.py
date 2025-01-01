@@ -1,5 +1,5 @@
 """Request model"""
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from enum import Enum as PyEnum
@@ -9,7 +9,7 @@ class RequestStatus(str, PyEnum):
     NEW = "new"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
-    CANCELLED = "cancelled"
+    REJECTED = "rejected"
 
 class RequestPriority(str, PyEnum):
     LOW = "low"
@@ -18,7 +18,6 @@ class RequestPriority(str, PyEnum):
 
 class Request(Base):
     __tablename__ = "requests"
-    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
