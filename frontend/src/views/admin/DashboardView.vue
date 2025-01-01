@@ -1,18 +1,18 @@
 <template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold">Панель администратораddd</h1>
+      <h1 class="text-2xl font-bold">Панель администратора</h1>
       <router-link 
         to="/admin/employees/add"
         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-flex items-center gap-2"
       >
         <PlusCircle class="w-5 h-5" />
-        Добавить сотрудникаdddd
+        Добавить сотрудника
       </router-link>
     </div>
 
     <!-- Statistics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div v-if="statisticsCards.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div v-for="stat in statisticsCards" :key="stat.period" class="bg-white p-4 rounded-lg shadow">
         <h3 class="text-lg font-semibold">{{ stat.label }}</h3>
         <p class="text-2xl font-bold">{{ stat.value }}</p>
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Requests -->
-    <div class="bg-white rounded-lg shadow">
+    <div v-if="requests.length" class="bg-white rounded-lg shadow">
       <div class="p-4">
         <h2 class="text-xl font-semibold">Последние заявки</h2>
       </div>
@@ -64,8 +64,10 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleString('ru-RU');
 };
 
-onMounted(() => {
-  fetchStatistics();
-  fetchRequests();
+onMounted(async () => {
+  await Promise.all([
+    fetchStatistics(),
+    fetchRequests()
+  ]);
 });
 </script>
