@@ -1,37 +1,33 @@
 """Request model"""
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from enum import Enum as PyEnum
 from ..database import Base
-import enum
 
-class RequestStatus(str, enum.Enum):
+class RequestStatus(str, PyEnum):
     NEW = "new"
     IN_PROGRESS = "in_progress"
-    RESOLVED = "resolved"
-    CLOSED = "closed"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
-class RequestPriority(str, enum.Enum):
+class RequestPriority(str, PyEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
-    CRITICAL = "critical"
 
 class Request(Base):
     __tablename__ = "requests"
     __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"))
-    department = Column(String, nullable=False)
-    request_type = Column(String, nullable=False)
-    priority = Column(Enum(RequestPriority), nullable=False)
+    title = Column(String, nullable=False)
     description = Column(String, nullable=False)
-    status = Column(Enum(RequestStatus), nullable=False, default=RequestStatus.NEW)
+    status = Column(String, nullable=False, default=RequestStatus.NEW)
+    priority = Column(String, nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    employee = relationship(
-        "app.models.employee.Employee",
-        back_populates="requests",
-        lazy="joined"
-    )
+    # Определяем отношение к Employee
+    employee = relationship("Employee", back_populates="requests")

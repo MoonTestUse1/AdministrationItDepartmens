@@ -1,12 +1,14 @@
-"""Database table schemas"""
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
-from ..database import Base
-import enum
+"""Table schemas"""
+from pydantic import BaseModel, ConfigDict
 
-class RequestStatus(str, enum.Enum):
-    new = "new"
-    in_progress = "in_progress"
-    resolved = "resolved"
-    closed = "closed"
+class TableBase(BaseModel):
+    name: str
+    description: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class TableCreate(TableBase):
+    pass
+
+class TableResponse(TableBase):
+    id: int

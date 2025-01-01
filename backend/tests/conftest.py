@@ -1,72 +1,35 @@
-"""Test configuration and fixtures"""
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-import logging
-
+from fastapi.testclient import TestClient
 from app.database import Base, get_db
 from app.main import app
 
-# Configure logging for tests
-logging.basicConfig(level=logging.INFO)
-
-# Create test database
-SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///:memory:"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
-    SQLALCHEMY_TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def override_get_db():
-    """Override database dependency"""
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@pytest.fixture(scope="function")
-def test_db():
-    """Create test database"""
+@pytest.fixture
+def db_session():
     Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
+    session = TestingSessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
         Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture(scope="function")
-def client(test_db):
-    """Create test client"""
+@pytest.fixture
+def client(db_session):
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            db_session.close()
+            
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-@pytest.fixture
-def test_employee():
-    """Test employee data"""
-    return {
-        "first_name": "Test",
-        "last_name": "User",
-        "department": "general",
-        "office": "101",
-        "password": "testpass123"
-    }
-
-@pytest.fixture
-def test_request():
-    """Test request data"""
-    return {
-        "employee_id": 1,
-        "department": "general",
-        "request_type": "hardware",
-        "priority": "medium",
-        "description": "Test request"
-    }
+    yield TestClient(app)
+    del app.dependency_overrides[get_db] 

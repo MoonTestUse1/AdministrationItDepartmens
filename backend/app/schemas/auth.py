@@ -1,13 +1,17 @@
 """Authentication schemas"""
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class AdminLogin(BaseModel):
     username: str
     password: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeLogin(BaseModel):
     last_name: str
     password: str
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeResponse(BaseModel):
     id: int
