@@ -28,11 +28,11 @@
         </div>
 
         <div class="actions-grid">
-          <router-link to="/admin/employees/add" class="action-card">
+          <div class="action-card" @click="showAddEmployeeModal">
             <div class="action-icon">👥</div>
             <h3>Добавить сотрудника</h3>
             <p>Регистрация нового сотрудника в системе</p>
-          </router-link>
+          </div>
 
           <router-link to="/admin/requests" class="action-card">
             <div class="action-icon">📝</div>
@@ -49,19 +49,27 @@
       </div>
     </main>
     <AdminFooter />
+    
+    <AddEmployeeModal 
+      :is-open="isAddEmployeeModalOpen"
+      @close="closeAddEmployeeModal"
+      @employee-added="handleEmployeeAdded"
+    />
   </div>
 </template>
 
 <script>
 import AdminHeader from '@/components/AdminHeader.vue'
 import AdminFooter from '@/components/AdminFooter.vue'
+import AddEmployeeModal from '@/components/admin/AddEmployeeModal.vue'
 import axios from 'axios'
 
 export default {
   name: 'AdminDashboardView',
   components: {
     AdminHeader,
-    AdminFooter
+    AdminFooter,
+    AddEmployeeModal
   },
   data() {
     return {
@@ -69,20 +77,36 @@ export default {
         total_requests: 0,
         by_status: {},
         by_priority: {}
+      },
+      isAddEmployeeModalOpen: false
+    }
+  },
+  methods: {
+    showAddEmployeeModal() {
+      this.isAddEmployeeModalOpen = true
+    },
+    closeAddEmployeeModal() {
+      this.isAddEmployeeModalOpen = false
+    },
+    handleEmployeeAdded() {
+      // Можно добавить уведомление об успешном добавлении
+      console.log('Сотрудник успешно добавлен')
+    },
+    async fetchStatistics() {
+      try {
+        const response = await axios.get('/api/requests/statistics', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          }
+        });
+        this.statistics = response.data;
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
       }
     }
   },
   async created() {
-    try {
-      const response = await axios.get('/api/requests/statistics', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-        }
-      });
-      this.statistics = response.data;
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-    }
+    await this.fetchStatistics()
   }
 }
 </script>
@@ -153,6 +177,7 @@ export default {
   text-decoration: none;
   color: inherit;
   transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
 }
 
 .action-card:hover {
