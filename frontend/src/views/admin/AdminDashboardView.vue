@@ -28,19 +28,19 @@
         </div>
 
         <div class="actions-grid">
-          <div class="action-card" @click="showAddEmployeeModal = true">
+          <div class="action-card" @click.stop="showAddEmployeeModal = true">
             <div class="action-icon">👥</div>
             <h3>Добавить сотрудника</h3>
             <p>Регистрация нового сотрудника в системе</p>
           </div>
 
-          <div class="action-card" @click="showRequestsModal = true">
+          <div class="action-card" @click.stop="showRequestsModal = true">
             <div class="action-icon">📝</div>
             <h3>Управление заявками</h3>
             <p>Просмотр и обработка заявок</p>
           </div>
 
-          <div class="action-card" @click="showEmployeesModal = true">
+          <div class="action-card" @click.stop="showEmployeesModal = true">
             <div class="action-icon">👤</div>
             <h3>Список сотрудников</h3>
             <p>Управление учетными записями</p>
@@ -69,6 +69,7 @@
       v-if="showRequestsModal"
       :isOpen="showRequestsModal"
       @close="showRequestsModal = false"
+      ref="requestsModal"
     />
   </div>
 </template>
