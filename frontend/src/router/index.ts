@@ -14,9 +14,9 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue')
     },
     {
-      path: '/admin',
+      path: '/admin/login',
       name: 'admin-login',
-      component: () => import('@/views/AdminLoginView.vue')
+      component: () => import('@/views/admin/AdminLoginView.vue')
     },
     {
       path: '/requests',
@@ -27,7 +27,7 @@ const router = createRouter({
     {
       path: '/admin/dashboard',
       name: 'admin-dashboard',
-      component: () => import('@/views/AdminDashboardView.vue'),
+      component: () => import('@/views/admin/AdminDashboardView.vue'),
       meta: { requiresAdmin: true }
     },
     {
@@ -41,6 +41,12 @@ const router = createRouter({
       name: 'admin-employees-add',
       component: () => import('@/views/admin/AddEmployeeView.vue'),
       meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/requests',
+      name: 'admin-requests',
+      component: () => import('@/views/admin/RequestsView.vue'),
+      meta: { requiresAdmin: true }
     }
   ]
 });
@@ -49,7 +55,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAdmin) {
     const adminToken = localStorage.getItem('admin_token')
     if (!adminToken) {
-      next('/admin')
+      next('/admin/login')
       return
     }
   } else if (to.meta.requiresAuth) {
