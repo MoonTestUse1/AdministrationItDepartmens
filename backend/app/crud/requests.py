@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from ..models.request import Request
 from ..schemas.request import RequestCreate
 from ..utils.loggers import request_logger
+from typing import List, Optional
 
 def create_request(db: Session, request: RequestCreate):
     """Create new request"""
@@ -56,3 +57,21 @@ def get_request_details(db: Session, request_id: int):
         "status": request.status,
         "created_at": request.created_at.isoformat()
     }
+
+def get_requests(db: Session, skip: int = 0, limit: int = 100) -> List[Request]:
+    """
+    Получить список всех заявок с пагинацией
+    """
+    return db.query(Request).offset(skip).limit(limit).all()
+
+def get_request(db: Session, request_id: int) -> Optional[Request]:
+    """
+    Получить заявку по ID
+    """
+    return db.query(Request).filter(Request.id == request_id).first()
+
+def get_employee_requests(db: Session, employee_id: int, skip: int = 0, limit: int = 100) -> List[Request]:
+    """
+    Получить список заявок конкретного сотрудника
+    """
+    return db.query(Request).filter(Request.employee_id == employee_id).offset(skip).limit(limit).all()
