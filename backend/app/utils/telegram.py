@@ -1,5 +1,5 @@
 """Telegram bot utils"""
-from aiogram import Bot, Dispatcher
+from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 from datetime import datetime
@@ -15,7 +15,6 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7677506032:AAHduD5EePz3bE2
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "5057752127")
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
-dp = Dispatcher()
 
 def format_priority(priority: str) -> str:
     """Format priority with emoji"""
