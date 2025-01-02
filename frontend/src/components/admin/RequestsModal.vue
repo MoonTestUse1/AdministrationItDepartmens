@@ -6,61 +6,72 @@
         <button class="close-button" @click.stop="closeModal">&times;</button>
       </div>
 
-      <div class="filters">
-        <div class="filter-group">
-          <label>Статус:</label>
-          <select v-model="statusFilter" class="filter-select" @click.stop>
-            <option value="">Все статусы</option>
-            <option value="new">Новая</option>
-            <option value="in_progress">В работе</option>
-            <option value="completed">Завершена</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>Приоритет:</label>
-          <select v-model="priorityFilter" class="filter-select" @click.stop>
-            <option value="">Все приоритеты</option>
-            <option value="low">Низкий</option>
-            <option value="medium">Средний</option>
-            <option value="high">Высокий</option>
-          </select>
-        </div>
+      <div v-if="isLoading" class="loading-state">
+        <p>Загрузка заявок...</p>
       </div>
 
-      <div class="requests-list">
-        <div v-for="request in filteredRequests" :key="request.id" class="request-card" @click.stop>
-          <div class="request-header">
-            <h3>{{ request.title }}</h3>
-            <div class="request-meta">
-              <span class="status" :class="request.status">{{ getStatusText(request.status) }}</span>
-              <span class="priority" :class="request.priority">{{ getPriorityText(request.priority) }}</span>
-            </div>
-          </div>
-          
-          <div class="request-body">
-            <p class="description">{{ request.description }}</p>
-            <p class="employee">Сотрудник: {{ request.employee_name }}</p>
-            <p class="date">Создано: {{ formatDate(request.created_at) }}</p>
-          </div>
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+        <button @click="fetchRequests" class="retry-button">Повторить</button>
+      </div>
 
-          <div class="request-actions">
-            <select 
-              v-model="request.status" 
-              class="status-select"
-              @change.stop="updateRequestStatus(request)"
-            >
+      <template v-else>
+        <div class="filters">
+          <div class="filter-group">
+            <label>Статус:</label>
+            <select v-model="statusFilter" class="filter-select" @click.stop>
+              <option value="">Все статусы</option>
               <option value="new">Новая</option>
               <option value="in_progress">В работе</option>
               <option value="completed">Завершена</option>
             </select>
           </div>
+
+          <div class="filter-group">
+            <label>Приоритет:</label>
+            <select v-model="priorityFilter" class="filter-select" @click.stop>
+              <option value="">Все приоритеты</option>
+              <option value="low">Низкий</option>
+              <option value="medium">Средний</option>
+              <option value="high">Высокий</option>
+            </select>
+          </div>
         </div>
 
-        <div v-if="filteredRequests.length === 0" class="no-requests">
-          <p>Заявки не найдены</p>
+        <div class="requests-list">
+          <div v-for="request in filteredRequests" :key="request.id" class="request-card" @click.stop>
+            <div class="request-header">
+              <h3>{{ request.title }}</h3>
+              <div class="request-meta">
+                <span class="status" :class="request.status">{{ getStatusText(request.status) }}</span>
+                <span class="priority" :class="request.priority">{{ getPriorityText(request.priority) }}</span>
+              </div>
+            </div>
+            
+            <div class="request-body">
+              <p class="description">{{ request.description }}</p>
+              <p class="employee">Сотрудник: {{ request.employee_name }}</p>
+              <p class="date">Создано: {{ formatDate(request.created_at) }}</p>
+            </div>
+
+            <div class="request-actions">
+              <select 
+                v-model="request.status" 
+                class="status-select"
+                @change.stop="updateRequestStatus(request)"
+              >
+                <option value="new">Новая</option>
+                <option value="in_progress">В работе</option>
+                <option value="completed">Завершена</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="filteredRequests.length === 0" class="no-requests">
+            <p>Заявки не найдены</p>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -102,11 +113,13 @@ export default {
     async fetchRequests() {
       this.isLoading = true
       try {
-        const response = await axios.get('/api/requests', {
+        console.log('Fetching requests...') // Для отладки
+        const response = await axios.get('/api/requests/all', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           }
         })
+        console.log('Requests response:', response.data) // Для отладки
         this.requests = response.data
 
         // Получаем информацию о сотрудниках для отображения имен
@@ -115,6 +128,7 @@ export default {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           }
         })
+        console.log('Employees response:', employeesResponse.data) // Для отладки
         const employees = employeesResponse.data
         
         // Добавляем имена сотрудников к заявкам
@@ -125,9 +139,11 @@ export default {
             employee_name: employee ? `${employee.last_name} ${employee.first_name}` : 'Неизвестный сотрудник'
           }
         })
+        console.log('Processed requests:', this.requests) // Для отладки
       } catch (error) {
         console.error('Error fetching requests:', error)
         this.error = 'Ошибка при загрузке заявок'
+        this.requests = []
       } finally {
         this.isLoading = false
       }
@@ -368,6 +384,29 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #666;
+}
+
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.retry-button {
+  background-color: #1a237e;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 1rem;
+  transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+  background-color: #283593;
 }
 
 @media (max-width: 768px) {
