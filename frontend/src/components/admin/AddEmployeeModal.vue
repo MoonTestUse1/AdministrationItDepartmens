@@ -55,6 +55,18 @@
           >
         </div>
 
+        <div class="form-group">
+          <label for="office">Кабинет</label>
+          <input
+            type="text"
+            id="office"
+            v-model="formData.office"
+            required
+            class="form-input"
+            placeholder="Введите номер кабинета"
+          >
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="submit-button" :disabled="isLoading">
             {{ isLoading ? 'Добавление...' : 'Добавить' }}
@@ -87,7 +99,8 @@ export default {
         first_name: '',
         last_name: '',
         password: '',
-        department: ''
+        department: '',
+        office: ''
       },
       error: '',
       isLoading: false
@@ -103,7 +116,8 @@ export default {
         first_name: '',
         last_name: '',
         password: '',
-        department: ''
+        department: '',
+        office: ''
       }
       this.error = ''
     },
