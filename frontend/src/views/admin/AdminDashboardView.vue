@@ -34,17 +34,17 @@
             <p>Регистрация нового сотрудника в системе</p>
           </div>
 
-          <router-link to="/admin/requests" class="action-card">
+          <div class="action-card" @click="showRequestsModal">
             <div class="action-icon">📝</div>
             <h3>Управление заявками</h3>
             <p>Просмотр и обработка заявок</p>
-          </router-link>
+          </div>
 
-          <router-link to="/admin/employees" class="action-card">
+          <div class="action-card" @click="showEmployeesModal">
             <div class="action-icon">👤</div>
             <h3>Список сотрудников</h3>
             <p>Управление учетными записями</p>
-          </router-link>
+          </div>
         </div>
       </div>
     </main>
@@ -55,6 +55,16 @@
       @close="closeAddEmployeeModal"
       @employee-added="handleEmployeeAdded"
     />
+
+    <RequestsModal
+      :is-open="isRequestsModalOpen"
+      @close="closeRequestsModal"
+    />
+
+    <EmployeesModal
+      :is-open="isEmployeesModalOpen"
+      @close="closeEmployeesModal"
+    />
   </div>
 </template>
 
@@ -62,6 +72,8 @@
 import AdminHeader from '@/components/AdminHeader.vue'
 import AdminFooter from '@/components/AdminFooter.vue'
 import AddEmployeeModal from '@/components/admin/AddEmployeeModal.vue'
+import RequestsModal from '@/components/admin/RequestsModal.vue'
+import EmployeesModal from '@/components/admin/EmployeesModal.vue'
 import axios from 'axios'
 
 export default {
@@ -69,7 +81,9 @@ export default {
   components: {
     AdminHeader,
     AdminFooter,
-    AddEmployeeModal
+    AddEmployeeModal,
+    RequestsModal,
+    EmployeesModal
   },
   data() {
     return {
@@ -78,7 +92,9 @@ export default {
         by_status: {},
         by_priority: {}
       },
-      isAddEmployeeModalOpen: false
+      isAddEmployeeModalOpen: false,
+      isRequestsModalOpen: false,
+      isEmployeesModalOpen: false
     }
   },
   methods: {
@@ -87,6 +103,18 @@ export default {
     },
     closeAddEmployeeModal() {
       this.isAddEmployeeModalOpen = false
+    },
+    showRequestsModal() {
+      this.isRequestsModalOpen = true
+    },
+    closeRequestsModal() {
+      this.isRequestsModalOpen = false
+    },
+    showEmployeesModal() {
+      this.isEmployeesModalOpen = true
+    },
+    closeEmployeesModal() {
+      this.isEmployeesModalOpen = false
     },
     handleEmployeeAdded() {
       // Можно добавить уведомление об успешном добавлении

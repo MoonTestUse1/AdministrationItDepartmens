@@ -29,18 +29,6 @@ const router = createRouter({
       name: 'admin-dashboard',
       component: () => import('@/views/admin/AdminDashboardView.vue'),
       meta: { requiresAdmin: true }
-    },
-    {
-      path: '/admin/employees',
-      name: 'admin-employees',
-      component: () => import('@/views/admin/EmployeesView.vue'),
-      meta: { requiresAdmin: true }
-    },
-    {
-      path: '/admin/requests',
-      name: 'admin-requests',
-      component: () => import('@/views/admin/RequestsView.vue'),
-      meta: { requiresAdmin: true }
     }
   ]
 });
