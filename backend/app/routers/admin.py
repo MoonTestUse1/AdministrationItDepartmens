@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
-from .. import crud, schemas
+from ..crud import requests, statistics
+from ..schemas.request import Request
 from ..utils.auth import get_current_admin
+from ..utils.loggers import request_logger
 
 router = APIRouter()
 
@@ -17,7 +19,7 @@ async def get_statistics(period: str = "week", db: Session = Depends(get_db)):
         request_logger.error(f"Error getting statistics: {e}")
         raise HTTPException(status_code=500, detail="Ошибка при получении статистики")
 
-@router.get("/requests", response_model=List[schemas.Request])
+@router.get("/requests", response_model=List[Request])
 async def get_all_requests(
     skip: int = 0,
     limit: int = 100,
@@ -28,13 +30,13 @@ async def get_all_requests(
     Получить список всех заявок (только для админа)
     """
     try:
-        requests = crud.requests.get_requests(db, skip=skip, limit=limit)
-        return requests
+        requests_list = requests.get_requests(db, skip=skip, limit=limit)
+        return requests_list
     except Exception as e:
         print(f"Error getting requests: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.get("/requests/{request_id}", response_model=schemas.Request)
+@router.get("/requests/{request_id}", response_model=Request)
 async def get_request_by_id(
     request_id: int,
     db: Session = Depends(get_db),
@@ -43,7 +45,7 @@ async def get_request_by_id(
     """
     Получить заявку по ID (только для админа)
     """
-    request = crud.requests.get_request(db, request_id)
+    request = requests.get_request(db, request_id)
     if request is None:
         raise HTTPException(status_code=404, detail="Request not found")
     return request
