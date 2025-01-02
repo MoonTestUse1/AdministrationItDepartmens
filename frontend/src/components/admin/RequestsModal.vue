@@ -6,15 +6,19 @@
         <button class="close-button" @click="closeModal">&times;</button>
       </div>
 
-      <div class="requests-container">
-        <div class="filters">
+      <div class="filters">
+        <div class="filter-group">
+          <label>Статус:</label>
           <select v-model="statusFilter" class="filter-select">
             <option value="">Все статусы</option>
-            <option value="new">Новые</option>
+            <option value="new">Новая</option>
             <option value="in_progress">В работе</option>
-            <option value="completed">Завершенные</option>
+            <option value="completed">Завершена</option>
           </select>
+        </div>
 
+        <div class="filter-group">
+          <label>Приоритет:</label>
           <select v-model="priorityFilter" class="filter-select">
             <option value="">Все приоритеты</option>
             <option value="low">Низкий</option>
@@ -22,40 +26,39 @@
             <option value="high">Высокий</option>
           </select>
         </div>
+      </div>
 
-        <div class="requests-list" v-if="requests.length">
-          <div v-for="request in filteredRequests" :key="request.id" class="request-card">
-            <div class="request-header">
-              <h3>{{ request.title }}</h3>
-              <span :class="['status-badge', request.status]">{{ getStatusText(request.status) }}</span>
-            </div>
-            
-            <p class="request-description">{{ request.description }}</p>
-            
-            <div class="request-info">
-              <span class="priority-badge" :class="request.priority">
-                {{ getPriorityText(request.priority) }}
-              </span>
-              <span class="employee-name">{{ request.employee_name }}</span>
-              <span class="request-date">{{ formatDate(request.created_at) }}</span>
-            </div>
-
-            <div class="request-actions">
-              <select 
-                v-model="request.status" 
-                class="status-select"
-                @change="updateRequestStatus(request.id, request.status)"
-              >
-                <option value="new">Новая</option>
-                <option value="in_progress">В работе</option>
-                <option value="completed">Завершена</option>
-              </select>
+      <div class="requests-list">
+        <div v-for="request in filteredRequests" :key="request.id" class="request-card">
+          <div class="request-header">
+            <h3>{{ request.title }}</h3>
+            <div class="request-meta">
+              <span class="status" :class="request.status">{{ getStatusText(request.status) }}</span>
+              <span class="priority" :class="request.priority">{{ getPriorityText(request.priority) }}</span>
             </div>
           </div>
+          
+          <div class="request-body">
+            <p class="description">{{ request.description }}</p>
+            <p class="employee">Сотрудник: {{ request.employee_name }}</p>
+            <p class="date">Создано: {{ formatDate(request.created_at) }}</p>
+          </div>
+
+          <div class="request-actions">
+            <select 
+              v-model="request.status" 
+              class="status-select"
+              @change="updateRequestStatus(request)"
+            >
+              <option value="new">Новая</option>
+              <option value="in_progress">В работе</option>
+              <option value="completed">Завершена</option>
+            </select>
+          </div>
         </div>
-        
-        <div v-else class="no-requests">
-          <p>Заявок не найдено</p>
+
+        <div v-if="filteredRequests.length === 0" class="no-requests">
+          <p>Заявки не найдены</p>
         </div>
       </div>
     </div>
@@ -78,7 +81,8 @@ export default {
       requests: [],
       statusFilter: '',
       priorityFilter: '',
-      isLoading: false
+      isLoading: false,
+      error: null
     }
   },
   computed: {
@@ -94,31 +98,8 @@ export default {
     closeModal() {
       this.$emit('close')
     },
-    getStatusText(status) {
-      const statusMap = {
-        new: 'Новая',
-        in_progress: 'В работе',
-        completed: 'Завершена'
-      }
-      return statusMap[status] || status
-    },
-    getPriorityText(priority) {
-      const priorityMap = {
-        low: 'Низкий',
-        medium: 'Средний',
-        high: 'Высокий'
-      }
-      return priorityMap[priority] || priority
-    },
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
-    },
     async fetchRequests() {
+      this.isLoading = true
       try {
         const response = await axios.get('/api/requests', {
           headers: {
@@ -159,28 +140,60 @@ export default {
         })
       } catch (error) {
         console.error('Error fetching requests:', error)
+        this.error = 'Ошибка при загрузке заявок'
+      } finally {
+        this.isLoading = false
       }
     },
-    async updateRequestStatus(requestId, newStatus) {
+    async updateRequestStatus(request) {
       try {
-        await axios.patch(`/api/requests/${requestId}`, 
-          { status: newStatus },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-            }
+        await axios.put(`/api/requests/${request.id}`, {
+          status: request.status
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           }
-        )
+        })
       } catch (error) {
         console.error('Error updating request status:', error)
+        // Возвращаем предыдущий статус в случае ошибки
+        this.fetchRequests()
       }
+    },
+    getStatusText(status) {
+      const statusMap = {
+        new: 'Новая',
+        in_progress: 'В работе',
+        completed: 'Завершена'
+      }
+      return statusMap[status] || status
+    },
+    getPriorityText(priority) {
+      const priorityMap = {
+        low: 'Низкий',
+        medium: 'Средний',
+        high: 'Высокий'
+      }
+      return priorityMap[priority] || priority
+    },
+    formatDate(dateString) {
+      const date = new Date(dateString)
+      return date.toLocaleString('ru-RU')
     }
   },
   watch: {
-    isOpen(newValue) {
-      if (newValue) {
-        this.fetchRequests()
+    isOpen: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchRequests()
+        }
       }
+    }
+  },
+  mounted() {
+    if (this.isOpen) {
+      this.fetchRequests()
     }
   }
 }
@@ -205,8 +218,8 @@ export default {
   border-radius: 12px;
   padding: 2rem;
   width: 90%;
-  max-width: 1000px;
-  max-height: 90vh;
+  max-width: 800px;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
@@ -241,7 +254,13 @@ export default {
 .filters {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .filter-select {
@@ -249,27 +268,33 @@ export default {
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 1rem;
-  color: #1a237e;
-  background-color: white;
+  transition: border-color 0.3s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #1a237e;
 }
 
 .requests-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .request-card {
-  background: #f8f9fa;
+  background: #f5f5f5;
   border-radius: 8px;
   padding: 1.5rem;
-  border: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .request-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: flex-start;
 }
 
 .request-header h3 {
@@ -278,75 +303,66 @@ export default {
   font-size: 1.2rem;
 }
 
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.new {
-  background-color: #e3f2fd;
-  color: #1976d2;
-}
-
-.status-badge.in_progress {
-  background-color: #fff3e0;
-  color: #f57c00;
-}
-
-.status-badge.completed {
-  background-color: #e8f5e9;
-  color: #388e3c;
-}
-
-.request-description {
-  margin: 0 0 1rem 0;
-  color: #666;
-}
-
-.request-info {
+.request-meta {
   display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
 }
 
-.priority-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
+.status, .priority {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
   font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.priority-badge.low {
-  background-color: #e8f5e9;
-  color: #388e3c;
+.status.new {
+  background-color: #e3f2fd;
+  color: #1565c0;
 }
 
-.priority-badge.medium {
+.status.in_progress {
   background-color: #fff3e0;
   color: #f57c00;
 }
 
-.priority-badge.high {
-  background-color: #fbe9e7;
-  color: #d32f2f;
+.status.completed {
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
-.employee-name {
-  color: #1a237e;
-  font-weight: 500;
+.priority.low {
+  background-color: #f5f5f5;
+  color: #616161;
 }
 
-.request-date {
+.priority.medium {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.priority.high {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.request-body {
   color: #666;
+}
+
+.description {
+  margin: 0 0 0.5rem 0;
+  white-space: pre-wrap;
+}
+
+.employee, .date {
+  margin: 0;
   font-size: 0.875rem;
+  color: #666;
 }
 
 .request-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
 }
 
 .status-select {
@@ -354,9 +370,12 @@ export default {
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #1a237e;
-  background-color: white;
-  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #1a237e;
 }
 
 .no-requests {
@@ -377,13 +396,12 @@ export default {
 
   .request-header {
     flex-direction: column;
-    align-items: flex-start;
     gap: 0.5rem;
   }
 
-  .request-info {
-    flex-direction: column;
-    align-items: flex-start;
+  .request-meta {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style> 
