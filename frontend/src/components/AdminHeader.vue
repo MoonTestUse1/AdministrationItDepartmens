@@ -1,15 +1,19 @@
 <template>
   <header class="admin-header">
-    <div class="header-content">
-      <div class="logo">
+    <div class="header-container">
+      <router-link to="/admin/dashboard" class="logo">
         <h1>IT Support</h1>
-      </div>
+      </router-link>
+      
       <nav class="nav-menu">
-        <router-link to="/admin/dashboard" class="nav-link">Панель управления</router-link>
-        <router-link to="/admin/employees" class="nav-link">Сотрудники</router-link>
+        <router-link to="/admin/dashboard" class="nav-link">Главная</router-link>
         <router-link to="/admin/requests" class="nav-link">Заявки</router-link>
-        <a @click="logout" class="nav-link logout">Выйти</a>
+        <router-link to="/admin/employees" class="nav-link">Сотрудники</router-link>
       </nav>
+      
+      <button @click="handleLogout" class="logout-button">
+        Выйти
+      </button>
     </div>
   </header>
 </template>
@@ -18,9 +22,9 @@
 export default {
   name: 'AdminHeader',
   methods: {
-    logout() {
-      localStorage.removeItem('admin_token');
-      this.$router.push('/admin/login');
+    handleLogout() {
+      localStorage.removeItem('admin_token')
+      this.$router.push('/admin/login')
     }
   }
 }
@@ -30,16 +34,20 @@ export default {
 .admin-header {
   background-color: #1a237e;
   color: white;
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
 }
 
-.header-content {
+.header-container {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  text-decoration: none;
+  color: white;
 }
 
 .logo h1 {
@@ -50,14 +58,14 @@ export default {
 
 .nav-menu {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .nav-link {
   color: white;
   text-decoration: none;
   font-weight: 500;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem;
   border-radius: 4px;
   transition: background-color 0.3s;
 }
@@ -66,16 +74,31 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nav-link.router-link-active {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.logout {
+.logout-button {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
   cursor: pointer;
-  color: #ff5252;
+  transition: all 0.3s;
 }
 
-.logout:hover {
-  background-color: rgba(255, 82, 82, 0.1);
+.logout-button:hover {
+  background-color: white;
+  color: #1a237e;
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav-menu {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 </style> 
