@@ -7,6 +7,8 @@ from ..models.request import Request, RequestStatus, RequestPriority
 from ..schemas.request import RequestCreate, RequestResponse, RequestUpdate, RequestStatistics
 from ..utils.auth import get_current_admin, get_current_employee
 from sqlalchemy import func
+from ..models.employee import Employee
+from ..utils.telegram import notify_new_request
 
 router = APIRouter()
 
@@ -39,7 +41,7 @@ def get_requests(
 def create_request(
     request: RequestCreate,
     db: Session = Depends(get_db),
-    current_employee: dict = Depends(get_current_employee)
+    current_employee: Employee = Depends(get_current_employee)
 ):
     """Create new request"""
     try:
@@ -47,13 +49,16 @@ def create_request(
             title=request.title,
             description=request.description,
             priority=request.priority,
-            status=RequestStatus.NEW.value,
-            employee_id=current_employee["id"]
+            status=RequestStatus.NEW,
+            employee_id=current_employee.id
         )
         
         db.add(db_request)
         db.commit()
         db.refresh(db_request)
+        
+        # Отправляем уведомление в Telegram
+        notify_new_request(db_request.id)
         
         return request_to_dict(db_request)
     except Exception as e:
@@ -63,12 +68,12 @@ def create_request(
 @router.get("/my", response_model=List[RequestResponse])
 def get_employee_requests(
     db: Session = Depends(get_db),
-    current_employee: dict = Depends(get_current_employee)
+    current_employee: Employee = Depends(get_current_employee)
 ):
     """Get employee's requests"""
     try:
         requests = db.query(Request).filter(
-            Request.employee_id == current_employee["id"]
+            Request.employee_id == current_employee.id
         ).all()
         
         # Преобразуем объекты в словари до закрытия сессии
