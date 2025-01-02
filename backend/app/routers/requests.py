@@ -57,23 +57,17 @@ def create_request(
         db.commit()
         db.refresh(db_request)
         
-        # Подготавливаем данные для уведомления
-        request_data = {
-            "id": db_request.id,
-            "title": db_request.title,
-            "description": db_request.description,
-            "priority": db_request.priority,
-            "status": db_request.status,
-            "employee_name": f"{current_employee.last_name} {current_employee.first_name}",
-            "created_at": db_request.created_at
-        }
+        # Преобразуем объект запроса в словарь для уведомления
+        request_dict = request_to_dict(db_request)
+        request_dict["employee_name"] = f"{current_employee.last_name} {current_employee.first_name}"
         
         # Отправляем уведомление в Telegram
-        notify_new_request(request_data)
+        notify_new_request(request_dict)
         
         return request_to_dict(db_request)
     except Exception as e:
         db.rollback()
+        logger.error(f"Error creating request: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my", response_model=List[RequestResponse])

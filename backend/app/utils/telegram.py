@@ -45,7 +45,7 @@ async def send_request_notification(request_data: dict):
             f"❗ <b>Приоритет:</b> {format_priority(request_data['priority'])}\n"
             f"📊 <b>Статус:</b> {format_status(request_data['status'])}\n\n"
             f"📄 <b>Описание:</b>\n{request_data['description']}\n\n"
-            f"🕒 <b>Создана:</b> {request_data['created_at'].strftime('%d.%m.%Y %H:%M')}"
+            f"🕒 <b>Создана:</b> {request_data['created_at'].strftime('%d.%m.%Y %H:%M') if request_data['created_at'] else 'Не указано'}"
         )
         
         await bot.send_message(
