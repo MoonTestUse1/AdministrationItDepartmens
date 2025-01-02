@@ -3,17 +3,22 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
+# Устанавливаем зависимости для сборки
+RUN apk add --no-cache python3 make g++
+
 # Копируем только файлы для установки зависимостей
 COPY frontend/package*.json ./
 
-# Устанавливаем зависимости
-RUN npm ci
+# Устанавливаем зависимости с кэшированием
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
 
 # Копируем остальные файлы проекта
 COPY frontend/ .
 
-# Собираем приложение
-RUN npm run build
+# Собираем приложение с кэшированием
+RUN --mount=type=cache,target=/root/.npm \
+    npm run build
 
 # Production stage
 FROM nginx:alpine
