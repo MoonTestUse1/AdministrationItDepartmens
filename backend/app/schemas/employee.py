@@ -17,6 +17,7 @@ class EmployeeUpdate(BaseModel):
     last_name: str | None = None
     department: str | None = None
     office: str | None = None
+    password: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 

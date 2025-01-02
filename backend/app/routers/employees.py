@@ -63,6 +63,11 @@ def update_employee(
     
     # Обновляем данные
     update_data = employee_update.model_dump(exclude_unset=True)
+    
+    # Если передан пароль, хешируем его
+    if 'password' in update_data:
+        update_data['password'] = pwd_context.hash(update_data['password'])
+    
     for field, value in update_data.items():
         setattr(db_employee, field, value)
     

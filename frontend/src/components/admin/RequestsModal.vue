@@ -123,9 +123,40 @@ export default {
         const response = await axios.get('/api/requests', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          },
+          validateStatus: function (status) {
+            return status < 500
           }
         })
-        this.requests = response.data
+
+        if (response.status === 307) {
+          const redirectUrl = response.headers.location
+          const finalResponse = await axios.get(redirectUrl, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            }
+          })
+          this.requests = finalResponse.data
+        } else {
+          this.requests = response.data
+        }
+
+        // Получаем информацию о сотрудниках для отображения имен
+        const employeesResponse = await axios.get('/api/employees', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          }
+        })
+        const employees = employeesResponse.data
+        
+        // Добавляем имена сотрудников к заявкам
+        this.requests = this.requests.map(request => {
+          const employee = employees.find(emp => emp.id === request.employee_id)
+          return {
+            ...request,
+            employee_name: employee ? `${employee.last_name} ${employee.first_name}` : 'Неизвестный сотрудник'
+          }
+        })
       } catch (error) {
         console.error('Error fetching requests:', error)
       }
