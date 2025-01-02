@@ -5,6 +5,18 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-6 bg-white shadow-lg rounded-lg p-6">
         <div>
+          <label for="title" class="block text-sm font-medium text-gray-700">Заголовок</label>
+          <input
+            id="title"
+            v-model="formData.title"
+            type="text"
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            required
+            placeholder="Краткое описание проблемы"
+          />
+        </div>
+
+        <div>
           <label for="department" class="block text-sm font-medium text-gray-700">Отдел</label>
           <select
             id="department"
@@ -106,6 +118,7 @@ interface Employee {
 }
 
 const formData = reactive({
+  title: '',
   department: '',
   request_type: '',
   priority: '',
@@ -137,7 +150,13 @@ const handleSubmit = async () => {
       throw new Error('Не найден токен авторизации')
     }
 
-    await axios.post('/api/requests/', formData, {
+    const requestData = {
+      title: formData.title,
+      description: formData.description,
+      priority: formData.priority
+    }
+
+    await axios.post('/api/requests/', requestData, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -145,6 +164,7 @@ const handleSubmit = async () => {
 
     success.value = true
     // Очищаем форму
+    formData.title = ''
     formData.department = ''
     formData.request_type = ''
     formData.priority = ''
