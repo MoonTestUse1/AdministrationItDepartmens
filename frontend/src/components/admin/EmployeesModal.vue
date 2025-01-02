@@ -6,83 +6,52 @@
         <button class="close-button" @click="closeModal">&times;</button>
       </div>
 
-      <div class="employees-container">
-        <div class="search-bar">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Поиск по имени или отделу..."
-            class="search-input"
-          >
-        </div>
-
-        <div class="employees-list" v-if="filteredEmployees.length">
-          <div v-for="employee in filteredEmployees" :key="employee.id" class="employee-card">
-            <div class="employee-info">
-              <h3>{{ employee.last_name }} {{ employee.first_name }}</h3>
-              <p class="department">{{ employee.department }}</p>
-            </div>
-
-            <div class="employee-actions">
-              <button class="edit-button" @click="editEmployee(employee)">
-                Изменить
-              </button>
-              <button class="delete-button" @click="deleteEmployee(employee.id)">
-                Удалить
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div v-else class="no-employees">
-          <p>Сотрудники не найдены</p>
-        </div>
+      <div class="search-bar">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Поиск сотрудников..."
+          class="search-input"
+        >
       </div>
-    </div>
 
-    <!-- Модальное окно редактирования -->
-    <div v-if="editingEmployee" class="edit-modal">
-      <div class="edit-modal-content" @click.stop>
-        <h3>Редактировать сотрудника</h3>
-        
-        <form @submit.prevent="saveEmployee" class="edit-form">
-          <div class="form-group">
-            <label>Имя</label>
-            <input
-              type="text"
-              v-model="editingEmployee.first_name"
-              required
-              class="form-input"
-            >
+      <div class="employees-list">
+        <div v-for="employee in filteredEmployees" :key="employee.id" class="employee-card">
+          <div class="employee-info">
+            <h3>{{ employee.last_name }} {{ employee.first_name }}</h3>
+            <p>Отдел: {{ employee.department }}</p>
+            <p>Кабинет: {{ employee.office }}</p>
           </div>
-
-          <div class="form-group">
-            <label>Фамилия</label>
-            <input
-              type="text"
-              v-model="editingEmployee.last_name"
-              required
-              class="form-input"
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Отдел</label>
-            <input
-              type="text"
-              v-model="editingEmployee.department"
-              required
-              class="form-input"
-            >
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="save-button">Сохранить</button>
-            <button type="button" class="cancel-button" @click="cancelEdit">
-              Отмена
+          <div class="employee-actions">
+            <button @click="editEmployee(employee)" class="edit-button">
+              Изменить
+            </button>
+            <button @click="confirmDelete(employee)" class="delete-button">
+              Удалить
             </button>
           </div>
-        </form>
+        </div>
+      </div>
+
+      <!-- Модальное окно редактирования -->
+      <EditEmployeeModal
+        v-if="showEditModal"
+        :isOpen="showEditModal"
+        :employee="selectedEmployee"
+        @close="closeEditModal"
+        @employee-updated="handleEmployeeUpdated"
+      />
+
+      <!-- Модальное окно подтверждения удаления -->
+      <div v-if="showDeleteConfirm" class="confirm-modal">
+        <div class="confirm-content">
+          <h3>Подтверждение удаления</h3>
+          <p>Вы действительно хотите удалить сотрудника {{ selectedEmployee?.last_name }} {{ selectedEmployee?.first_name }}?</p>
+          <div class="confirm-actions">
+            <button @click="deleteEmployee" class="delete-button">Удалить</button>
+            <button @click="cancelDelete" class="cancel-button">Отмена</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -90,9 +59,13 @@
 
 <script>
 import axios from 'axios'
+import EditEmployeeModal from './EditEmployeeModal.vue'
 
 export default {
   name: 'EmployeesModal',
+  components: {
+    EditEmployeeModal
+  },
   props: {
     isOpen: {
       type: Boolean,
@@ -103,18 +76,20 @@ export default {
     return {
       employees: [],
       searchQuery: '',
-      editingEmployee: null,
-      isLoading: false
+      showEditModal: false,
+      showDeleteConfirm: false,
+      selectedEmployee: null,
+      error: ''
     }
   },
   computed: {
     filteredEmployees() {
       const query = this.searchQuery.toLowerCase()
-      return this.employees.filter(employee => {
-        const fullName = `${employee.last_name} ${employee.first_name}`.toLowerCase()
-        const department = employee.department.toLowerCase()
-        return fullName.includes(query) || department.includes(query)
-      })
+      return this.employees.filter(employee => 
+        employee.last_name.toLowerCase().includes(query) ||
+        employee.first_name.toLowerCase().includes(query) ||
+        employee.department.toLowerCase().includes(query)
+      )
     }
   },
   methods: {
@@ -134,49 +109,43 @@ export default {
       }
     },
     editEmployee(employee) {
-      this.editingEmployee = { ...employee }
+      this.selectedEmployee = employee
+      this.showEditModal = true
     },
-    cancelEdit() {
-      this.editingEmployee = null
+    closeEditModal() {
+      this.showEditModal = false
+      this.selectedEmployee = null
     },
-    async saveEmployee() {
+    handleEmployeeUpdated() {
+      this.fetchEmployees()
+      this.closeEditModal()
+    },
+    confirmDelete(employee) {
+      this.selectedEmployee = employee
+      this.showDeleteConfirm = true
+    },
+    cancelDelete() {
+      this.showDeleteConfirm = false
+      this.selectedEmployee = null
+    },
+    async deleteEmployee() {
       try {
-        await axios.put(`/api/employees/${this.editingEmployee.id}`,
-          this.editingEmployee,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-            }
-          }
-        )
-        
-        await this.fetchEmployees()
-        this.editingEmployee = null
-      } catch (error) {
-        console.error('Error updating employee:', error)
-      }
-    },
-    async deleteEmployee(employeeId) {
-      if (!confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
-        return
-      }
-
-      try {
-        await axios.delete(`/api/employees/${employeeId}`, {
+        await axios.delete(`/api/employees/${this.selectedEmployee.id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           }
         })
-        
-        await this.fetchEmployees()
+        this.showDeleteConfirm = false
+        this.selectedEmployee = null
+        this.fetchEmployees()
       } catch (error) {
         console.error('Error deleting employee:', error)
       }
     }
   },
   watch: {
-    isOpen(newValue) {
-      if (newValue) {
+    isOpen(newVal) {
+      if (newVal) {
         this.fetchEmployees()
       }
     }
@@ -204,7 +173,7 @@ export default {
   padding: 2rem;
   width: 90%;
   max-width: 800px;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
@@ -237,7 +206,7 @@ export default {
 }
 
 .search-bar {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .search-input {
@@ -256,41 +225,41 @@ export default {
 
 .employees-list {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .employee-card {
-  background: #f8f9fa;
+  background: #f5f5f5;
   border-radius: 8px;
   padding: 1.5rem;
-  border: 1px solid #e0e0e0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .employee-info h3 {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   color: #1a237e;
   font-size: 1.2rem;
 }
 
-.department {
-  margin: 0;
+.employee-info p {
+  margin: 0.5rem 0;
   color: #666;
 }
 
 .employee-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .edit-button, .delete-button {
-  padding: 0.5rem 1rem;
+  flex: 1;
+  padding: 0.5rem;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  border-radius: 4px;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -305,21 +274,15 @@ export default {
 }
 
 .delete-button {
-  background-color: #fbe9e7;
-  color: #d32f2f;
+  background-color: #f44336;
+  color: white;
 }
 
 .delete-button:hover {
-  background-color: #ffcdd2;
+  background-color: #d32f2f;
 }
 
-.no-employees {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.edit-modal {
+.confirm-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -332,101 +295,38 @@ export default {
   z-index: 1100;
 }
 
-.edit-modal-content {
+.confirm-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 2rem;
   width: 100%;
-  max-width: 500px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  text-align: center;
 }
 
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
+.confirm-content h3 {
+  margin: 0 0 1rem;
   color: #1a237e;
-  font-weight: 500;
 }
 
-.form-input {
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #1a237e;
-}
-
-.form-actions {
+.confirm-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
-}
-
-.save-button {
-  flex: 1;
-  background-color: #1a237e;
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.save-button:hover {
-  background-color: #283593;
+  margin-top: 2rem;
 }
 
 .cancel-button {
   flex: 1;
-  background-color: #f5f5f5;
-  color: #666;
+  background-color: #9e9e9e;
+  color: white;
   padding: 0.75rem;
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background-color 0.3s;
 }
 
 .cancel-button:hover {
-  background-color: #e0e0e0;
-  color: #1a237e;
-}
-
-@media (max-width: 768px) {
-  .modal-content {
-    padding: 1rem;
-    width: 95%;
-  }
-
-  .employee-card {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .employee-actions {
-    width: 100%;
-    justify-content: center;
-  }
+  background-color: #757575;
 }
 </style> 
