@@ -9,6 +9,10 @@ from ..utils.auth import get_current_admin, get_current_employee
 from sqlalchemy import func
 from ..models.employee import Employee
 from ..utils.telegram import notify_new_request, notify_status_change
+import logging
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -41,7 +45,7 @@ def get_requests(
 def create_request(
     request: RequestCreate,
     db: Session = Depends(get_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: dict = Depends(get_current_employee)
 ):
     """Create new request"""
     try:
@@ -50,16 +54,19 @@ def create_request(
             description=request.description,
             priority=request.priority,
             status=RequestStatus.NEW,
-            employee_id=current_employee.id
+            employee_id=current_employee["id"]
         )
         
         db.add(db_request)
         db.commit()
         db.refresh(db_request)
         
+        # Получаем информацию о сотруднике
+        employee = db.query(Employee).filter(Employee.id == current_employee["id"]).first()
+        
         # Преобразуем объект запроса в словарь для уведомления
         request_dict = request_to_dict(db_request)
-        request_dict["employee_name"] = f"{current_employee.last_name} {current_employee.first_name}"
+        request_dict["employee_name"] = f"{employee.last_name} {employee.first_name}"
         
         # Отправляем уведомление в Telegram
         notify_new_request(request_dict)
@@ -73,17 +80,18 @@ def create_request(
 @router.get("/my", response_model=List[RequestResponse])
 def get_employee_requests(
     db: Session = Depends(get_db),
-    current_employee: Employee = Depends(get_current_employee)
+    current_employee: dict = Depends(get_current_employee)
 ):
     """Get employee's requests"""
     try:
         requests = db.query(Request).filter(
-            Request.employee_id == current_employee.id
+            Request.employee_id == current_employee["id"]
         ).all()
         
         # Преобразуем объекты в словари до закрытия сессии
         return [request_to_dict(request) for request in requests]
     except Exception as e:
+        logger.error(f"Error getting employee requests: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/{request_id}/status", response_model=RequestResponse)
