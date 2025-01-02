@@ -126,6 +126,7 @@ export default {
       this.isLoading = true
       
       try {
+        console.log('Sending employee data:', this.formData)
         const response = await axios.post('/api/employees', this.formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
@@ -136,14 +137,19 @@ export default {
           }
         })
 
+        console.log('Response:', response)
+
         if (response.status === 307) {
           const redirectUrl = response.headers.location
+          console.log('Redirecting to:', redirectUrl)
           const finalResponse = await axios.post(redirectUrl, this.formData, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
               'Content-Type': 'application/json'
             }
           })
+          
+          console.log('Final response:', finalResponse)
           
           if (finalResponse.status === 200 || finalResponse.status === 201) {
             this.$emit('employee-added')

@@ -105,20 +105,48 @@ export default {
   methods: {
     async fetchStatistics() {
       try {
-        const response = await axios.get('/api/statistics', {
+        const response = await axios.get('/api/requests/statistics', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          },
+          validateStatus: function (status) {
+            return status < 500
           }
         })
-        this.statistics = response.data
+
+        if (response.status === 307) {
+          const redirectUrl = response.headers.location
+          const finalResponse = await axios.get(redirectUrl, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            }
+          })
+          this.statistics = finalResponse.data
+        } else {
+          this.statistics = response.data
+        }
       } catch (error) {
         console.error('Error fetching statistics:', error)
+        this.statistics = {
+          total_requests: 0,
+          by_status: {},
+          by_priority: {}
+        }
       }
     },
     handleEmployeeAdded() {
       // Обновляем список сотрудников, если модальное окно списка открыто
       if (this.showEmployeesModal && this.$refs.employeesModal) {
         this.$refs.employeesModal.fetchEmployees()
+      }
+      // Также обновляем список, если окно закрыто
+      if (!this.showEmployeesModal) {
+        this.showEmployeesModal = true
+        this.$nextTick(() => {
+          if (this.$refs.employeesModal) {
+            this.$refs.employeesModal.fetchEmployees()
+          }
+        })
       }
     }
   },

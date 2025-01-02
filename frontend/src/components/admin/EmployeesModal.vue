@@ -118,8 +118,11 @@ export default {
         } else {
           this.employees = response.data
         }
+
+        console.log('Fetched employees:', this.employees) // Для отладки
       } catch (error) {
         console.error('Error fetching employees:', error)
+        this.employees = []
       }
     },
     editEmployee(employee) {
@@ -158,11 +161,17 @@ export default {
     }
   },
   watch: {
-    isOpen(newVal) {
-      if (newVal) {
-        this.fetchEmployees()
+    isOpen: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchEmployees()
+        }
       }
     }
+  },
+  mounted() {
+    this.fetchEmployees()
   }
 }
 </script>
