@@ -8,7 +8,7 @@ from ..schemas.request import RequestCreate, RequestResponse, RequestUpdate, Req
 from ..utils.auth import get_current_admin, get_current_employee
 from sqlalchemy import func
 from ..models.employee import Employee
-from ..utils.telegram import notify_new_request
+from ..utils.telegram import notify_new_request, notify_status_change
 
 router = APIRouter()
 
@@ -57,8 +57,19 @@ def create_request(
         db.commit()
         db.refresh(db_request)
         
+        # Подготавливаем данные для уведомления
+        request_data = {
+            "id": db_request.id,
+            "title": db_request.title,
+            "description": db_request.description,
+            "priority": db_request.priority,
+            "status": db_request.status,
+            "employee_name": f"{current_employee.last_name} {current_employee.first_name}",
+            "created_at": db_request.created_at
+        }
+        
         # Отправляем уведомление в Telegram
-        notify_new_request(db_request.id)
+        notify_new_request(request_data)
         
         return request_to_dict(db_request)
     except Exception as e:
@@ -94,9 +105,18 @@ def update_request_status(
         if not db_request:
             raise HTTPException(status_code=404, detail="Заявка не найдена")
         
+        old_status = db_request.status
         db_request.status = status_update.status
         db.commit()
         db.refresh(db_request)
+        
+        # Отправляем уведомление об изменении статуса, если у сотрудника есть telegram_id
+        if db_request.employee and db_request.employee.telegram_id:
+            notify_status_change(
+                request_id=db_request.id,
+                new_status=status_update.status,
+                employee_telegram_id=db_request.employee.telegram_id
+            )
         
         return request_to_dict(db_request)
     except HTTPException:

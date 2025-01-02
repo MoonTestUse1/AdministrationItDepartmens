@@ -1,42 +1,21 @@
 """Telegram bot utils"""
+from aiogram import Bot, Dispatcher
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import asyncio
+from datetime import datetime
 import os
-from fastapi import APIRouter, Request
-from telebot import TeleBot
-from telebot.types import Update
+from logging import getLogger
 from ..models.request import RequestStatus, RequestPriority
-from ..database import SessionLocal
-from ..models.request import Request as DBRequest
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-WEBHOOK_URL = "https://itformhelp.ru/telegram/webhook/"
-WEBHOOK_PATH = "/telegram/webhook/"
+# Initialize logger
+logger = getLogger(__name__)
 
-bot = TeleBot(TELEGRAM_BOT_TOKEN)
-router = APIRouter()
+# Initialize bot with token
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "5057752127")
 
-@router.post(WEBHOOK_PATH)
-async def handle_webhook(request: Request):
-    """Handle webhook from Telegram"""
-    json_string = await request.json()
-    update = Update.de_json(json_string)
-    bot.process_new_updates([update])
-    return {"ok": True}
-
-def setup_webhook():
-    """Setup webhook"""
-    bot.remove_webhook()
-    bot.set_webhook(url=WEBHOOK_URL)
-
-@bot.message_handler(commands=['start'])
-def start(message):
-    """Handle /start command"""
-    bot.reply_to(message, "Привет! Я бот технической поддержки. Я буду уведомлять вас о статусе ваших заявок.")
-
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    """Handle all messages"""
-    bot.reply_to(message, "Я получил ваше сообщение и обязательно обработаю его!")
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
+dp = Dispatcher()
 
 def format_priority(priority: str) -> str:
     """Format priority with emoji"""
@@ -47,43 +26,63 @@ def format_priority(priority: str) -> str:
     }
     return f"{priority_emoji.get(priority, '⚪')} {priority.capitalize()}"
 
-def notify_new_request(request_id: int):
-    """Send notification about new request"""
-    try:
-        db = SessionLocal()
-        request = db.query(DBRequest).filter(DBRequest.id == request_id).first()
-        if request:
-            message = (
-                f"📋 <b>Новая заявка #{request.id}</b>\n\n"
-                f"📝 <b>Заголовок:</b> {request.title}\n"
-                f"👤 <b>Сотрудник:</b> {request.employee.last_name} {request.employee.first_name}\n"
-                f"❗ <b>Приоритет:</b> {format_priority(request.priority)}\n\n"
-                f"📄 <b>Описание:</b>\n{request.description}"
-            )
-            bot.send_message(TELEGRAM_CHAT_ID, message, parse_mode="HTML")
-    except Exception as e:
-        print(f"Error sending telegram notification: {e}")
-    finally:
-        db.close()
+def format_status(status: str) -> str:
+    """Format status with emoji"""
+    status_emoji = {
+        RequestStatus.NEW: "🆕",
+        RequestStatus.IN_PROGRESS: "⏳",
+        RequestStatus.COMPLETED: "✅",
+        RequestStatus.REJECTED: "❌"
+    }
+    return f"{status_emoji.get(status, '⚪')} {status.capitalize()}"
 
-def notify_status_change(request_id: int, new_status: RequestStatus):
-    """Notify user about request status change"""
+async def send_request_notification(request_data: dict):
+    """Send notification about new request to Telegram"""
     try:
-        db = SessionLocal()
-        request = db.query(DBRequest).filter(DBRequest.id == request_id).first()
-        if request and request.employee and request.employee.telegram_id:
-            status_messages = {
-                RequestStatus.NEW: "создана",
-                RequestStatus.IN_PROGRESS: "взята в работу",
-                RequestStatus.COMPLETED: "выполнена",
-                RequestStatus.REJECTED: "отклонена"
-            }
-            message = f"Статус вашей заявки №{request.id} изменен на: {status_messages.get(new_status, new_status)}"
-            bot.send_message(request.employee.telegram_id, message)
+        message = (
+            f"📋 <b>Новая заявка #{request_data['id']}</b>\n\n"
+            f"📝 <b>Заголовок:</b> {request_data['title']}\n"
+            f"👤 <b>Сотрудник:</b> {request_data.get('employee_name', 'Не указан')}\n"
+            f"❗ <b>Приоритет:</b> {format_priority(request_data['priority'])}\n"
+            f"📊 <b>Статус:</b> {format_status(request_data['status'])}\n\n"
+            f"📄 <b>Описание:</b>\n{request_data['description']}\n\n"
+            f"🕒 <b>Создана:</b> {request_data['created_at'].strftime('%d.%m.%Y %H:%M')}"
+        )
+        
+        await bot.send_message(
+            chat_id=TELEGRAM_CHAT_ID,
+            text=message,
+            parse_mode="HTML"
+        )
     except Exception as e:
-        print(f"Error sending telegram notification: {e}")
-    finally:
-        db.close()
+        logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
 
-# Инициализация вебхука при запуске
-setup_webhook()
+def notify_new_request(request_data: dict):
+    """Wrapper to run async notification in sync context"""
+    try:
+        asyncio.run(send_request_notification(request_data))
+    except Exception as e:
+        logger.error(f"Failed to send notification: {e}", exc_info=True)
+
+async def send_status_notification(request_id: int, new_status: str, employee_telegram_id: str):
+    """Send notification about status change"""
+    try:
+        message = (
+            f"🔄 <b>Обновление статуса заявки #{request_id}</b>\n\n"
+            f"📊 <b>Новый статус:</b> {format_status(new_status)}"
+        )
+        
+        await bot.send_message(
+            chat_id=employee_telegram_id,
+            text=message,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"Error sending status notification: {e}", exc_info=True)
+
+def notify_status_change(request_id: int, new_status: str, employee_telegram_id: str):
+    """Wrapper to run async status notification in sync context"""
+    try:
+        asyncio.run(send_status_notification(request_id, new_status, employee_telegram_id))
+    except Exception as e:
+        logger.error(f"Failed to send status notification: {e}", exc_info=True)
