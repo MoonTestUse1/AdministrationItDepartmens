@@ -101,9 +101,23 @@ export default {
         const response = await axios.get('/api/employees', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          },
+          validateStatus: function (status) {
+            return status < 500
           }
         })
-        this.employees = response.data
+
+        if (response.status === 307) {
+          const redirectUrl = response.headers.location
+          const finalResponse = await axios.get(redirectUrl, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            }
+          })
+          this.employees = finalResponse.data
+        } else {
+          this.employees = response.data
+        }
       } catch (error) {
         console.error('Error fetching employees:', error)
       }

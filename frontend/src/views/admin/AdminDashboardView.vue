@@ -62,6 +62,7 @@
       v-if="showEmployeesModal"
       :isOpen="showEmployeesModal"
       @close="showEmployeesModal = false"
+      ref="employeesModal"
     />
 
     <RequestsModal
@@ -116,8 +117,8 @@ export default {
     },
     handleEmployeeAdded() {
       // Обновляем список сотрудников, если модальное окно списка открыто
-      if (this.showEmployeesModal) {
-        this.$refs.employeesModal?.fetchEmployees()
+      if (this.showEmployeesModal && this.$refs.employeesModal) {
+        this.$refs.employeesModal.fetchEmployees()
       }
     }
   },

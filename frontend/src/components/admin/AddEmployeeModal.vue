@@ -132,12 +132,11 @@ export default {
             'Content-Type': 'application/json'
           },
           validateStatus: function (status) {
-            return status < 500 // Разрешаем все статусы < 500
+            return status < 500
           }
         })
-        
+
         if (response.status === 307) {
-          // Если получили редирект, делаем запрос по новому URL
           const redirectUrl = response.headers.location
           const finalResponse = await axios.post(redirectUrl, this.formData, {
             headers: {
