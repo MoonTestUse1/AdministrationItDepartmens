@@ -124,6 +124,8 @@ export default {
         })
         console.log('Requests response:', response) // Для отладки
 
+        // Убедимся, что у нас есть массив заявок
+        let requestsData = []
         if (response.status === 307) {
           const redirectUrl = response.headers.location
           console.log('Following redirect to:', redirectUrl) // Для отладки
@@ -133,9 +135,9 @@ export default {
             }
           })
           console.log('Final response:', finalResponse) // Для отладки
-          this.requests = finalResponse.data
+          requestsData = Array.isArray(finalResponse.data) ? finalResponse.data : []
         } else {
-          this.requests = response.data
+          requestsData = Array.isArray(response.data) ? response.data : []
         }
 
         // Получаем информацию о сотрудниках для отображения имен
@@ -145,10 +147,10 @@ export default {
           }
         })
         console.log('Employees response:', employeesResponse.data) // Для отладки
-        const employees = employeesResponse.data
+        const employees = Array.isArray(employeesResponse.data) ? employeesResponse.data : []
         
         // Добавляем имена сотрудников к заявкам
-        this.requests = this.requests.map(request => {
+        this.requests = requestsData.map(request => {
           const employee = employees.find(emp => emp.id === request.employee_id)
           return {
             ...request,
