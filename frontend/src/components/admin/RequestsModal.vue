@@ -114,13 +114,29 @@ export default {
       this.isLoading = true
       try {
         console.log('Fetching requests...') // Для отладки
-        const response = await axios.get('/api/requests/all', {
+        const response = await axios.get('/api/requests', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+          },
+          validateStatus: function (status) {
+            return status < 500
           }
         })
-        console.log('Requests response:', response.data) // Для отладки
-        this.requests = response.data
+        console.log('Requests response:', response) // Для отладки
+
+        if (response.status === 307) {
+          const redirectUrl = response.headers.location
+          console.log('Following redirect to:', redirectUrl) // Для отладки
+          const finalResponse = await axios.get(redirectUrl, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            }
+          })
+          console.log('Final response:', finalResponse) // Для отладки
+          this.requests = finalResponse.data
+        } else {
+          this.requests = response.data
+        }
 
         // Получаем информацию о сотрудниках для отображения имен
         const employeesResponse = await axios.get('/api/employees', {
@@ -139,10 +155,10 @@ export default {
             employee_name: employee ? `${employee.last_name} ${employee.first_name}` : 'Неизвестный сотрудник'
           }
         })
-        console.log('Processed requests:', this.requests) // Для отладки
+        console.log('Final processed requests:', this.requests) // Для отладки
       } catch (error) {
-        console.error('Error fetching requests:', error)
-        this.error = 'Ошибка при загрузке заявок'
+        console.error('Error fetching requests:', error.response || error)
+        this.error = `Ошибка при загрузке заявок: ${error.response?.data?.detail || error.message}`
         this.requests = []
       } finally {
         this.isLoading = false
