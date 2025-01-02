@@ -1,15 +1,15 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="closeModal">
+  <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>Управление заявками</h2>
-        <button class="close-button" @click="closeModal">&times;</button>
+        <button class="close-button" @click.stop="closeModal">&times;</button>
       </div>
 
       <div class="filters">
         <div class="filter-group">
           <label>Статус:</label>
-          <select v-model="statusFilter" class="filter-select">
+          <select v-model="statusFilter" class="filter-select" @click.stop>
             <option value="">Все статусы</option>
             <option value="new">Новая</option>
             <option value="in_progress">В работе</option>
@@ -19,7 +19,7 @@
 
         <div class="filter-group">
           <label>Приоритет:</label>
-          <select v-model="priorityFilter" class="filter-select">
+          <select v-model="priorityFilter" class="filter-select" @click.stop>
             <option value="">Все приоритеты</option>
             <option value="low">Низкий</option>
             <option value="medium">Средний</option>
@@ -29,7 +29,7 @@
       </div>
 
       <div class="requests-list">
-        <div v-for="request in filteredRequests" :key="request.id" class="request-card">
+        <div v-for="request in filteredRequests" :key="request.id" class="request-card" @click.stop>
           <div class="request-header">
             <h3>{{ request.title }}</h3>
             <div class="request-meta">
@@ -48,7 +48,7 @@
             <select 
               v-model="request.status" 
               class="status-select"
-              @change="updateRequestStatus(request)"
+              @change.stop="updateRequestStatus(request)"
             >
               <option value="new">Новая</option>
               <option value="in_progress">В работе</option>
@@ -73,7 +73,8 @@ export default {
   props: {
     isOpen: {
       type: Boolean,
-      required: true
+      required: true,
+      default: false
     }
   },
   data() {
@@ -104,23 +105,9 @@ export default {
         const response = await axios.get('/api/requests', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-          },
-          validateStatus: function (status) {
-            return status < 500
           }
         })
-
-        if (response.status === 307) {
-          const redirectUrl = response.headers.location
-          const finalResponse = await axios.get(redirectUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-            }
-          })
-          this.requests = finalResponse.data
-        } else {
-          this.requests = response.data
-        }
+        this.requests = response.data
 
         // Получаем информацию о сотрудниках для отображения имен
         const employeesResponse = await axios.get('/api/employees', {
@@ -156,7 +143,6 @@ export default {
         })
       } catch (error) {
         console.error('Error updating request status:', error)
-        // Возвращаем предыдущий статус в случае ошибки
         this.fetchRequests()
       }
     },

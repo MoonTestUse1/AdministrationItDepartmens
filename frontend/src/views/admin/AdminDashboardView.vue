@@ -34,7 +34,7 @@
             <p>Регистрация нового сотрудника в системе</p>
           </div>
 
-          <div class="action-card" @click.stop="showRequestsModal = true">
+          <div class="action-card" @click.stop="openRequestsModal">
             <div class="action-icon">📝</div>
             <h3>Управление заявками</h3>
             <p>Просмотр и обработка заявок</p>
@@ -109,23 +109,9 @@ export default {
         const response = await axios.get('/api/requests/statistics', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-          },
-          validateStatus: function (status) {
-            return status < 500
           }
         })
-
-        if (response.status === 307) {
-          const redirectUrl = response.headers.location
-          const finalResponse = await axios.get(redirectUrl, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('admin_token')}`
-            }
-          })
-          this.statistics = finalResponse.data
-        } else {
-          this.statistics = response.data
-        }
+        this.statistics = response.data
       } catch (error) {
         console.error('Error fetching statistics:', error)
         this.statistics = {
@@ -136,19 +122,17 @@ export default {
       }
     },
     handleEmployeeAdded() {
-      // Обновляем список сотрудников, если модальное окно списка открыто
       if (this.showEmployeesModal && this.$refs.employeesModal) {
         this.$refs.employeesModal.fetchEmployees()
       }
-      // Также обновляем список, если окно закрыто
-      if (!this.showEmployeesModal) {
-        this.showEmployeesModal = true
-        this.$nextTick(() => {
-          if (this.$refs.employeesModal) {
-            this.$refs.employeesModal.fetchEmployees()
-          }
-        })
-      }
+    },
+    openRequestsModal() {
+      this.showRequestsModal = true
+      this.$nextTick(() => {
+        if (this.$refs.requestsModal) {
+          this.$refs.requestsModal.fetchRequests()
+        }
+      })
     }
   },
   async created() {
