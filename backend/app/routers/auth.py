@@ -9,11 +9,14 @@ from passlib.context import CryptContext
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.post("/admin")
+@router.post("/admin/login")
 def admin_login(login_data: AdminLogin, db: Session = Depends(get_db)):
     """Admin login endpoint"""
     if login_data.username == "admin" and login_data.password == "admin123":
-        return {"access_token": "admin_token"}
+        return {
+            "access_token": "admin_token",
+            "token_type": "bearer"
+        }
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @router.post("/login")
@@ -42,5 +45,6 @@ def employee_login(login_data: EmployeeLogin, db: Session = Depends(get_db)):
         "last_name": employee.last_name,
         "department": employee.department,
         "office": employee.office,
-        "access_token": f"employee_token_{employee.id}"  # Добавляем токен для авторизации
+        "access_token": f"employee_token_{employee.id}",  # Добавляем токен для авторизации
+        "token_type": "bearer"
     }
