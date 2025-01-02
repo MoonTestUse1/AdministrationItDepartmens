@@ -3,13 +3,16 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Копируем только файлы для установки зависимостей
+# Устанавливаем необходимые зависимости
+RUN apk add --no-cache python3 make g++
+
+# Копируем файлы package.json и package-lock.json
 COPY frontend/package*.json ./
 
-# Устанавливаем зависимости
-RUN npm install --production
+# Устанавливаем все зависимости (включая devDependencies)
+RUN npm install
 
-# Копируем остальные файлы проекта
+# Копируем исходный код
 COPY frontend/ .
 
 # Собираем приложение
