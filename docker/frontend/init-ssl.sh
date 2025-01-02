@@ -1,23 +1,34 @@
 #!/bin/sh
 
-# Остановка nginx
-nginx -s stop || true
+# Проверяем наличие сертификата
+if [ ! -f "/etc/letsencrypt/live/itformhelp.ru/fullchain.pem" ]; then
+    echo "Сертификат не найден. Получаем новый..."
+    
+    # Останавливаем nginx для освобождения 80 порта
+    nginx -s stop || true
+    
+    # Ждем освобождения порта
+    sleep 5
+    
+    # Получаем сертификат
+    certbot certonly --standalone \
+        --email crocoman7887@gmail.com \
+        --agree-tos \
+        --no-eff-email \
+        --non-interactive \
+        -d itformhelp.ru
+        
+    # Проверяем успешность получения сертификата
+    if [ ! -f "/etc/letsencrypt/live/itformhelp.ru/fullchain.pem" ]; then
+        echo "Ошибка получения сертификата"
+        exit 1
+    fi
+    
+    echo "Сертификат успешно получен"
+else
+    echo "Сертификат уже существует"
+fi
 
-# Получение сертификата
-certbot certonly --standalone \
-  --email crocoman7887@gmail.com \
-  --agree-tos \
-  --no-eff-email \
-  --staging \
-  -d itformhelp.ru
-
-# После успешного получения сертификата в staging, получаем боевой сертификат
-certbot certonly --standalone \
-  --email crocoman7887@gmail.com \
-  --agree-tos \
-  --no-eff-email \
-  --force-renewal \
-  -d itformhelp.ru
-
-# Запуск nginx
+# Запускаем nginx с новой конфигурацией
+echo "Запускаем nginx..."
 nginx -g "daemon off;" 
