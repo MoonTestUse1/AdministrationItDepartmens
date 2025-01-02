@@ -1,90 +1,60 @@
-from aiogram import Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import asyncio
-from datetime import datetime
-from logging import getLogger
-from .constants import (
-    STATUS_LABELS, PRIORITY_LABELS, PRIORITY_EMOJI,
-    DEPARTMENT_LABELS, REQUEST_TYPE_LABELS, REQUEST_TYPE_EMOJI
-)
+"""Telegram bot utils"""
+import os
+from fastapi import APIRouter, Request
+from telebot import TeleBot
+from telebot.types import Update
+from ..models.request import RequestStatus
+from ..database import SessionLocal
+from ..models.request import Request as DBRequest
 
-# Initialize logger
-logger = getLogger(__name__)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+WEBHOOK_URL = "https://itformhelp.ru/telegram/webhook/"
+WEBHOOK_PATH = "/telegram/webhook/"
 
-# Initialize bot with token
-bot = Bot(token="7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
+bot = TeleBot(TELEGRAM_BOT_TOKEN)
+router = APIRouter()
 
-# Chat ID for notifications 
-CHAT_ID = "5057752127"
+@router.post(WEBHOOK_PATH)
+async def handle_webhook(request: Request):
+    """Handle webhook from Telegram"""
+    json_string = await request.json()
+    update = Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return {"ok": True}
 
-def create_status_keyboard(request_id: int, current_status: str) -> InlineKeyboardMarkup:
-    """Create inline keyboard with status buttons"""
-    status_transitions = {
-        'new': ['in_progress'],
-        'in_progress': ['resolved'],
-        'resolved': ['closed'],
-        'closed': []
-    }
+def setup_webhook():
+    """Setup webhook"""
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL)
 
-    buttons = []
-    available_statuses = status_transitions.get(current_status, [])
-    
-    for status in available_statuses:
-        callback_data = f"status_{request_id}_{status}"
-        logger.debug(f"Creating button with callback_data: {callback_data}")
-        buttons.append([
-            InlineKeyboardButton(
-                text=STATUS_LABELS[status],
-                callback_data=callback_data
-            )
-        ])
+@bot.message_handler(commands=['start'])
+def start(message):
+    """Handle /start command"""
+    bot.reply_to(message, "Привет! Я бот технической поддержки. Я буду уведомлять вас о статусе ваших заявок.")
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    logger.debug(f"Created keyboard: {keyboard}")
-    return keyboard
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    """Handle all messages"""
+    bot.reply_to(message, "Я получил ваше сообщение и обязательно обработаю его!")
 
-def format_request_message(request_data: dict) -> str:
-    """Format request data into a message"""
-    created_at = datetime.fromisoformat(request_data['created_at']).strftime('%d.%m.%Y %H:%M')
-    
-    # Get translated values
-    department = DEPARTMENT_LABELS.get(request_data['department'], request_data['department'])
-    request_type = REQUEST_TYPE_LABELS.get(request_data['request_type'], request_data['request_type'])
-    priority = PRIORITY_LABELS.get(request_data['priority'], request_data['priority'])
-    status = STATUS_LABELS.get(request_data.get('status', 'new'), 'Неизвестно')
-    
-    return (
-        f"📋 <b>Заявка #{request_data['id']}</b>\n\n"
-        f"👤 <b>Сотрудник:</b> {request_data['employee_last_name']} {request_data['employee_first_name']}\n"
-        f"🏢 <b>Отдел:</b> {department}\n"
-        f"🚪 <b>Кабинет:</b> {request_data['office']}\n"
-        f"{REQUEST_TYPE_EMOJI.get(request_data['request_type'], '📝')} <b>Тип заявки:</b> {request_type}\n"
-        f"{PRIORITY_EMOJI.get(request_data['priority'], '⚪')} <b>Приоритет:</b> {priority}\n\n"
-        f"📝 <b>Описание:</b>\n{request_data['description']}\n\n"
-        f"🕒 <b>Создана:</b> {created_at}\n"
-        f"📊 <b>Статус:</b> {status}"
-    )
-
-async def send_request_notification(request_data: dict):
-    """Send notification about request to Telegram"""
+def notify_status_change(request_id: int, new_status: RequestStatus):
+    """Notify user about request status change"""
     try:
-        message = format_request_message(request_data)
-        keyboard = create_status_keyboard(request_data['id'], request_data.get('status', 'new'))
-        
-        await bot.send_message(
-            chat_id=CHAT_ID,
-            text=message,
-            parse_mode="HTML",
-            reply_markup=keyboard
-        )
+        db = SessionLocal()
+        request = db.query(DBRequest).filter(DBRequest.id == request_id).first()
+        if request and request.employee and request.employee.telegram_id:
+            status_messages = {
+                RequestStatus.NEW: "создана",
+                RequestStatus.IN_PROGRESS: "взята в работу",
+                RequestStatus.COMPLETED: "выполнена",
+                RequestStatus.REJECTED: "отклонена"
+            }
+            message = f"Статус вашей заявки №{request.id} изменен на: {status_messages.get(new_status, new_status)}"
+            bot.send_message(request.employee.telegram_id, message)
     except Exception as e:
-        logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
-        raise
+        print(f"Error sending telegram notification: {e}")
+    finally:
+        db.close()
 
-def send_notification(request_data: dict):
-    """Wrapper to run async notification in sync context"""
-    try:
-        asyncio.run(send_request_notification(request_data))
-    except Exception as e:
-        logger.error(f"Failed to send notification: {e}", exc_info=True)
-        raise
+# Инициализация вебхука при запуске
+setup_webhook()
