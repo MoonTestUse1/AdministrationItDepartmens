@@ -1,97 +1,173 @@
 <template>
-  <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-    <h2 class="text-2xl font-semibold text-slate-800 mb-4">Вход в админ-панель</h2>
-    
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Логин
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <UserIcon :size="18" class="text-slate-400" />
-          </div>
+  <div class="admin-login">
+    <div class="login-container">
+      <div class="login-header">
+        <h1>IT Support</h1>
+        <p>Панель администратора</p>
+      </div>
+      
+      <form @submit.prevent="handleLogin" class="login-form">
+        <div class="form-group">
+          <label for="username">Имя пользователя</label>
           <input
-            v-model="username"
             type="text"
+            id="username"
+            v-model="username"
             required
-            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
-            placeholder="Введите логин"
-          />
+            class="form-input"
+            placeholder="Введите имя пользователя"
+          >
         </div>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">
-          Пароль
-        </label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-            <LockIcon :size="18" class="text-slate-400" />
-          </div>
+        <div class="form-group">
+          <label for="password">Пароль</label>
           <input
-            v-model="password"
             type="password"
+            id="password"
+            v-model="password"
             required
-            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            class="form-input"
             placeholder="Введите пароль"
-          />
+          >
         </div>
-      </div>
 
-      <button
-        type="submit"
-        :disabled="isLoading"
-        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        <component 
-          :is="isLoading ? LoaderIcon : LogInIcon" 
-          :size="18"
-          :class="{ 'animate-spin': isLoading }" 
-        />
-        {{ isLoading ? 'Вход...' : 'Войти' }}
-      </button>
+        <button type="submit" class="login-button" :disabled="isLoading">
+          {{ isLoading ? 'Вход...' : 'Войти' }}
+        </button>
 
-      <div class="text-center">
-        <router-link 
-          to="/" 
-          class="text-sm text-blue-600 hover:text-blue-800"
-        >
-          Вернуться к входу для сотрудников
-        </router-link>
-      </div>
-    </form>
+        <p v-if="error" class="error-message">{{ error }}</p>
+      </form>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import { UserIcon, LockIcon, LogInIcon, LoaderIcon } from 'lucide-vue-next';
+<script>
+import axios from 'axios'
 
-const router = useRouter();
-const authStore = useAuthStore();
-
-const username = ref('');
-const password = ref('');
-const isLoading = ref(false);
-
-async function handleSubmit() {
-  if (isLoading.value) return;
-  
-  isLoading.value = true;
-  try {
-    const success = await authStore.adminLogin(username.value, password.value);
-    if (success) {
-      router.push('/admin/dashboard');
-    } else {
-      alert('Неверные учетные данные');
+export default {
+  name: 'AdminLoginView',
+  data() {
+    return {
+      username: '',
+      password: '',
+      error: '',
+      isLoading: false
     }
-  } catch (error) {
-    alert('Ошибка авторизации');
-  } finally {
-    isLoading.value = false;
+  },
+  methods: {
+    async handleLogin() {
+      this.error = ''
+      this.isLoading = true
+      
+      try {
+        const response = await axios.post('/api/auth/admin/login', {
+          username: this.username,
+          password: this.password
+        })
+        
+        localStorage.setItem('admin_token', response.data.access_token)
+        this.$router.push('/admin/dashboard')
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Ошибка при входе'
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 }
 </script>
+
+<style scoped>
+.admin-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+  padding: 1rem;
+}
+
+.login-container {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h1 {
+  color: #1a237e;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.login-header p {
+  color: #666;
+  margin: 0.5rem 0 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #1a237e;
+  font-weight: 500;
+}
+
+.form-input {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #1a237e;
+}
+
+.login-button {
+  background-color: #1a237e;
+  color: white;
+  padding: 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover:not(:disabled) {
+  background-color: #283593;
+}
+
+.login-button:disabled {
+  background-color: #9fa8da;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #d32f2f;
+  text-align: center;
+  margin: 0;
+  font-size: 0.9rem;
+}
+</style>
