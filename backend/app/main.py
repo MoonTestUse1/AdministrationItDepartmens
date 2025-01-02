@@ -4,7 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models
 from .routers import admin, employees, requests, auth, statistics
 
-app = FastAPI()
+app = FastAPI(
+    # Отключаем автоматическое перенаправление со слэшем
+    redirect_slashes=False
+)
 
 # CORS configuration
 app.add_middleware(

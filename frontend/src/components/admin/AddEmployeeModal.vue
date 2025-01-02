@@ -126,15 +126,40 @@ export default {
       this.isLoading = true
       
       try {
-        await axios.post('/api/employees', this.formData, {
+        const response = await axios.post('/api/employees', this.formData, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('admin_token')}`
+            Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
+            'Content-Type': 'application/json'
+          },
+          validateStatus: function (status) {
+            return status < 500 // Разрешаем все статусы < 500
           }
         })
         
-        this.$emit('employee-added')
-        this.closeModal()
+        if (response.status === 307) {
+          // Если получили редирект, делаем запрос по новому URL
+          const redirectUrl = response.headers.location
+          const finalResponse = await axios.post(redirectUrl, this.formData, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('admin_token')}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (finalResponse.status === 200 || finalResponse.status === 201) {
+            this.$emit('employee-added')
+            this.closeModal()
+          } else {
+            this.error = finalResponse.data?.detail || 'Ошибка при добавлении сотрудника'
+          }
+        } else if (response.status === 200 || response.status === 201) {
+          this.$emit('employee-added')
+          this.closeModal()
+        } else {
+          this.error = response.data?.detail || 'Ошибка при добавлении сотрудника'
+        }
       } catch (error) {
+        console.error('Error creating employee:', error)
         this.error = error.response?.data?.detail || 'Ошибка при добавлении сотрудника'
       } finally {
         this.isLoading = false

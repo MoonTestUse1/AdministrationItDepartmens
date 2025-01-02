@@ -11,6 +11,7 @@ from passlib.context import CryptContext
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+@router.get("", response_model=List[EmployeeResponse])
 @router.get("/", response_model=List[EmployeeResponse])
 def get_employees(db: Session = Depends(get_db), _: dict = Depends(get_current_admin)):
     """Get all employees"""
@@ -25,6 +26,7 @@ def get_employee(employee_id: int, db: Session = Depends(get_db), _: dict = Depe
         raise HTTPException(status_code=404, detail="Сотрудник не найден")
     return employee
 
+@router.post("", response_model=EmployeeResponse)
 @router.post("/", response_model=EmployeeResponse)
 def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db), _: dict = Depends(get_current_admin)):
     """Create new employee"""
