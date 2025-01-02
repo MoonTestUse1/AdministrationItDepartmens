@@ -113,8 +113,9 @@ export default {
     async fetchRequests() {
       this.isLoading = true
       try {
+        console.log('Token:', localStorage.getItem('admin_token')) // Для отладки токена
         console.log('Fetching requests...') // Для отладки
-        const response = await axios.get('/api/requests', {
+        const response = await axios.get('/api/admin/requests', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           },
@@ -138,6 +139,13 @@ export default {
           requestsData = Array.isArray(finalResponse.data) ? finalResponse.data : []
         } else {
           requestsData = Array.isArray(response.data) ? response.data : []
+        }
+
+        console.log('Requests data after processing:', requestsData) // Для отладки
+
+        if (requestsData.length === 0) {
+          console.log('No requests found in the response') // Для отладки
+          return
         }
 
         // Получаем информацию о сотрудниках для отображения имен
