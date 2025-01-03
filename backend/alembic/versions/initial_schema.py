@@ -7,7 +7,6 @@ Create Date: 2024-01-03 20:45:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'initial_schema'
@@ -16,23 +15,6 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Создаем enum типы с проверкой существования
-    connection = op.get_bind()
-    
-    # Проверяем существование типа requeststatus
-    result = connection.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requeststatus')")
-    exists = result.scalar()
-    if not exists:
-        request_status = postgresql.ENUM('new', 'in_progress', 'completed', 'rejected', name='requeststatus')
-        request_status.create(connection)
-    
-    # Проверяем существование типа requestpriority
-    result = connection.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requestpriority')")
-    exists = result.scalar()
-    if not exists:
-        request_priority = postgresql.ENUM('low', 'medium', 'high', name='requestpriority')
-        request_priority.create(connection)
-    
     # Создаем таблицу employees
     op.create_table(
         'employees',
@@ -51,8 +33,8 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('title', sa.String(), nullable=False),
         sa.Column('description', sa.String(), nullable=False),
-        sa.Column('status', sa.Enum('new', 'in_progress', 'completed', 'rejected', name='requeststatus'), nullable=False),
-        sa.Column('priority', sa.Enum('low', 'medium', 'high', name='requestpriority'), nullable=False),
+        sa.Column('status', sa.String(), nullable=False),
+        sa.Column('priority', sa.String(), nullable=False),
         sa.Column('employee_id', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
@@ -90,8 +72,4 @@ def downgrade() -> None:
     # Удаляем таблицы
     op.drop_table('tokens')
     op.drop_table('requests')
-    op.drop_table('employees')
-    
-    # Удаляем enum типы
-    op.execute('DROP TYPE IF EXISTS requeststatus')
-    op.execute('DROP TYPE IF EXISTS requestpriority') 
+    op.drop_table('employees') 
