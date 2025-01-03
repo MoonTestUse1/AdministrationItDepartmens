@@ -5,17 +5,17 @@ from ..models.request import Request
 from ..schemas.request import RequestCreate, RequestUpdate
 from ..utils.loggers import request_logger
 from typing import List, Optional
+from enum import Enum
 
 def create_request(db: Session, request: RequestCreate, employee_id: int):
     """Create new request"""
     try:
         db_request = Request(
-            employee_id=employee_id,
-            department=request.department,
-            request_type=request.request_type,
-            priority=request.priority,
+            title=request.title,
             description=request.description,
-            status="new"
+            priority=request.priority.value,
+            status=request.status.value,
+            employee_id=employee_id
         )
         db.add(db_request)
         db.commit()
@@ -50,11 +50,9 @@ def get_request_details(db: Session, request_id: int):
         "employee_id": request.employee_id,
         "employee_last_name": request.employee.last_name,
         "employee_first_name": request.employee.first_name,
-        "department": request.department,
-        "office": request.employee.office,
-        "request_type": request.request_type,
-        "priority": request.priority,
+        "title": request.title,
         "description": request.description,
+        "priority": request.priority,
         "status": request.status,
         "created_at": request.created_at.isoformat()
     }
@@ -79,6 +77,8 @@ def update_request(db: Session, request_id: int, request: RequestUpdate):
         
     update_data = request.model_dump(exclude_unset=True)
     for field, value in update_data.items():
+        if isinstance(value, Enum):
+            value = value.value
         setattr(db_request, field, value)
         
     db.commit()
