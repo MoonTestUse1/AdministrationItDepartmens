@@ -1,6 +1,7 @@
 """Employee schemas"""
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import Optional
 
 class EmployeeBase(BaseModel):
     first_name: str
@@ -14,7 +15,10 @@ class EmployeeCreate(EmployeeBase):
     password: str
 
 class EmployeeUpdate(EmployeeBase):
-    pass
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    department: Optional[str] = None
+    office: Optional[str] = None
 
 class Employee(EmployeeBase):
     id: int

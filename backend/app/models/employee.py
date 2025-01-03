@@ -16,4 +16,4 @@ class Employee(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Определяем отношение к Request
-    requests = relationship("Request", back_populates="employee")
+    requests = relationship("Request", back_populates="employee", cascade="all, delete-orphan")
