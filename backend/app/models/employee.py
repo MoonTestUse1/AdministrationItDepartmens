@@ -13,12 +13,12 @@ class Employee(Base):
     last_name = Column(String, nullable=False)
     department = Column(String, nullable=False)
     office = Column(String, nullable=False)
-    password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Определяем отношение к Request
     requests = relationship(
-        "app.models.request.Request",
+        "Request",
         back_populates="employee",
         lazy="dynamic",
         cascade="all, delete-orphan"
