@@ -6,8 +6,11 @@ WORKDIR /app
 # Копируем файлы package.json и package-lock.json
 COPY frontend/package*.json ./
 
-# Используем npm ci вместо npm install
-RUN npm ci
+# Сначала обновляем package-lock.json
+RUN npm install
+
+# Очищаем node_modules и используем npm ci
+RUN rm -rf node_modules && npm ci
 
 # Копируем исходный код
 COPY frontend/ .
