@@ -1,79 +1,86 @@
 """Employees router"""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
-from ..models.employee import Employee
-from ..schemas.employee import EmployeeCreate, EmployeeResponse, EmployeeUpdate
+from ..crud import employees
+from ..schemas.employee import Employee, EmployeeCreate, EmployeeUpdate
 from ..utils.auth import get_current_admin
-from passlib.context import CryptContext
+from ..utils.auth import get_password_hash
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.get("", response_model=List[EmployeeResponse])
-@router.get("/", response_model=List[EmployeeResponse])
-def get_employees(db: Session = Depends(get_db), _: dict = Depends(get_current_admin)):
-    """Get all employees"""
-    employees = db.query(Employee).all()
-    return employees
-
-@router.get("/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: int, db: Session = Depends(get_db), _: dict = Depends(get_current_admin)):
-    """Get employee by ID"""
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Сотрудник не найден")
-    return employee
-
-@router.post("", response_model=EmployeeResponse)
-@router.post("/", response_model=EmployeeResponse)
-def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db), _: dict = Depends(get_current_admin)):
-    """Create new employee"""
-    # Хешируем пароль
-    hashed_password = pwd_context.hash(employee.password)
-    
-    # Создаем нового сотрудника
-    db_employee = Employee(
-        first_name=employee.first_name,
-        last_name=employee.last_name,
-        department=employee.department,
-        office=employee.office,
-        password=hashed_password
-    )
-    
-    # Сохраняем в базу данных
-    db.add(db_employee)
-    db.commit()
-    db.refresh(db_employee)
-    
-    return db_employee
-
-@router.put("/{employee_id}", response_model=EmployeeResponse)
-def update_employee(
-    employee_id: int,
-    employee_update: EmployeeUpdate,
+@router.post("", response_model=Employee)
+def create_employee(
+    employee: EmployeeCreate,
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """Update employee data"""
-    db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
-    if not db_employee:
-        raise HTTPException(status_code=404, detail="Сотрудник не найден")
+    """
+    Создание нового сотрудника (только для админа)
+    """
+    # Хэшируем пароль
+    hashed_password = get_password_hash(employee.password)
     
-    # Обновляем данные
-    update_data = employee_update.model_dump(exclude_unset=True)
-    
-    # Если передан пароль, хешируем его
-    if 'password' in update_data:
-        update_data['password'] = pwd_context.hash(update_data['password'])
-    
-    for field, value in update_data.items():
-        setattr(db_employee, field, value)
-    
-    db.commit()
-    db.refresh(db_employee)
+    # Создаем сотрудника
+    db_employee = employees.create_employee(
+        db=db,
+        employee=employee,
+        hashed_password=hashed_password
+    )
     return db_employee
+
+@router.get("", response_model=List[Employee])
+def get_employees(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    _: dict = Depends(get_current_admin)
+):
+    """
+    Получение списка всех сотрудников (только для админа)
+    """
+    employees_list = employees.get_employees(db, skip=skip, limit=limit)
+    return employees_list
+
+@router.get("/{employee_id}", response_model=Employee)
+def get_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    _: dict = Depends(get_current_admin)
+):
+    """
+    Получение информации о сотруднике по ID (только для админа)
+    """
+    db_employee = employees.get_employee(db, employee_id=employee_id)
+    if db_employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return db_employee
+
+@router.put("/{employee_id}", response_model=Employee)
+def update_employee(
+    employee_id: int,
+    employee: EmployeeUpdate,
+    db: Session = Depends(get_db),
+    _: dict = Depends(get_current_admin)
+):
+    """
+    Обновление информации о сотруднике (только для админа)
+    """
+    db_employee = employees.get_employee(db, employee_id=employee_id)
+    if db_employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+        
+    # Если указан новый пароль, хэшируем его
+    if employee.password:
+        employee.password = get_password_hash(employee.password)
+        
+    updated_employee = employees.update_employee(
+        db=db,
+        employee_id=employee_id,
+        employee=employee
+    )
+    return updated_employee
 
 @router.delete("/{employee_id}")
 def delete_employee(
@@ -81,11 +88,11 @@ def delete_employee(
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """Delete employee"""
-    db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
-    if not db_employee:
-        raise HTTPException(status_code=404, detail="Сотрудник не найден")
-    
-    db.delete(db_employee)
-    db.commit()
-    return {"message": "Сотрудник успешно удален"}
+    """
+    Удаление сотрудника (только для админа)
+    """
+    db_employee = employees.get_employee(db, employee_id=employee_id)
+    if db_employee is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    employees.delete_employee(db=db, employee_id=employee_id)
+    return {"message": "Employee deleted successfully"}
