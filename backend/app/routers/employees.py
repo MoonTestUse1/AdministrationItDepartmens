@@ -11,9 +11,9 @@ from ..utils.auth import get_current_admin, get_password_hash
 # Настройка логирования
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/employees", tags=["employees"])
+router = APIRouter(tags=["employees"])
 
-@router.post("/", response_model=Employee, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Employee, status_code=status.HTTP_201_CREATED)
 async def create_employee(
     employee: EmployeeCreate,
     db: Session = Depends(get_db),
@@ -31,7 +31,7 @@ async def create_employee(
             detail="Error creating employee"
         )
 
-@router.get("/", response_model=List[Employee])
+@router.get("", response_model=List[Employee])
 async def get_employees(
     skip: int = 0,
     limit: int = 100,
@@ -49,7 +49,7 @@ async def get_employees(
             detail="Error getting employees"
         )
 
-@router.get("/{employee_id}/", response_model=Employee)
+@router.get("/{employee_id}", response_model=Employee)
 async def get_employee(
     employee_id: int,
     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ async def get_employee(
             detail="Error getting employee"
         )
 
-@router.put("/{employee_id}/", response_model=Employee)
+@router.put("/{employee_id}", response_model=Employee)
 async def update_employee(
     employee_id: int,
     employee: EmployeeUpdate,
@@ -94,7 +94,7 @@ async def update_employee(
             detail="Error updating employee"
         )
 
-@router.delete("/{employee_id}/", response_model=Employee)
+@router.delete("/{employee_id}", response_model=Employee)
 async def delete_employee(
     employee_id: int,
     db: Session = Depends(get_db),
