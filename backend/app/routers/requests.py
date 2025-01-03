@@ -7,6 +7,7 @@ from ..crud import requests
 from ..schemas.request import Request, RequestCreate, RequestUpdate, RequestStatistics
 from ..utils.auth import get_current_employee, get_current_admin
 from ..utils.telegram import notify_new_request
+from ..utils.loggers import request_logger
 
 router = APIRouter()
 
@@ -20,7 +21,33 @@ async def create_request(
     """
     Создание новой заявки
     """
+    # Логируем входящие данные
+    request_logger.info(
+        "Creating new request",
+        extra={
+            "request_data": request.model_dump(),
+            "employee_id": current_employee["id"]
+        }
+    )
+    
+    # Проверяем, что все поля заполнены правильно
+    request_logger.info(f"Request title: {request.title}")
+    request_logger.info(f"Request description: {request.description}")
+    request_logger.info(f"Request priority: {request.priority} (type: {type(request.priority)})")
+    request_logger.info(f"Request status: {request.status} (type: {type(request.status)})")
+    
     db_request = requests.create_request(db=db, request=request, employee_id=current_employee["id"])
+    
+    # Логируем созданную заявку
+    request_logger.info(
+        "Request created successfully",
+        extra={
+            "request_id": db_request.id,
+            "status": db_request.status,
+            "priority": db_request.priority
+        }
+    )
+    
     await notify_new_request(db_request.id)
     return db_request
 
