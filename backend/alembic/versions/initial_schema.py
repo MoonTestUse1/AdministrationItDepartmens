@@ -16,12 +16,22 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # Создаем enum типы
-    request_status = postgresql.ENUM('new', 'in_progress', 'completed', 'rejected', name='requeststatus')
-    request_status.create(op.get_bind())
+    # Создаем enum типы с проверкой существования
+    connection = op.get_bind()
     
-    request_priority = postgresql.ENUM('low', 'medium', 'high', name='requestpriority')
-    request_priority.create(op.get_bind())
+    # Проверяем существование типа requeststatus
+    result = connection.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requeststatus')")
+    exists = result.scalar()
+    if not exists:
+        request_status = postgresql.ENUM('new', 'in_progress', 'completed', 'rejected', name='requeststatus')
+        request_status.create(connection)
+    
+    # Проверяем существование типа requestpriority
+    result = connection.execute("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'requestpriority')")
+    exists = result.scalar()
+    if not exists:
+        request_priority = postgresql.ENUM('low', 'medium', 'high', name='requestpriority')
+        request_priority.create(connection)
     
     # Создаем таблицу employees
     op.create_table(
@@ -83,5 +93,5 @@ def downgrade() -> None:
     op.drop_table('employees')
     
     # Удаляем enum типы
-    op.execute('DROP TYPE requeststatus')
-    op.execute('DROP TYPE requestpriority') 
+    op.execute('DROP TYPE IF EXISTS requeststatus')
+    op.execute('DROP TYPE IF EXISTS requestpriority') 
