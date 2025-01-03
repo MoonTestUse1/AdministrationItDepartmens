@@ -32,6 +32,8 @@ Thumbs.db
 .venv/
 venv/
 .bolt/
+.venv2/
+   
 
 # Python cache files
 __pycache__/
