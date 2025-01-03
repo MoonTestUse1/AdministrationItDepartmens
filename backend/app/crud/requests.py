@@ -95,28 +95,44 @@ def delete_request(db: Session, request_id: int):
 
 def get_statistics(db: Session):
     """Get requests statistics"""
-    # Прямой SQL запрос для проверки данных
-    raw_data = db.execute(text("SELECT id, status FROM requests")).fetchall()
-    request_logger.info(f"Raw requests data: {raw_data}")
+    # Проверяем все заявки с полной информацией
+    all_requests = db.query(Request).all()
+    request_logger.info(f"Found {len(all_requests)} requests")
     
-    # Получаем общее количество заявок
-    total = len(raw_data)
-    request_logger.info(f"Total requests: {total}")
+    for req in all_requests:
+        request_logger.info(
+            f"Request #{req.id}: "
+            f"title='{req.title}', "
+            f"status='{req.status}', "
+            f"priority='{req.priority}', "
+            f"employee_id={req.employee_id}"
+        )
     
-    # Подсчитываем статусы вручную
-    status_counts = {status.value: 0 for status in RequestStatus}
-    for _, status in raw_data:
-        if status in status_counts:
-            status_counts[status] += 1
-        request_logger.info(f"Found status: {status}")
-    
-    result = {
-        "total": total,
-        "new": status_counts.get(RequestStatus.NEW.value, 0),
-        "in_progress": status_counts.get(RequestStatus.IN_PROGRESS.value, 0),
-        "completed": status_counts.get(RequestStatus.COMPLETED.value, 0),
-        "rejected": status_counts.get(RequestStatus.REJECTED.value, 0)
+    # Подсчитываем статусы
+    status_counts = {
+        RequestStatus.NEW.value: 0,
+        RequestStatus.IN_PROGRESS.value: 0,
+        RequestStatus.COMPLETED.value: 0,
+        RequestStatus.REJECTED.value: 0
     }
     
+    for req in all_requests:
+        current_status = req.status
+        request_logger.info(f"Processing status: {current_status}")
+        if current_status in status_counts:
+            status_counts[current_status] += 1
+            request_logger.info(f"Incremented count for {current_status}")
+        else:
+            request_logger.warning(f"Unknown status found: {current_status}")
+    
+    result = {
+        "total": len(all_requests),
+        "new": status_counts[RequestStatus.NEW.value],
+        "in_progress": status_counts[RequestStatus.IN_PROGRESS.value],
+        "completed": status_counts[RequestStatus.COMPLETED.value],
+        "rejected": status_counts[RequestStatus.REJECTED.value]
+    }
+    
+    request_logger.info(f"Status counts: {status_counts}")
     request_logger.info(f"Final statistics: {result}")
     return result
