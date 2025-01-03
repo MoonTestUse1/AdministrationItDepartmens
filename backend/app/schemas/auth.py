@@ -20,3 +20,13 @@ class EmployeeResponse(BaseModel):
     department: str
     office: str
     access_token: str 
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    employee_id: int | None = None
+    is_admin: bool = False
+
+    model_config = ConfigDict(from_attributes=True) 
