@@ -1,6 +1,6 @@
 """Request CRUD operations"""
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from ..models.request import Request, RequestStatus
 from ..schemas.request import RequestCreate, RequestUpdate
 from ..utils.loggers import request_logger
@@ -95,27 +95,27 @@ def delete_request(db: Session, request_id: int):
 
 def get_statistics(db: Session):
     """Get requests statistics"""
+    # Прямой SQL запрос для проверки данных
+    raw_data = db.execute(text("SELECT id, status FROM requests")).fetchall()
+    request_logger.info(f"Raw requests data: {raw_data}")
+    
     # Получаем общее количество заявок
-    total = db.query(func.count(Request.id)).scalar() or 0
+    total = len(raw_data)
     request_logger.info(f"Total requests: {total}")
     
-    # Получаем все заявки для проверки
-    all_requests = db.query(Request.status).all()
-    request_logger.info(f"All requests statuses: {[r.status for r in all_requests]}")
-    
-    # Получаем статистику по статусам
-    status_counts = {}
-    for status in RequestStatus:
-        count = db.query(func.count(Request.id)).filter(Request.status == status.value).scalar() or 0
-        status_counts[status.value] = count
-        request_logger.info(f"Status {status.value}: {count} requests")
+    # Подсчитываем статусы вручную
+    status_counts = {status.value: 0 for status in RequestStatus}
+    for _, status in raw_data:
+        if status in status_counts:
+            status_counts[status] += 1
+        request_logger.info(f"Found status: {status}")
     
     result = {
         "total": total,
-        "new": status_counts[RequestStatus.NEW.value],
-        "in_progress": status_counts[RequestStatus.IN_PROGRESS.value],
-        "completed": status_counts[RequestStatus.COMPLETED.value],
-        "rejected": status_counts[RequestStatus.REJECTED.value]
+        "new": status_counts.get(RequestStatus.NEW.value, 0),
+        "in_progress": status_counts.get(RequestStatus.IN_PROGRESS.value, 0),
+        "completed": status_counts.get(RequestStatus.COMPLETED.value, 0),
+        "rejected": status_counts.get(RequestStatus.REJECTED.value, 0)
     }
     
     request_logger.info(f"Final statistics: {result}")
