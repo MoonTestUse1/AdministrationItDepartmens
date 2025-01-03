@@ -11,7 +11,7 @@ from ..utils.auth import verify_password
 from ..utils.jwt import create_and_save_token
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
