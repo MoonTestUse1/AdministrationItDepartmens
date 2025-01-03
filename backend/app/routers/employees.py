@@ -29,7 +29,7 @@ def get_employees(
     """Get all employees"""
     return employees.get_employees(db, skip=skip, limit=limit)
 
-@router.get("/{employee_id}", response_model=Employee)
+@router.get("/{employee_id}/", response_model=Employee)
 def get_employee(
     employee_id: int,
     db: Session = Depends(get_db),
@@ -41,7 +41,7 @@ def get_employee(
         raise HTTPException(status_code=404, detail="Employee not found")
     return db_employee
 
-@router.put("/{employee_id}", response_model=Employee)
+@router.put("/{employee_id}/", response_model=Employee)
 def update_employee(
     employee_id: int,
     employee: EmployeeUpdate,
@@ -54,7 +54,7 @@ def update_employee(
         raise HTTPException(status_code=404, detail="Employee not found")
     return db_employee
 
-@router.delete("/{employee_id}", response_model=Employee)
+@router.delete("/{employee_id}/", response_model=Employee)
 def delete_employee(
     employee_id: int,
     db: Session = Depends(get_db),
