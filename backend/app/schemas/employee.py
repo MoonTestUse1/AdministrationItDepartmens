@@ -1,25 +1,21 @@
 """Employee schemas"""
 from pydantic import BaseModel, ConfigDict
+from typing import Optional
 
 class EmployeeBase(BaseModel):
     first_name: str
     last_name: str
     department: str
     office: str
-    
-    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeCreate(EmployeeBase):
     password: str
 
-class EmployeeUpdate(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    department: str | None = None
-    office: str | None = None
-    password: str | None = None
-    
-    model_config = ConfigDict(from_attributes=True)
+class EmployeeUpdate(EmployeeBase):
+    password: Optional[str] = None
 
-class EmployeeResponse(EmployeeBase):
-    id: int 
+class Employee(EmployeeBase):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    hashed_password: str 

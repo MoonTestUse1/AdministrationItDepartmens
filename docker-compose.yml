@@ -21,7 +21,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/support_db
+      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/support_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
@@ -34,8 +34,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=postgres123
       - POSTGRES_DB=support_db
+    ports:
+      - "5432:5432"
 
   redis:
     container_name: support-redis

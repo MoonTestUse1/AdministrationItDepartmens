@@ -12,11 +12,11 @@ COPY backend/ .
 # Создаем entrypoint скрипт
 RUN echo '#!/bin/sh\n\
 echo "Waiting for database..."\n\
-sleep 5\n\
+sleep 10\n\
 echo "Running database migrations..."\n\
 alembic upgrade head\n\
 echo "Starting application..."\n\
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload' > /entrypoint.sh \
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --workers 1' > /entrypoint.sh \
     && chmod +x /entrypoint.sh
 
 EXPOSE 8000
