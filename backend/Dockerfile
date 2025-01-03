@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -22,9 +23,12 @@ COPY . .
 # Create script to run migrations and start app
 RUN echo '#!/bin/sh\n\
 echo "Waiting for database..."\n\
-sleep 5\n\
+while ! pg_isready -h db -p 5432 -U postgres; do\n\
+  sleep 1\n\
+done\n\
+echo "Database is ready!"\n\
 echo "Running migrations..."\n\
-alembic upgrade head\n\
+cd /app && alembic upgrade head\n\
 echo "Starting application..."\n\
 python run.py' > /app/start.sh && chmod +x /app/start.sh
 
