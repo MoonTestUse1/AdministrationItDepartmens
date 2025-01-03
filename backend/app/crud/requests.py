@@ -1,7 +1,7 @@
 """Request CRUD operations"""
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from ..models.request import Request
+from ..models.request import Request, RequestStatus
 from ..schemas.request import RequestCreate, RequestUpdate
 from ..utils.loggers import request_logger
 from typing import List, Optional
@@ -95,20 +95,19 @@ def delete_request(db: Session, request_id: int):
 
 def get_statistics(db: Session):
     """Get requests statistics"""
-    total_requests = db.query(func.count(Request.id)).scalar()
+    total = db.query(func.count(Request.id)).scalar()
     
-    status_stats = db.query(
-        Request.status,
-        func.count(Request.id)
-    ).group_by(Request.status).all()
-    
-    priority_stats = db.query(
-        Request.priority,
-        func.count(Request.id)
-    ).group_by(Request.priority).all()
+    status_stats = dict(
+        db.query(
+            Request.status,
+            func.count(Request.id)
+        ).group_by(Request.status).all()
+    )
     
     return {
-        "total_requests": total_requests,
-        "by_status": {status: count for status, count in status_stats},
-        "by_priority": {priority: count for priority, count in priority_stats}
+        "total": total,
+        "new": status_stats.get("new", 0),
+        "in_progress": status_stats.get("in_progress", 0),
+        "completed": status_stats.get("completed", 0),
+        "rejected": status_stats.get("rejected", 0)
     }
