@@ -23,11 +23,13 @@ def get_statistics(db: Session = Depends(get_db)):
     request_logger.info(f"Status counts - new: {new_requests}, in_progress: {in_progress}, completed: {completed}, rejected: {rejected}")
     
     result = {
-        "total": total,
-        "new": new_requests,
-        "in_progress": in_progress,
-        "completed": completed,
-        "rejected": rejected
+        "total_requests": total,
+        "by_status": {
+            "new": new_requests,
+            "in_progress": in_progress,
+            "completed": completed,
+            "rejected": rejected
+        }
     }
     
     request_logger.info(f"Returning statistics: {result}")

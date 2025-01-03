@@ -25,6 +25,11 @@
             <h3>Завершенные</h3>
             <p class="stat-number">{{ statistics.by_status?.completed || 0 }}</p>
           </div>
+          
+          <div class="stat-card">
+            <h3>Отклоненные</h3>
+            <p class="stat-number">{{ statistics.by_status?.rejected || 0 }}</p>
+          </div>
         </div>
 
         <div class="actions-grid">
@@ -106,18 +111,23 @@ export default {
   methods: {
     async fetchStatistics() {
       try {
-        const response = await axios.get('/api/requests/statistics', {
+        const response = await axios.get('/api/statistics/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('admin_token')}`
           }
         })
         this.statistics = response.data
+        console.log('Полученная статистика:', response.data)
       } catch (error) {
         console.error('Error fetching statistics:', error)
         this.statistics = {
           total_requests: 0,
-          by_status: {},
-          by_priority: {}
+          by_status: {
+            new: 0,
+            in_progress: 0,
+            completed: 0,
+            rejected: 0
+          }
         }
       }
     },
