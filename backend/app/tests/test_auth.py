@@ -34,7 +34,6 @@ def test_login_success(test_db: Session):
     assert response.json()["token_type"] == "bearer"
 
 def test_login_wrong_password(test_db: Session):
-    # Создаем тестового сотрудника с известным паролем
     hashed_password = get_password_hash("testpass123")
     employee = employees.create_employee(
         test_db,
@@ -49,12 +48,9 @@ def test_login_wrong_password(test_db: Session):
     
     response = client.post(
         "/api/auth/login",
-        data={
-            "username": "WrongPass",
-            "password": "wrongpass"
-        }
+        data={"username": "WrongPass",
+            "password": "wrongpass"}
     )
-    
     assert response.status_code == 401
     assert "detail" in response.json()
 
