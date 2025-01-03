@@ -17,7 +17,13 @@ echo "Applying database migrations..."
 cd /app
 alembic upgrade head
 
-echo "Migrations completed!"
+# Проверяем, что миграции применились успешно
+if [ $? -eq 0 ]; then
+    echo "Migrations completed successfully!"
+else
+    echo "Error applying migrations!"
+    exit 1
+fi
 
 # Запускаем приложение
 echo "Starting application..."

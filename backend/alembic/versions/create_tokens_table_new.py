@@ -1,23 +1,23 @@
 """create tokens table
 
 Revision ID: create_tokens_table_new
-Revises: merge_heads
-Create Date: 2024-01-03 17:30:00.000000
+Revises: initial_migration
+Create Date: 2024-01-03 17:45:00.000000
 
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'create_tokens_table_new'
-down_revision = 'merge_heads'
+down_revision = 'initial_migration'
 branch_labels = None
 depends_on = None
 
-
 def upgrade() -> None:
-    op.create_table('tokens',
+    # Создаем таблицу tokens
+    op.create_table(
+        'tokens',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('access_token', sa.String(), nullable=False),
         sa.Column('employee_id', sa.Integer(), nullable=False),
@@ -28,7 +28,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_tokens_access_token'), 'tokens', ['access_token'], unique=True)
     op.create_index(op.f('ix_tokens_id'), 'tokens', ['id'], unique=False)
-
 
 def downgrade() -> None:
     op.drop_index(op.f('ix_tokens_id'), table_name='tokens')
