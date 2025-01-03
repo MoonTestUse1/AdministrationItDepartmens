@@ -95,19 +95,21 @@ def delete_request(db: Session, request_id: int):
 
 def get_statistics(db: Session):
     """Get requests statistics"""
-    total = db.query(func.count(Request.id)).scalar()
+    # Получаем общее количество заявок
+    total = db.query(func.count(Request.id)).scalar() or 0
     
-    status_stats = dict(
-        db.query(
-            Request.status,
-            func.count(Request.id)
-        ).group_by(Request.status).all()
-    )
+    # Получаем статистику по статусам
+    status_counts = {
+        status.value: db.query(func.count(Request.id))
+                       .filter(Request.status == status.value)
+                       .scalar() or 0
+        for status in RequestStatus
+    }
     
     return {
         "total": total,
-        "new": status_stats.get("new", 0),
-        "in_progress": status_stats.get("in_progress", 0),
-        "completed": status_stats.get("completed", 0),
-        "rejected": status_stats.get("rejected", 0)
+        "new": status_counts[RequestStatus.NEW.value],
+        "in_progress": status_counts[RequestStatus.IN_PROGRESS.value],
+        "completed": status_counts[RequestStatus.COMPLETED.value],
+        "rejected": status_counts[RequestStatus.REJECTED.value]
     }
