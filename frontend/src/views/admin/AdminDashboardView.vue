@@ -26,10 +26,6 @@
             <p class="stat-number">{{ statistics.by_status?.completed || 0 }}</p>
           </div>
           
-          <div class="stat-card">
-            <h3>Отклоненные</h3>
-            <p class="stat-number">{{ statistics.by_status?.rejected || 0 }}</p>
-          </div>
         </div>
 
         <div class="actions-grid">
