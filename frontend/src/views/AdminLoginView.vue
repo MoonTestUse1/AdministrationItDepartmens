@@ -101,7 +101,11 @@ const handleLogin = async () => {
     formData.append('username', username.value)
     formData.append('password', password.value)
     
-    const response = await axios.post('/api/auth/admin/login', formData)
+    const response = await axios.post('/api/auth/admin/login', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     console.log('Ответ от сервера:', response.data)
 
     // Сохраняем токен администратора
