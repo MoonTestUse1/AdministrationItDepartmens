@@ -21,34 +21,6 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-6 bg-card rounded-lg shadow-lg p-6">
         <div>
-          <label for="title" class="block text-sm font-medium text-secondary mb-1">Заголовок</label>
-          <input
-            id="title"
-            v-model="formData.title"
-            type="text"
-            class="w-full px-4 py-2 rounded-lg bg-input text-primary border border-input-border focus:border-button-primary transition-colors"
-            required
-            placeholder="Краткое описание проблемы"
-          />
-        </div>
-
-        <div>
-          <label for="department" class="block text-sm font-medium text-secondary mb-1">Отдел</label>
-          <select
-            id="department"
-            v-model="formData.department"
-            class="w-full px-4 py-2 rounded-lg bg-input text-primary border border-input-border focus:border-button-primary transition-colors"
-            required
-          >
-            <option value="">Выберите отдел</option>
-            <option value="IT">IT</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Финансы</option>
-            <option value="Marketing">Маркетинг</option>
-          </select>
-        </div>
-
-        <div>
           <label for="request_type" class="block text-sm font-medium text-secondary mb-1">Тип заявки</label>
           <select
             id="request_type"
@@ -129,8 +101,6 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const router = useRouter()
 const formData = reactive({
-  title: '',
-  department: '',
   request_type: '',
   priority: '',
   description: '',
@@ -157,14 +127,22 @@ const handleSubmit = async () => {
 
   try {
     const token = localStorage.getItem('token')
+    const employeeData = localStorage.getItem('employee')
+    
     if (!token) {
       throw new Error('Не найден токен авторизации')
     }
+    
+    if (!employeeData) {
+      throw new Error('Не найдены данные сотрудника')
+    }
 
+    const employee = JSON.parse(employeeData)
+    
     const requestData = {
-      title: formData.title,
       description: formData.description,
-      priority: formData.priority
+      priority: formData.priority,
+      request_type: formData.request_type
     }
 
     await axios.post('/api/requests/', requestData, {
@@ -175,8 +153,6 @@ const handleSubmit = async () => {
 
     success.value = true
     // Очищаем форму
-    formData.title = ''
-    formData.department = ''
     formData.request_type = ''
     formData.priority = ''
     formData.description = ''
