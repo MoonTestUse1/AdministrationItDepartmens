@@ -3,21 +3,32 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.request import Request, RequestStatus
+from ..utils.loggers import request_logger
 
 router = APIRouter()
 
 @router.get("/")
 def get_statistics(db: Session = Depends(get_db)):
     """Get request statistics"""
-    # Получаем количество заявок по статусам
-    new_requests = db.query(Request).filter(Request.status == RequestStatus.NEW).count()
-    in_progress = db.query(Request).filter(Request.status == RequestStatus.IN_PROGRESS).count()
-    completed = db.query(Request).filter(Request.status == RequestStatus.COMPLETED).count()
-    rejected = db.query(Request).filter(Request.status == RequestStatus.REJECTED).count()
+    # Получаем общее количество заявок
+    total = db.query(Request).count()
+    request_logger.info(f"Total requests: {total}")
     
-    return {
+    # Получаем количество заявок по статусам
+    new_requests = db.query(Request).filter(Request.status == RequestStatus.NEW.value).count()
+    in_progress = db.query(Request).filter(Request.status == RequestStatus.IN_PROGRESS.value).count()
+    completed = db.query(Request).filter(Request.status == RequestStatus.COMPLETED.value).count()
+    rejected = db.query(Request).filter(Request.status == RequestStatus.REJECTED.value).count()
+    
+    request_logger.info(f"Status counts - new: {new_requests}, in_progress: {in_progress}, completed: {completed}, rejected: {rejected}")
+    
+    result = {
+        "total": total,
         "new": new_requests,
-        "inProgress": in_progress,
+        "in_progress": in_progress,
         "completed": completed,
         "rejected": rejected
-    } 
+    }
+    
+    request_logger.info(f"Returning statistics: {result}")
+    return result 
