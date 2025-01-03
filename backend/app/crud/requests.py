@@ -97,19 +97,26 @@ def get_statistics(db: Session):
     """Get requests statistics"""
     # Получаем общее количество заявок
     total = db.query(func.count(Request.id)).scalar() or 0
+    request_logger.info(f"Total requests: {total}")
+    
+    # Получаем все заявки для проверки
+    all_requests = db.query(Request.status).all()
+    request_logger.info(f"All requests statuses: {[r.status for r in all_requests]}")
     
     # Получаем статистику по статусам
-    status_counts = {
-        status.value: db.query(func.count(Request.id))
-                       .filter(Request.status == status.value)
-                       .scalar() or 0
-        for status in RequestStatus
-    }
+    status_counts = {}
+    for status in RequestStatus:
+        count = db.query(func.count(Request.id)).filter(Request.status == status.value).scalar() or 0
+        status_counts[status.value] = count
+        request_logger.info(f"Status {status.value}: {count} requests")
     
-    return {
+    result = {
         "total": total,
         "new": status_counts[RequestStatus.NEW.value],
         "in_progress": status_counts[RequestStatus.IN_PROGRESS.value],
         "completed": status_counts[RequestStatus.COMPLETED.value],
         "rejected": status_counts[RequestStatus.REJECTED.value]
     }
+    
+    request_logger.info(f"Final statistics: {result}")
+    return result
