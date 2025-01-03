@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { departments } from '@/utils/constants';
@@ -53,7 +52,7 @@ async function handleSubmit(data: any) {
 
 async function fetchEmployees() {
   try {
-    const response = await fetch('/api/employees/');
+    const response = await fetch('/api/employees');
     if (!response.ok) throw new Error('Failed to fetch employees');
     employees.value = await response.json();
   } catch (error) {

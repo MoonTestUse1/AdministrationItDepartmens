@@ -63,7 +63,7 @@ const employees = ref<Employee[]>([]);
 const fetchEmployees = async () => {
   try {
     const token = localStorage.getItem('admin_token');
-    const response = await fetch('/api/employees/', {
+    const response = await fetch('/api/employees', {
       headers: {
         'Authorization': `Bearer ${token}`
       }

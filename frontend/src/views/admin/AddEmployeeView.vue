@@ -121,7 +121,7 @@ const handleSubmit = async () => {
 
     console.log('Отправляем данные:', form.value);
     
-    const response = await fetch('/api/employees/', {
+    const response = await fetch('/api/employees', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
