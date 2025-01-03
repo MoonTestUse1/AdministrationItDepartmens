@@ -6,6 +6,8 @@ from datetime import datetime
 import os
 from logging import getLogger
 from ..models.request import RequestStatus, RequestPriority
+from ..crud import requests
+from ..database import get_db
 
 # Initialize logger
 logger = getLogger(__name__)
@@ -35,17 +37,24 @@ def format_status(status: str) -> str:
     }
     return f"{status_emoji.get(status, '⚪')} {status.capitalize()}"
 
-async def send_request_notification(request_data: dict):
+async def send_request_notification(request_id: int):
     """Send notification about new request to Telegram"""
     try:
+        # Получаем данные заявки
+        db = next(get_db())
+        request_data = requests.get_request_details(db, request_id)
+        if not request_data:
+            logger.error(f"Request {request_id} not found")
+            return
+
         message = (
             f"📋 <b>Новая заявка #{request_data['id']}</b>\n\n"
             f"📝 <b>Заголовок:</b> {request_data['title']}\n"
-            f"👤 <b>Сотрудник:</b> {request_data.get('employee_name', 'Не указан')}\n"
+            f"👤 <b>Сотрудник:</b> {request_data['employee_first_name']} {request_data['employee_last_name']}\n"
             f"❗ <b>Приоритет:</b> {format_priority(request_data['priority'])}\n"
             f"📊 <b>Статус:</b> {format_status(request_data['status'])}\n\n"
             f"📄 <b>Описание:</b>\n{request_data['description']}\n\n"
-            f"🕒 <b>Создана:</b> {request_data['created_at'].strftime('%d.%m.%Y %H:%M') if request_data['created_at'] else 'Не указано'}"
+            f"🕒 <b>Создана:</b> {datetime.fromisoformat(request_data['created_at']).strftime('%d.%m.%Y %H:%M')}"
         )
         
         await bot.send_message(
@@ -56,12 +65,9 @@ async def send_request_notification(request_data: dict):
     except Exception as e:
         logger.error(f"Error sending Telegram notification: {e}", exc_info=True)
 
-def notify_new_request(request_data: dict):
-    """Wrapper to run async notification in sync context"""
-    try:
-        asyncio.run(send_request_notification(request_data))
-    except Exception as e:
-        logger.error(f"Failed to send notification: {e}", exc_info=True)
+async def notify_new_request(request_id: int):
+    """Async wrapper for send_request_notification"""
+    await send_request_notification(request_id)
 
 async def send_status_notification(request_id: int, new_status: str, employee_telegram_id: str):
     """Send notification about status change"""
@@ -79,9 +85,6 @@ async def send_status_notification(request_id: int, new_status: str, employee_te
     except Exception as e:
         logger.error(f"Error sending status notification: {e}", exc_info=True)
 
-def notify_status_change(request_id: int, new_status: str, employee_telegram_id: str):
-    """Wrapper to run async status notification in sync context"""
-    try:
-        asyncio.run(send_status_notification(request_id, new_status, employee_telegram_id))
-    except Exception as e:
-        logger.error(f"Failed to send status notification: {e}", exc_info=True)
+async def notify_status_change(request_id: int, new_status: str, employee_telegram_id: str):
+    """Async wrapper for send_status_notification"""
+    await send_status_notification(request_id, new_status, employee_telegram_id)
