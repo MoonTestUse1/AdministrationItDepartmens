@@ -8,6 +8,7 @@ class RequestStatus(str, Enum):
     NEW = "new"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    REJECTED = "rejected"
 
 class RequestPriority(str, Enum):
     LOW = "low"
@@ -21,17 +22,26 @@ class RequestBase(BaseModel):
     status: RequestStatus = RequestStatus.NEW
 
 class RequestCreate(RequestBase):
-    employee_id: int
+    pass
 
-class Request(RequestBase):
+class RequestUpdate(BaseModel):
+    status: RequestStatus
+    
     model_config = ConfigDict(from_attributes=True)
 
+class Request(RequestBase):
     id: int
     employee_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-class RequestUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    status: RequestStatus 
+class RequestStatistics(BaseModel):
+    total: int
+    new: int
+    in_progress: int
+    completed: int
+    rejected: int
+    
+    model_config = ConfigDict(from_attributes=True) 
