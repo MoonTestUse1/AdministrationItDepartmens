@@ -1,8 +1,8 @@
-"""initial migration
+"""initial schema
 
-Revision ID: initial_migration
+Revision ID: initial_schema
 Revises: 
-Create Date: 2024-01-03 11:00:00.000000
+Create Date: 2024-01-03 20:45:00.000000
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'initial_migration'
+revision = 'initial_schema'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -84,4 +84,4 @@ def downgrade() -> None:
     
     # Удаляем enum типы
     op.execute('DROP TYPE requeststatus')
-    op.execute('DROP TYPE requestpriority')
+    op.execute('DROP TYPE requestpriority') 
