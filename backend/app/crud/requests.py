@@ -1,22 +1,21 @@
 """Request CRUD operations"""
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from sqlalchemy import func
-from ..schemas.request import RequestCreate, RequestUpdate
+from ..models.request import Request
 from ..schemas.request import RequestCreate, RequestUpdate
 from ..utils.loggers import request_logger
 from typing import List, Optional
+
 def create_request(db: Session, request: RequestCreate, employee_id: int):
-def create_request(db: Session, request: RequestCreate):
     """Create new request"""
     try:
+        db_request = Request(
             employee_id=employee_id,
-            employee_id=request.employee_id,
             department=request.department,
             request_type=request.request_type,
             priority=request.priority,
             description=request.description,
-            status="new",
+            status="new"
         )
         db.add(db_request)
         db.commit()
@@ -61,21 +60,16 @@ def get_request_details(db: Session, request_id: int):
     }
 
 def get_requests(db: Session, skip: int = 0, limit: int = 100) -> List[Request]:
-    """
-    Получить список всех заявок с пагинацией
-    """
+    """Get all requests with pagination"""
     return db.query(Request).offset(skip).limit(limit).all()
 
 def get_request(db: Session, request_id: int) -> Optional[Request]:
-    """
-    Получить заявку по ID
-    """
+    """Get request by ID"""
     return db.query(Request).filter(Request.id == request_id).first()
 
 def get_employee_requests(db: Session, employee_id: int, skip: int = 0, limit: int = 100) -> List[Request]:
-    """
-    Получить список заявок конкретного сотрудника
-    """
+    """Get requests by employee ID"""
+    return db.query(Request).filter(Request.employee_id == employee_id).offset(skip).limit(limit).all()
 
 def update_request(db: Session, request_id: int, request: RequestUpdate):
     """Update request"""
@@ -118,4 +112,3 @@ def get_statistics(db: Session):
         "by_status": {status: count for status, count in status_stats},
         "by_priority": {priority: count for priority, count in priority_stats}
     }
-    return db.query(Request).filter(Request.employee_id == employee_id).offset(skip).limit(limit).all()
