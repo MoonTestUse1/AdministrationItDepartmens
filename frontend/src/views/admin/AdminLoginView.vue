@@ -64,7 +64,7 @@ export default {
         formData.append('username', this.username)
         formData.append('password', this.password)
         
-        const response = await axios.post('/api/auth/admin/login', formData)
+        const response = await axios.post('/auth/admin/login', formData)
         
         localStorage.setItem('admin_token', response.data.access_token)
         this.$router.push('/admin/dashboard')
