@@ -2,17 +2,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from ..main import app
+from ..models.request import RequestStatus, RequestPriority
 from ..crud import requests, employees
-from ..models.request import RequestStatus
+from ..utils.auth import get_password_hash
 
 client = TestClient(app)
 
 def test_create_request(test_db: Session, test_token: str):
     request_data = {
-        "title": "Test Request",
-        "description": "Test Description",
-        "priority": "low",
-        "status": "new"
+        "department": "IT",
+        "request_type": "hardware",
+        "priority": RequestPriority.LOW.value,
+        "description": "Test Description"
     }
     
     response = client.post(
@@ -23,16 +24,17 @@ def test_create_request(test_db: Session, test_token: str):
     
     assert response.status_code == 200
     data = response.json()
-    assert data["title"] == request_data["title"]
+    assert data["department"] == request_data["department"]
     assert data["description"] == request_data["description"]
-    assert data["priority"] == request_data["priority"]
+    assert data["priority"] == RequestPriority.LOW.value
     assert data["status"] == RequestStatus.NEW.value
 
 def test_create_request_unauthorized():
     request_data = {
-        "title": "Test Request",
-        "description": "Test Description",
-        "priority": "low"
+        "department": "IT",
+        "request_type": "hardware",
+        "priority": RequestPriority.LOW.value,
+        "description": "Test Description"
     }
     
     response = client.post(
@@ -48,10 +50,10 @@ def test_get_employee_requests(test_db: Session, test_token: str, test_employee_
         requests.create_request(
             test_db,
             {
-                "title": f"Test Request {i}",
-                "description": f"Test Description {i}",
-                "priority": "low",
-                "status": "new"
+                "department": "IT",
+                "request_type": f"hardware_{i}",
+                "priority": RequestPriority.LOW.value,
+                "description": f"Test Description {i}"
             },
             test_employee_id
         )
@@ -67,32 +69,34 @@ def test_get_employee_requests(test_db: Session, test_token: str, test_employee_
     assert all(req["employee_id"] == test_employee_id for req in data)
 
 def test_update_request_status(test_db: Session, admin_token: str):
-    # Создаем тестовую заявку
+    # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
     employee = employees.create_employee(
         test_db,
         {
             "first_name": "Test",
             "last_name": "User",
             "department": "IT",
-            "office": "101",
-            "password": "testpass123"
-        }
+            "office": "101"
+        },
+        hashed_password=hashed_password
     )
     
+    # Создаем тестовую заявку
     request = requests.create_request(
         test_db,
         {
-            "title": "Test Request",
-            "description": "Test Description",
-            "priority": "low",
-            "status": "new"
+            "department": "IT",
+            "request_type": "hardware",
+            "priority": RequestPriority.LOW.value,
+            "description": "Test Description"
         },
         employee.id
     )
     
     response = client.put(
         f"/api/requests/{request.id}",
-        json={"status": "in_progress"},
+        json={"status": RequestStatus.IN_PROGRESS.value},
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     
@@ -107,8 +111,9 @@ def test_get_request_statistics(test_db: Session, admin_token: str):
     
     assert response.status_code == 200
     data = response.json()
-    assert "total" in data
-    assert "new" in data
-    assert "in_progress" in data
-    assert "completed" in data
-    assert "rejected" in data 
+    assert "total_requests" in data
+    assert "by_status" in data
+    assert RequestStatus.NEW.value in data["by_status"]
+    assert RequestStatus.IN_PROGRESS.value in data["by_status"]
+    assert RequestStatus.COMPLETED.value in data["by_status"]
+    assert RequestStatus.REJECTED.value in data["by_status"] 

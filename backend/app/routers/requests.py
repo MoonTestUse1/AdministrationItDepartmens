@@ -1,107 +1,67 @@
 """Requests router"""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from ..database import get_db
 from ..crud import requests
-from ..schemas.request import Request, RequestCreate, RequestUpdate, RequestStatistics
+from ..schemas.request import Request, RequestCreate, RequestUpdate
+from ..models.request import RequestStatus
 from ..utils.auth import get_current_employee, get_current_admin
-from ..utils.telegram import notify_new_request
-from ..utils.loggers import request_logger
 
 router = APIRouter()
 
-@router.post("", response_model=Request)
 @router.post("/", response_model=Request)
-async def create_request(
+def create_request(
     request: RequestCreate,
     db: Session = Depends(get_db),
     current_employee: dict = Depends(get_current_employee)
 ):
-    """
-    Создание новой заявки
-    """
-    # Логируем входящие данные
-    request_logger.info(
-        "Creating new request",
-        extra={
-            "request_data": request.model_dump(),
-            "employee_id": current_employee["id"]
-        }
-    )
-    
-    # Проверяем, что все поля заполнены правильно
-    request_logger.info(f"Request title: {request.title}")
-    request_logger.info(f"Request description: {request.description}")
-    request_logger.info(f"Request priority: {request.priority} (type: {type(request.priority)})")
-    request_logger.info(f"Request status: {request.status} (type: {type(request.status)})")
-    
-    db_request = requests.create_request(db=db, request=request, employee_id=current_employee["id"])
-    
-    # Логируем созданную заявку
-    request_logger.info(
-        "Request created successfully",
-        extra={
-            "request_id": db_request.id,
-            "status": db_request.status,
-            "priority": db_request.priority
-        }
-    )
-    
-    await notify_new_request(db_request.id)
-    return db_request
+    """Create new request"""
+    return requests.create_request(db, request, current_employee["id"])
 
-@router.get("", response_model=List[Request])
-@router.get("/", response_model=List[Request])
+@router.get("/my", response_model=List[Request])
 def get_employee_requests(
-    skip: int = 0,
-    limit: int = 100,
     db: Session = Depends(get_db),
     current_employee: dict = Depends(get_current_employee)
 ):
-    """
-    Получение списка заявок текущего сотрудника
-    """
-    return requests.get_employee_requests(db, employee_id=current_employee["id"], skip=skip, limit=limit)
+    """Get current employee's requests"""
+    return requests.get_employee_requests(db, current_employee["id"])
 
-@router.get("/statistics", response_model=RequestStatistics)
-def get_request_statistics(
+@router.get("/admin", response_model=List[Request])
+def get_all_requests(
+    status: Optional[RequestStatus] = Query(None),
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """
-    Получение статистики по заявкам (только для админа)
-    """
-    return requests.get_statistics(db)
+    """Get all requests (admin only)"""
+    return requests.get_requests(db, status=status, skip=skip, limit=limit)
 
-@router.put("/{request_id}", response_model=Request)
-def update_request(
+@router.patch("/{request_id}/status", response_model=Request)
+def update_request_status(
     request_id: int,
     request_update: RequestUpdate,
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """
-    Обновление статуса заявки (только для админа)
-    """
-    db_request = requests.get_request(db, request_id=request_id)
+    """Update request status (admin only)"""
+    db_request = requests.update_request_status(db, request_id, request_update.status)
     if db_request is None:
         raise HTTPException(status_code=404, detail="Request not found")
-    
-    return requests.update_request(db=db, request_id=request_id, request=request_update)
+    return db_request
 
-@router.delete("/{request_id}")
-def delete_request(
-    request_id: int,
+@router.get("/statistics")
+def get_request_statistics(
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """
-    Удаление заявки (только для админа)
-    """
-    db_request = requests.get_request(db, request_id=request_id)
-    if db_request is None:
-        raise HTTPException(status_code=404, detail="Request not found")
-    
-    requests.delete_request(db=db, request_id=request_id)
-    return {"message": "Request deleted successfully"}
+    """Get request statistics (admin only)"""
+    stats = requests.get_statistics(db)
+    return {
+        "total": stats["total"],
+        "by_status": {
+            status: count
+            for status, count in stats["by_status"].items()
+        }
+    }

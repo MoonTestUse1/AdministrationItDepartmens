@@ -1,8 +1,18 @@
-from pydantic import BaseModel
+"""Schemas for the application"""
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import Optional
 from models import RequestStatus
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class TokenData(BaseModel):
+    user_id: int | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeBase(BaseModel):
     last_name: str
@@ -10,18 +20,14 @@ class EmployeeBase(BaseModel):
     department: str
     office: str
 
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeCreate(EmployeeBase):
     password: str
 
-
 class Employee(EmployeeBase):
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
-
 
 class RequestBase(BaseModel):
     department: str
@@ -29,16 +35,13 @@ class RequestBase(BaseModel):
     priority: str
     description: str
 
+    model_config = ConfigDict(from_attributes=True)
 
 class RequestCreate(RequestBase):
     employee_id: int
-
 
 class Request(RequestBase):
     id: int
     status: RequestStatus
     created_at: datetime
     employee_id: int
-
-    class Config:
-        from_attributes = True

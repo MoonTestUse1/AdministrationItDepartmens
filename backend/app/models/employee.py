@@ -1,25 +1,21 @@
 """Employee model"""
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from ..database import Base
+from ..db.base import Base
 
 class Employee(Base):
     __tablename__ = "employees"
-    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    department = Column(String, nullable=False)
-    office = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    first_name = Column(String, index=True)
+    last_name = Column(String, index=True)
+    department = Column(String)
+    office = Column(String)
+    hashed_password = Column(String)
 
     # Определяем отношение к Request
     requests = relationship(
         "Request",
         back_populates="employee",
-        lazy="dynamic",
         cascade="all, delete-orphan"
     )

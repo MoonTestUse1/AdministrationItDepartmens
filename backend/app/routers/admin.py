@@ -1,4 +1,4 @@
-"""Admin routes"""
+"""Admin router"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -6,35 +6,24 @@ from ..database import get_db
 from ..crud import requests, statistics
 from ..schemas.request import Request
 from ..utils.auth import get_current_admin
-from ..utils.loggers import request_logger
 
 router = APIRouter()
 
 @router.get("/statistics")
-async def get_statistics(period: str = "week", db: Session = Depends(get_db)):
-    """Get request statistics"""
-    try:
-        return statistics.get_statistics(db, period)
-    except Exception as e:
-        request_logger.error(f"Error getting statistics: {e}")
-        raise HTTPException(status_code=500, detail="Ошибка при получении статистики")
-
-@router.get("/requests", response_model=List[Request])
-async def get_all_requests(
-    skip: int = 0,
-    limit: int = 100,
+def get_statistics(
     db: Session = Depends(get_db),
     _: dict = Depends(get_current_admin)
 ):
-    """
-    Получить список всех заявок (только для админа)
-    """
-    try:
-        requests_list = requests.get_requests(db, skip=skip, limit=limit)
-        return requests_list
-    except Exception as e:
-        print(f"Error getting requests: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    """Get system statistics"""
+    return statistics.get_request_statistics(db)
+
+@router.get("/requests", response_model=List[Request])
+def get_all_requests(
+    db: Session = Depends(get_db),
+    _: dict = Depends(get_current_admin)
+):
+    """Get all requests"""
+    return requests.get_requests(db)
 
 @router.get("/requests/{request_id}", response_model=Request)
 async def get_request_by_id(

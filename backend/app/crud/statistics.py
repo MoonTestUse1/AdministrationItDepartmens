@@ -1,53 +1,40 @@
 """Statistics CRUD operations"""
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from sqlalchemy import func
 from datetime import datetime, timedelta
 from ..models.request import Request, RequestStatus
 
-def get_statistics(db: Session, period: str = "week"):
-    """Get statistics for the given period"""
-    try:
-        # Calculate date range
-        end_date = datetime.now()
-        if period == "week":
-            start_date = end_date - timedelta(days=7)
-        elif period == "month":
-            start_date = end_date - timedelta(days=30)
-        else:
-            start_date = end_date - timedelta(days=7)  # default to week
+def get_request_statistics(db: Session):
+    """Get request statistics"""
+    # Общее количество заявок
+    total_requests = db.query(func.count(Request.id)).scalar()
 
-        # Get total requests
-        total_requests = db.query(func.count(Request.id)).scalar() or 0
+    # Количество заявок по статусам
+    status_counts = {
+        RequestStatus.NEW: 0,
+        RequestStatus.IN_PROGRESS: 0,
+        RequestStatus.COMPLETED: 0,
+        RequestStatus.REJECTED: 0
+    }
 
-        # Get requests by status
-        requests_by_status = (
-            db.query(Request.status, func.count(Request.id))
-            .group_by(Request.status)
-            .all()
-        )
+    # Получаем количество заявок для каждого статуса
+    status_query = db.query(
+        Request.status,
+        func.count(Request.id)
+    ).group_by(Request.status).all()
 
-        # Convert to dictionary
-        status_counts = {
-            status.name: 0 for status in RequestStatus
-        }
-        for status, count in requests_by_status:
-            status_counts[status.name] = count
+    for status, count in status_query:
+        if status in status_counts:
+            status_counts[status] = count
 
-        # Get recent requests
-        recent_requests = (
-            db.query(Request)
-            .filter(Request.created_at >= start_date)
-            .order_by(Request.created_at.desc())
-            .limit(5)
-            .all()
-        )
+    # Статистика за последние 7 дней
+    week_ago = datetime.now() - timedelta(days=7)
+    recent_requests = db.query(func.count(Request.id)).filter(
+        Request.created_at >= week_ago
+    ).scalar()
 
-        return {
-            "total_requests": total_requests,
-            "status_counts": status_counts,
-            "recent_requests": recent_requests
-        }
-
-    except Exception as e:
-        print(f"Error getting statistics: {e}")
-        raise
+    return {
+        "total_requests": total_requests or 0,
+        "by_status": status_counts,
+        "recent_requests": recent_requests or 0
+    }

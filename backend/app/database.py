@@ -1,17 +1,20 @@
 """Database configuration"""
-import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
+from .core.config import settings
+from .db.base import Base
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres123@db:5432/support_db")
+# Для создания таблиц импортируем модели
+from .models.employee import Employee  # noqa
+from .models.request import Request  # noqa
+from .models.token import Token  # noqa
+
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 def get_db():
-    """Get database session"""
     db = SessionLocal()
     try:
         yield db

@@ -1,6 +1,5 @@
 """Employee schemas"""
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 class EmployeeBase(BaseModel):
     first_name: str
@@ -8,14 +7,15 @@ class EmployeeBase(BaseModel):
     department: str
     office: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 class EmployeeCreate(EmployeeBase):
     password: str
 
 class EmployeeUpdate(EmployeeBase):
-    password: Optional[str] = None
+    pass
 
 class Employee(EmployeeBase):
-    model_config = ConfigDict(from_attributes=True)
-    
     id: int
-    hashed_password: str 
+
+    model_config = ConfigDict(from_attributes=True) 

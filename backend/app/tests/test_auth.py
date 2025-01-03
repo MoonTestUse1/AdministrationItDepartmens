@@ -16,9 +16,9 @@ def test_login_success(test_db: Session):
             "first_name": "Test",
             "last_name": "User",
             "department": "IT",
-            "office": "101",
-            "password": "testpass123"
-        }
+            "office": "101"
+        },
+        hashed_password=hashed_password
     )
     
     response = client.post(
@@ -34,10 +34,23 @@ def test_login_success(test_db: Session):
     assert response.json()["token_type"] == "bearer"
 
 def test_login_wrong_password(test_db: Session):
+    # Создаем тестового сотрудника с известным паролем
+    hashed_password = get_password_hash("testpass123")
+    employee = employees.create_employee(
+        test_db,
+        {
+            "first_name": "Test",
+            "last_name": "WrongPass",
+            "department": "IT",
+            "office": "101"
+        },
+        hashed_password=hashed_password
+    )
+    
     response = client.post(
         "/api/auth/login",
         data={
-            "username": "User",
+            "username": "WrongPass",
             "password": "wrongpass"
         }
     )

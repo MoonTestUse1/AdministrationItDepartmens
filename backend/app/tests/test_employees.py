@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from ..main import app
 from ..crud import employees
-from ..utils.auth import verify_password
+from ..utils.auth import verify_password, get_password_hash
 
 client = TestClient(app)
 
@@ -49,15 +49,16 @@ def test_create_employee_unauthorized():
 def test_get_employees(test_db: Session, admin_token: str):
     # Создаем несколько тестовых сотрудников
     for i in range(3):
+        hashed_password = get_password_hash("testpass123")
         employees.create_employee(
             test_db,
             {
                 "first_name": f"Test{i}",
                 "last_name": f"User{i}",
                 "department": "IT",
-                "office": f"10{i}",
-                "password": "testpass123"
-            }
+                "office": f"10{i}"
+            },
+            hashed_password=hashed_password
         )
     
     response = client.get(
@@ -71,15 +72,16 @@ def test_get_employees(test_db: Session, admin_token: str):
 
 def test_get_employee_by_id(test_db: Session, admin_token: str):
     # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
     employee = employees.create_employee(
         test_db,
         {
             "first_name": "Test",
             "last_name": "User",
             "department": "IT",
-            "office": "101",
-            "password": "testpass123"
-        }
+            "office": "101"
+        },
+        hashed_password=hashed_password
     )
     
     response = client.get(
@@ -95,15 +97,16 @@ def test_get_employee_by_id(test_db: Session, admin_token: str):
 
 def test_update_employee(test_db: Session, admin_token: str):
     # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
     employee = employees.create_employee(
         test_db,
         {
             "first_name": "Test",
             "last_name": "User",
             "department": "IT",
-            "office": "101",
-            "password": "testpass123"
-        }
+            "office": "101"
+        },
+        hashed_password=hashed_password
     )
     
     update_data = {
@@ -124,15 +127,16 @@ def test_update_employee(test_db: Session, admin_token: str):
 
 def test_delete_employee(test_db: Session, admin_token: str):
     # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
     employee = employees.create_employee(
         test_db,
         {
             "first_name": "Test",
             "last_name": "User",
             "department": "IT",
-            "office": "101",
-            "password": "testpass123"
-        }
+            "office": "101"
+        },
+        hashed_password=hashed_password
     )
     
     response = client.delete(

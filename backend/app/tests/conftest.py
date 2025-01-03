@@ -1,21 +1,34 @@
-import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi.testclient import TestClient
+from unittest.mock import Mock, patch
 from ..database import Base, get_db
 from ..main import app
 from ..utils.jwt import create_and_save_token
 from ..crud import employees
+from ..utils.auth import get_password_hash
 
-# Получаем URL базы данных из переменной окружения или используем значение по умолчанию
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/support_test"
-)
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Используем SQLite для тестов
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Мок для Redis
+class MockRedis:
+    def __init__(self):
+        self.data = {}
+    
+    def setex(self, name, time, value):
+        self.data[name] = value
+        return True
+    
+    def get(self, name):
+        return self.data.get(name)
+
+@pytest.fixture(autouse=True)
+def mock_redis():
+    with patch("app.utils.jwt.redis", MockRedis()):
+        yield
 
 @pytest.fixture(scope="function")
 def test_db():
@@ -33,14 +46,14 @@ def test_db():
 
 @pytest.fixture(scope="function")
 def test_employee(test_db):
+    hashed_password = get_password_hash("testpass123")
     employee_data = {
         "first_name": "Test",
         "last_name": "User",
         "department": "IT",
-        "office": "101",
-        "password": "testpass123"
+        "office": "101"
     }
-    employee = employees.create_employee(test_db, employee_data)
+    employee = employees.create_employee(test_db, employee_data, hashed_password=hashed_password)
     return employee
 
 @pytest.fixture(scope="function")

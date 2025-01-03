@@ -1,70 +1,98 @@
 import pytest
-from app.models.employee import Employee
-from app.utils.auth import get_password_hash
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+from app.main import app
+from app.crud import employees
+from app.utils.auth import verify_password, get_password_hash
+from app.schemas.employee import EmployeeCreate
 
-def test_admin_login(client):
-    """Test admin login endpoint"""
-    response = client.post("/api/auth/admin", json={
-        "username": "admin",
-        "password": "admin123"
-    })
+client = TestClient(app)
+
+def test_login_success(test_db: Session):
+    # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
+    employee_data = EmployeeCreate(
+        first_name="Test",
+        last_name="User",
+        department="IT",
+        office="101",
+        password="testpass123"
+    )
+    employee = employees.create_employee(test_db, employee_data, hashed_password)
+    
+    response = client.post(
+        "/api/auth/login",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "username": "User",
+            "password": "testpass123"
+        }
+    )
+    
     assert response.status_code == 200
     assert "access_token" in response.json()
+    assert response.json()["token_type"] == "bearer"
 
-def test_admin_login_invalid_credentials(client):
-    """Test admin login with invalid credentials"""
-    response = client.post("/api/auth/admin", json={
-        "username": "wrong",
-        "password": "wrong"
-    })
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid credentials"
-
-def test_employee_login(client, db_session):
-    """Test employee login endpoint"""
-    # Create test employee
-    hashed_password = get_password_hash("test123")
-    employee = Employee(
+def test_login_wrong_password(test_db: Session):
+    # Создаем тестового сотрудника
+    hashed_password = get_password_hash("testpass123")
+    employee_data = EmployeeCreate(
         first_name="Test",
         last_name="User",
         department="IT",
-        office="A101",
-        password=hashed_password
+        office="101",
+        password="testpass123"
     )
-    db_session.add(employee)
-    db_session.commit()
+    employees.create_employee(test_db, employee_data, hashed_password)
+    
+    response = client.post(
+        "/api/auth/login",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "username": "User",
+            "password": "wrongpass"
+        }
+    )
+    
+    assert response.status_code == 401
+    assert "detail" in response.json()
 
-    # Try to login
-    response = client.post("/api/auth/login", json={
-        "last_name": "User",
-        "password": "test123"
-    })
+def test_login_nonexistent_user(test_db: Session):
+    response = client.post(
+        "/api/auth/login",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "username": "NonExistent",
+            "password": "testpass123"
+        }
+    )
+    
+    assert response.status_code == 401
+    assert "detail" in response.json()
+
+def test_admin_login_success():
+    response = client.post(
+        "/api/auth/admin/login",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "username": "admin",
+            "password": "admin123"
+        }
+    )
+    
     assert response.status_code == 200
-    data = response.json()
-    assert data["first_name"] == "Test"
-    assert data["last_name"] == "User"
-    assert data["department"] == "IT"
-    assert data["office"] == "A101"
-    assert "access_token" in data
+    assert "access_token" in response.json()
+    assert response.json()["token_type"] == "bearer"
 
-def test_employee_login_invalid_credentials(client, db_session):
-    """Test employee login with invalid credentials"""
-    # Create test employee
-    hashed_password = get_password_hash("test123")
-    employee = Employee(
-        first_name="Test",
-        last_name="User",
-        department="IT",
-        office="A101",
-        password=hashed_password
+def test_admin_login_wrong_password():
+    response = client.post(
+        "/api/auth/admin/login",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "username": "admin",
+            "password": "wrongpass"
+        }
     )
-    db_session.add(employee)
-    db_session.commit()
-
-    # Try to login with wrong password
-    response = client.post("/api/auth/login", json={
-        "last_name": "User",
-        "password": "wrong"
-    })
+    
     assert response.status_code == 401
-    assert response.json()["detail"] == "Неверный пароль" 
+    assert "detail" in response.json() 
