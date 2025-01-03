@@ -11,6 +11,7 @@ from ..utils.telegram import notify_new_request
 router = APIRouter()
 
 @router.post("", response_model=Request)
+@router.post("/", response_model=Request)
 async def create_request(
     request: RequestCreate,
     db: Session = Depends(get_db),
@@ -19,11 +20,12 @@ async def create_request(
     """
     Создание новой заявки
     """
-    db_request = requests.create_request(db=db, request=request, employee_id=current_employee.id)
+    db_request = requests.create_request(db=db, request=request, employee_id=current_employee["id"])
     await notify_new_request(db_request.id)
     return db_request
 
 @router.get("", response_model=List[Request])
+@router.get("/", response_model=List[Request])
 def get_employee_requests(
     skip: int = 0,
     limit: int = 100,
@@ -33,7 +35,7 @@ def get_employee_requests(
     """
     Получение списка заявок текущего сотрудника
     """
-    return requests.get_employee_requests(db, employee_id=current_employee.id, skip=skip, limit=limit)
+    return requests.get_employee_requests(db, employee_id=current_employee["id"], skip=skip, limit=limit)
 
 @router.get("/statistics", response_model=RequestStatistics)
 def get_request_statistics(
@@ -59,7 +61,7 @@ def update_request(
     if db_request is None:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    return requests.update_request(db=db, request_id=request_id, request_update=request_update)
+    return requests.update_request(db=db, request_id=request_id, request=request_update)
 
 @router.delete("/{request_id}")
 def delete_request(
