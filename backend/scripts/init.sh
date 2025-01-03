@@ -8,10 +8,13 @@ done
 
 echo "Database is ready!"
 
+# Устанавливаем переменные окружения
+export PYTHONPATH=/app
+export DATABASE_URL="postgresql://postgres:postgres123@db:5432/support_db"
+
 # Применяем миграции
 echo "Applying database migrations..."
 cd /app
-export DATABASE_URL="postgresql://postgres:postgres123@db:5432/support_db"
 alembic upgrade head
 
 echo "Migrations completed!"
