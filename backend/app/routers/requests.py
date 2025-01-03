@@ -8,12 +8,11 @@ from ..schemas.request import Request, RequestCreate, RequestUpdate
 from ..models.request import RequestStatus
 from ..utils.auth import get_current_employee, get_current_admin
 from ..utils.telegram import notify_new_request
-import asyncio
 
 router = APIRouter()
 
 @router.post("/", response_model=Request)
-def create_request(
+async def create_request(
     request: RequestCreate,
     db: Session = Depends(get_db),
     current_employee: dict = Depends(get_current_employee)
@@ -21,7 +20,7 @@ def create_request(
     """Create new request"""
     db_request = requests.create_request(db, request, current_employee["id"])
     # Отправляем уведомление в Telegram
-    asyncio.create_task(notify_new_request(db_request.id))
+    await notify_new_request(db_request.id)
     return db_request
 
 @router.get("/my", response_model=List[Request])

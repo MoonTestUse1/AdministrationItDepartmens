@@ -1,14 +1,16 @@
 FROM nginx:alpine
 
-# Копируем конфигурацию nginx
-COPY docker/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+# Установка certbot и зависимостей
+RUN apk add --no-cache certbot certbot-nginx openssl
 
-# Копируем собранные файлы фронтенда
-COPY frontend/dist /usr/share/nginx/html/
+# Копирование скриптов и конфигурации
+COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./docker/nginx/entrypoint.sh /entrypoint.sh
 
-# Удаляем дефолтную страницу nginx
-RUN rm -rf /usr/share/nginx/html/50x.html
+# Создание директорий для certbot
+RUN mkdir -p /var/www/certbot && \
+    mkdir -p /etc/letsencrypt && \
+    chmod +x /entrypoint.sh
 
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/entrypoint.sh"]

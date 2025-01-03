@@ -1,13 +1,27 @@
 version: '3.8'
 
 services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx:/etc/nginx/conf.d
+      - ./letsencrypt:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+
   frontend:
     container_name: support-frontend
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    ports:
-      - "80:80"
     volumes:
       - ./frontend:/app
     depends_on:

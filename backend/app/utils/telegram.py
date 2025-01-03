@@ -49,8 +49,9 @@ async def send_request_notification(request_id: int):
 
         message = (
             f"📋 <b>Новая заявка #{request_data['id']}</b>\n\n"
-            f"📝 <b>Заголовок:</b> {request_data['title']}\n"
             f"👤 <b>Сотрудник:</b> {request_data['employee_first_name']} {request_data['employee_last_name']}\n"
+            f"🏢 <b>Отдел:</b> {request_data['department']}\n"
+            f"📝 <b>Тип заявки:</b> {request_data['request_type']}\n"
             f"❗ <b>Приоритет:</b> {format_priority(request_data['priority'])}\n"
             f"📊 <b>Статус:</b> {format_status(request_data['status'])}\n\n"
             f"📄 <b>Описание:</b>\n{request_data['description']}\n\n"
