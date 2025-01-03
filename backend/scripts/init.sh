@@ -11,6 +11,7 @@ echo "Database is ready!"
 # Применяем миграции
 echo "Applying database migrations..."
 cd /app
+export DATABASE_URL="postgresql://postgres:postgres123@db:5432/support_db"
 alembic upgrade head
 
 echo "Migrations completed!"
