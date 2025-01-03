@@ -2,29 +2,23 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create logs directory
-RUN mkdir -p /app/logs
-
-# Copy requirements first to leverage Docker cache
+# Устанавливаем зависимости
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Копируем код приложения
 COPY backend/ .
 
-# Make entrypoint script executable
-COPY docker/backend/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Создаем entrypoint скрипт
+RUN echo '#!/bin/sh\n\
+echo "Waiting for database..."\n\
+sleep 5\n\
+echo "Running database migrations..."\n\
+alembic upgrade head\n\
+echo "Starting application..."\n\
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
 
-# Create volume for logs
-VOLUME ["/app/logs"]
-
-# Expose the port the app runs on
 EXPOSE 8000
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/entrypoint.sh"]

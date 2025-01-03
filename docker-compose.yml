@@ -8,10 +8,8 @@ services:
       dockerfile: docker/frontend/Dockerfile
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./certbot/www:/var/www/certbot/:ro
-      - ./certbot/conf/:/etc/letsencrypt/:ro
+      - ./frontend:/app
     depends_on:
       - backend
 
@@ -42,8 +40,6 @@ services:
   redis:
     container_name: support-redis
     image: redis:alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
 
