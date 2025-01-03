@@ -96,18 +96,23 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const response = await axios.post('/api/auth/admin', {
-      username: username.value,
-      password: password.value
-    })
+    console.log('Отправка запроса на авторизацию админа...')
+    const formData = new FormData()
+    formData.append('username', username.value)
+    formData.append('password', password.value)
+    
+    const response = await axios.post('/api/auth/admin/login', formData)
+    console.log('Ответ от сервера:', response.data)
 
     // Сохраняем токен администратора
     localStorage.setItem('admin_token', response.data.access_token)
     localStorage.setItem('is_admin', 'true')
 
+    console.log('Перенаправление на панель администратора...')
     // Перенаправляем на панель администратора
     await router.push('/admin/dashboard')
   } catch (e: any) {
+    console.error('Ошибка при авторизации:', e)
     error.value = e.response?.data?.detail || 'Неверное имя пользователя или пароль'
   } finally {
     loading.value = false
