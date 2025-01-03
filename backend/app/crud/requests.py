@@ -95,9 +95,21 @@ def delete_request(db: Session, request_id: int):
 
 def get_statistics(db: Session):
     """Get requests statistics"""
-    # Проверяем все заявки с полной информацией
+    # Прямой SQL запрос для проверки таблицы
+    sql_check = db.execute(text("SELECT * FROM requests")).fetchall()
+    request_logger.info(f"Direct SQL check - all requests: {sql_check}")
+    
+    # Проверяем структуру таблицы
+    table_info = db.execute(text("""
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'requests'
+    """)).fetchall()
+    request_logger.info(f"Table structure: {table_info}")
+    
+    # Проверяем все заявки через ORM
     all_requests = db.query(Request).all()
-    request_logger.info(f"Found {len(all_requests)} requests")
+    request_logger.info(f"ORM check - Found {len(all_requests)} requests")
     
     for req in all_requests:
         request_logger.info(
@@ -116,14 +128,14 @@ def get_statistics(db: Session):
         RequestStatus.REJECTED.value: 0
     }
     
-    for req in all_requests:
-        current_status = req.status
-        request_logger.info(f"Processing status: {current_status}")
-        if current_status in status_counts:
-            status_counts[current_status] += 1
-            request_logger.info(f"Incremented count for {current_status}")
-        else:
-            request_logger.warning(f"Unknown status found: {current_status}")
+    # Прямой подсчет через SQL
+    for status in RequestStatus:
+        count = db.execute(
+            text(f"SELECT COUNT(*) FROM requests WHERE status = :status"),
+            {"status": status.value}
+        ).scalar()
+        status_counts[status.value] = count
+        request_logger.info(f"SQL count for status {status.value}: {count}")
     
     result = {
         "total": len(all_requests),
