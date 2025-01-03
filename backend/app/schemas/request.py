@@ -5,7 +5,6 @@ from datetime import datetime
 from ..models.request import RequestStatus, RequestPriority
 
 class RequestBase(BaseModel):
-    department: str
     request_type: str
     description: str
     priority: RequestPriority
@@ -24,6 +23,7 @@ class Request(RequestBase):
     id: int
     status: RequestStatus
     employee_id: int
+    department: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True) 

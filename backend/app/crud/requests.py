@@ -4,11 +4,17 @@ from sqlalchemy import func
 from typing import Optional, Dict
 from ..models.request import Request, RequestStatus
 from ..schemas.request import RequestCreate
+from . import employees
 
 def create_request(db: Session, request: RequestCreate, employee_id: int) -> Request:
     """Create new request"""
+    # Получаем данные сотрудника
+    employee = employees.get_employee(db, employee_id)
+    if not employee:
+        raise ValueError("Employee not found")
+
     db_request = Request(
-        department=request.department,
+        department=employee.department,  # Берем отдел из данных сотрудника
         request_type=request.request_type,
         description=request.description,
         priority=request.priority,
@@ -47,26 +53,13 @@ def update_request_status(db: Session, request_id: int, status: RequestStatus) -
 def get_statistics(db: Session) -> Dict:
     """Get request statistics"""
     total = db.query(func.count(Request.id)).scalar()
-    
-    # Получаем количество заявок по статусам
-    status_counts = db.query(
-        Request.status,
-        func.count(Request.id)
-    ).group_by(Request.status).all()
-    
-    # Инициализируем словарь всеми возможными статусами
-    by_status = {
-        RequestStatus.NEW: 0,
-        RequestStatus.IN_PROGRESS: 0,
-        RequestStatus.COMPLETED: 0,
-        RequestStatus.REJECTED: 0
-    }
-    
-    # Обновляем значения из базы
-    for status, count in status_counts:
-        by_status[status] = count
-    
+    by_status = dict(
+        db.query(
+            Request.status,
+            func.count(Request.id)
+        ).group_by(Request.status).all()
+    )
     return {
-        "total": total or 0,
+        "total": total,
         "by_status": by_status
     }
