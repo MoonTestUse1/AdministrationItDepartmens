@@ -5,9 +5,6 @@ import App from './App.vue';
 import router from './router';
 import './assets/main.css';
 
-// Настраиваем базовый URL для axios
-axios.defaults.baseURL = '/api';
-
 const app = createApp(App);
 
 app.use(createPinia());
