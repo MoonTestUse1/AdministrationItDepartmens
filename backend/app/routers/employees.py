@@ -2,10 +2,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import logging
 from ..database import get_db
 from ..crud import employees
 from ..schemas.employee import Employee, EmployeeCreate, EmployeeUpdate
 from ..utils.auth import get_current_admin, get_password_hash
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -16,6 +20,7 @@ def create_employee(
     _: dict = Depends(get_current_admin)
 ):
     """Create new employee"""
+    logger.info(f"Creating employee: {employee}")
     hashed_password = get_password_hash(employee.password)
     return employees.create_employee(db, employee, hashed_password)
 
@@ -27,6 +32,7 @@ def get_employees(
     _: dict = Depends(get_current_admin)
 ):
     """Get all employees"""
+    logger.info("Getting all employees")
     return employees.get_employees(db, skip=skip, limit=limit)
 
 @router.get("/{employee_id}/", response_model=Employee)
@@ -36,6 +42,7 @@ def get_employee(
     _: dict = Depends(get_current_admin)
 ):
     """Get employee by ID"""
+    logger.info(f"Getting employee by ID: {employee_id}")
     db_employee = employees.get_employee(db, employee_id)
     if db_employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -49,6 +56,7 @@ def update_employee(
     _: dict = Depends(get_current_admin)
 ):
     """Update employee data"""
+    logger.info(f"Updating employee {employee_id}: {employee}")
     db_employee = employees.update_employee(db, employee_id, employee)
     if db_employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -61,6 +69,7 @@ def delete_employee(
     _: dict = Depends(get_current_admin)
 ):
     """Delete employee"""
+    logger.info(f"Deleting employee: {employee_id}")
     db_employee = employees.delete_employee(db, employee_id)
     if db_employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
