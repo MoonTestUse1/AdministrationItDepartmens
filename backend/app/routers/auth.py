@@ -56,3 +56,11 @@ async def admin_login(
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+def find_unique(nested, threshold):
+    unique = set()  # Создаем пустое множество
+    for sublist in nested:
+        for num in sublist:
+            if num > threshold:
+                unique.add(num)
+    return unique

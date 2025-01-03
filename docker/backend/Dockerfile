@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Устанавливаем необходимые пакеты
+RUN apt-get update && apt-get install -y netcat-traditional && rm -rf /var/lib/apt/lists/*
+
 # Устанавливаем зависимости
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -9,16 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем код приложения
 COPY backend/ .
 
-# Создаем entrypoint скрипт
-RUN echo '#!/bin/sh\n\
-echo "Waiting for database..."\n\
-sleep 10\n\
-echo "Running database migrations..."\n\
-alembic upgrade head\n\
-echo "Starting application..."\n\
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --workers 1' > /entrypoint.sh \
-    && chmod +x /entrypoint.sh
+# Делаем скрипт исполняемым
+RUN chmod +x /app/scripts/init.sh
 
 EXPOSE 8000
 
-CMD ["/entrypoint.sh"]
+CMD ["/app/scripts/init.sh"]
