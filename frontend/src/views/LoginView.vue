@@ -97,10 +97,11 @@ const handleLogin = async () => {
 
   try {
     console.log('Отправка запроса на авторизацию...')
-    const response = await axios.post('/api/auth/login', {
-      last_name: lastName.value,
-      password: password.value
-    })
+    const formData = new FormData()
+    formData.append('username', lastName.value)
+    formData.append('password', password.value)
+    
+    const response = await axios.post('/api/auth/login', formData)
     console.log('Ответ от сервера:', response.data)
 
     // Сохраняем данные сотрудника и токен

@@ -18,12 +18,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(lastName: string, password: string): Promise<boolean> {
     try {
+      const formData = new FormData();
+      formData.append('username', lastName);
+      formData.append('password', password);
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ lastName, password }),
+        body: formData
       });
 
       if (!response.ok) {
@@ -41,12 +42,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function adminLogin(username: string, password: string): Promise<boolean> {
     try {
-      const response = await fetch('/api/auth/admin', {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const response = await fetch('/api/auth/admin/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
+        body: formData
       });
 
       if (!response.ok) {

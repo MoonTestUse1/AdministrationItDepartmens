@@ -11,9 +11,9 @@ from ..utils.auth import verify_password
 from ..utils.jwt import create_and_save_token
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-@router.post("/token", response_model=Token)
+@router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -35,7 +35,7 @@ async def login_for_access_token(
         "token_type": "bearer"
     }
 
-@router.post("/admin/token", response_model=Token)
+@router.post("/admin/login", response_model=Token)
 async def admin_login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
