@@ -103,7 +103,7 @@ const handleLogin = async () => {
     
     const response = await axios.post('/api/auth/admin/login', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
     console.log('Ответ от сервера:', response.data)
