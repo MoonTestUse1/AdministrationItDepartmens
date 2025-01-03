@@ -1,0 +1,14 @@
+FROM python:3.9
+
+WORKDIR /app
+
+# Устанавливаем зависимости
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install pytest pytest-asyncio pytest-cov
+
+# Копируем код приложения
+COPY . .
+
+# Ждем доступности базы данных и запускаем тесты
+CMD ["sh", "-c", "while ! nc -z test-db 5432; do sleep 1; done; pytest tests/ -v --cov=app"] 
