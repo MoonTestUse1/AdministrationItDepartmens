@@ -45,6 +45,9 @@ async def create_request(
     # Отправляем уведомление в Telegram
     await notify_new_request(db_request.id)
     
+    # Получаем актуальную статистику
+    stats = requests.get_statistics(db)
+    
     # Получаем полные данные о заявке для отправки через WebSocket
     request_data = {
         "id": db_request.id,
@@ -61,7 +64,11 @@ async def create_request(
     # Отправляем уведомление через WebSocket всем админам
     await notification_manager.broadcast_to_admins({
         "type": "new_request",
-        "data": request_data
+        "data": request_data,
+        "statistics": {
+            "total": stats["total"],
+            "by_status": stats["by_status"]
+        }
     })
     return db_request
 
@@ -96,12 +103,19 @@ async def update_request_status(
     if db_request is None:
         raise HTTPException(status_code=404, detail="Request not found")
     
+    # Получаем актуальную статистику
+    stats = requests.get_statistics(db)
+    
     # Отправляем уведомление через WebSocket
     await notification_manager.broadcast_to_admins({
         "type": "status_update",
         "data": {
             "id": request_id,
             "status": db_request.status
+        },
+        "statistics": {
+            "total": stats["total"],
+            "by_status": stats["by_status"]
         }
     })
     return db_request

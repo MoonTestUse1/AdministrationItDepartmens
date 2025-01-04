@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import axios from '@/plugins/axios'
 import { wsClient } from '@/plugins/websocket'
 import { formatDate } from '@/utils/date'
@@ -101,32 +101,21 @@ const fetchData = async () => {
 const handleWebSocketMessage = async (data: any) => {
   console.log('Received WebSocket message:', data)
   
+  // Обновляем статистику, если она пришла в сообщении
+  if (data.statistics) {
+    statistics.value = data.statistics
+  }
+  
   if (data.type === 'new_request') {
-    try {
-      // Получаем актуальную статистику
-      const statsResponse = await axios.get('/api/requests/statistics')
-      statistics.value = statsResponse.data
-      
-      // Добавляем новую заявку в начало списка
-      if (data.data) {
-        requests.value = [data.data, ...requests.value]
-      }
-    } catch (error) {
-      console.error('Error updating data:', error)
+    // Добавляем новую заявку в начало списка
+    if (data.data) {
+      requests.value = [data.data, ...requests.value]
     }
   } else if (data.type === 'status_update') {
-    try {
-      // Получаем актуальную статистику
-      const statsResponse = await axios.get('/api/requests/statistics')
-      statistics.value = statsResponse.data
-      
-      // Обновляем статус заявки в списке
-      const request = requests.value.find(r => r.id === data.data.id)
-      if (request) {
-        request.status = data.data.status
-      }
-    } catch (error) {
-      console.error('Error updating status:', error)
+    // Обновляем статус заявки в списке
+    const request = requests.value.find(r => r.id === data.data.id)
+    if (request) {
+      request.status = data.data.status
     }
   }
 }
@@ -139,6 +128,15 @@ onMounted(() => {
     wsClient.connect('admin')
     wsClient.addMessageHandler(handleWebSocketMessage)
   }, 1000)
+})
+
+// Переподключение WebSocket при потере соединения
+watch(() => wsClient.isConnected, (isConnected) => {
+  if (!isConnected) {
+    setTimeout(() => {
+      wsClient.connect('admin')
+    }, 3000)
+  }
 })
 
 // Отключение от WebSocket при размонтировании компонента
