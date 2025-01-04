@@ -1,19 +1,23 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18
 
 WORKDIR /app
 
-# Копируем файлы package.json и package-lock.json
+# Копируем package.json и package-lock.json
 COPY frontend/package*.json ./
 
-# Устанавливаем все зависимости
+# Устанавливаем зависимости
 RUN npm install
 
 # Копируем исходный код
 COPY frontend/ .
 
-# Собираем приложение
-RUN npm run build
+# Открываем порт для Vite
+EXPOSE 5173
+
+# Запускаем Vite сервер
+ENV HOST=0.0.0.0
+CMD ["npm", "run", "dev"]
 
 # Production stage
 FROM nginx:alpine
