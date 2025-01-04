@@ -93,22 +93,37 @@ const fetchData = async () => {
 }
 
 // Обработчик WebSocket сообщений
-const handleWebSocketMessage = (data: any) => {
+const handleWebSocketMessage = async (data: any) => {
   if (data.type === 'new_request') {
     // Обновляем статистику при получении новой заявки
-    statistics.value.total++
-    statistics.value.by_status.NEW = (statistics.value.by_status.NEW || 0) + 1
-    // Добавляем новую заявку в начало списка
-    requests.value.unshift(data.data)
+    try {
+      // Получаем актуальную статистику
+      const statsResponse = await axios.get('/api/requests/statistics')
+      statistics.value = statsResponse.data
+      
+      // Получаем детали новой заявки
+      const requestResponse = await axios.get(`/api/requests/admin?limit=1`)
+      if (requestResponse.data && requestResponse.data.length > 0) {
+        const newRequest = requestResponse.data[0]
+        // Добавляем новую заявку в начало списка
+        requests.value = [newRequest, ...requests.value]
+      }
+    } catch (error) {
+      console.error('Error updating data:', error)
+    }
   } else if (data.type === 'status_update') {
-    // Обновляем статус заявки в списке
-    const request = requests.value.find(r => r.id === data.data.id)
-    if (request) {
-      const oldStatus = request.status
-      request.status = data.data.status
-      // Обновляем статистику
-      statistics.value.by_status[oldStatus]--
-      statistics.value.by_status[data.data.status] = (statistics.value.by_status[data.data.status] || 0) + 1
+    try {
+      // Получаем актуальную статистику
+      const statsResponse = await axios.get('/api/requests/statistics')
+      statistics.value = statsResponse.data
+      
+      // Обновляем статус заявки в списке
+      const request = requests.value.find(r => r.id === data.data.id)
+      if (request) {
+        request.status = data.data.status
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
     }
   }
 }

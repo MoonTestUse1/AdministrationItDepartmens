@@ -44,16 +44,25 @@ async def create_request(
     db_request = requests.create_request(db, request, current_employee["id"])
     # Отправляем уведомление в Telegram
     await notify_new_request(db_request.id)
+    
+    # Получаем полные данные о заявке для отправки через WebSocket
+    request_data = {
+        "id": db_request.id,
+        "title": db_request.title,
+        "description": db_request.description,
+        "status": db_request.status,
+        "priority": db_request.priority,
+        "request_type": db_request.request_type,
+        "department": db_request.department,
+        "employee_id": current_employee["id"],
+        "employee_name": current_employee.get("full_name", ""),
+        "created_at": db_request.created_at.isoformat()
+    }
+    
     # Отправляем уведомление через WebSocket всем админам
     await notification_manager.broadcast_to_admins({
         "type": "new_request",
-        "data": {
-            "id": db_request.id,
-            "employee_id": current_employee["id"],
-            "status": db_request.status,
-            "priority": db_request.priority,
-            "created_at": db_request.created_at.isoformat()
-        }
+        "data": request_data
     })
     return db_request
 
