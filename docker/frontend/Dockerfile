@@ -9,8 +9,8 @@ COPY frontend/package*.json ./
 RUN npm cache clean --force
 RUN rm -rf node_modules
 
-# Устанавливаем зависимости через npm ci для точного соответствия package-lock.json
-RUN npm ci
+# Устанавливаем зависимости и обновляем package-lock.json
+RUN npm install
 
 # Копируем исходный код
 COPY frontend/ .
@@ -19,4 +19,5 @@ COPY frontend/ .
 EXPOSE 5173
 
 # Запускаем Vite сервер
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+ENV HOST=0.0.0.0
+CMD ["npm", "run", "dev", "--", "--host"]
