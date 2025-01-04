@@ -52,10 +52,11 @@ class WebSocketClient {
       }
 
       this.socket.onmessage = (event) => {
-        console.log('WebSocket: Message received', event.data)
+        console.log('WebSocket: Message received:', event.data)
         try {
           const data = JSON.parse(event.data)
-          if (data.type !== 'pong') { // Игнорируем pong сообщения
+          if (data.type !== 'pong') {
+            console.log('WebSocket: Broadcasting message to handlers:', data)
             this.messageHandlers.forEach(handler => {
               try {
                 handler(data)
@@ -106,15 +107,17 @@ class WebSocketClient {
   }
 
   addMessageHandler(handler: (data: any) => void) {
+    console.log('WebSocket: Adding message handler')
     this.messageHandlers.push(handler)
-    console.log('WebSocket: Message handler added')
+    console.log('WebSocket: Total handlers:', this.messageHandlers.length)
   }
 
   removeMessageHandler(handler: (data: any) => void) {
+    console.log('WebSocket: Removing message handler')
     const index = this.messageHandlers.indexOf(handler)
     if (index > -1) {
       this.messageHandlers.splice(index, 1)
-      console.log('WebSocket: Message handler removed')
+      console.log('WebSocket: Handler removed, remaining handlers:', this.messageHandlers.length)
     }
   }
 
@@ -131,6 +134,7 @@ class WebSocketClient {
     this.currentType = null
     this.currentId = undefined
     this.isConnected.value = false
+    console.log('WebSocket: Disconnected')
   }
 }
 

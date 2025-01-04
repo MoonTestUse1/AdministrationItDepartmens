@@ -67,7 +67,7 @@ async def create_request(
     
     # Получаем актуальную статистику
     stats = requests.get_statistics(db)
-    logger.info(f"Current statistics: {stats}")
+    logger.info(f"Current statistics after new request: {stats}")
     
     # Получаем полные данные о заявке для отправки через WebSocket
     request_data = {
@@ -89,7 +89,7 @@ async def create_request(
         "statistics": stats
     }
     
-    logger.info(f"Broadcasting WebSocket message: {ws_message}")
+    logger.info(f"Broadcasting WebSocket message for new request: {ws_message}")
     # Отправляем уведомление через WebSocket всем админам
     await notification_manager.broadcast_to_admins(ws_message)
     
@@ -154,10 +154,5 @@ def get_request_statistics(
 ):
     """Get request statistics (admin only)"""
     stats = requests.get_statistics(db)
-    return {
-        "total": stats["total"],
-        "by_status": {
-            status: count
-            for status, count in stats["by_status"].items()
-        }
-    }
+    logger.info(f"Returning statistics: {stats}")
+    return stats

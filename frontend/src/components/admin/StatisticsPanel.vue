@@ -88,10 +88,12 @@ const periodOptions = [
 // Загрузка статистики
 const fetchStatistics = async () => {
   try {
+    console.log('StatisticsPanel: Fetching statistics');
     const [statsResponse, chartsResponse] = await Promise.all([
       axios.get('/api/requests/statistics'),
       axios.get(`/api/statistics?period=${period.value}`)
     ]);
+    console.log('StatisticsPanel: Received statistics:', statsResponse.data);
     statistics.value = statsResponse.data;
     chartData.value = chartsResponse.data;
   } catch (error) {
@@ -104,17 +106,26 @@ const handleWebSocketMessage = (data: any) => {
   console.log('StatisticsPanel: Received WebSocket message:', data);
   
   if (data.statistics) {
+    console.log('StatisticsPanel: Old statistics:', statistics.value);
     console.log('StatisticsPanel: Updating statistics:', data.statistics);
-    statistics.value = data.statistics;
+    statistics.value = {
+      total: data.statistics.total,
+      by_status: { ...data.statistics.by_status }
+    };
+    console.log('StatisticsPanel: New statistics:', statistics.value);
   }
   
-  // Обновляем статистику при изменении статуса заявки
-  if (data.type === 'status_update' && data.data) {
-    fetchStatistics(); // Обновляем графики
+  // Обновляем статистику при изменении статуса заявки или новой заявке
+  if (data.type === 'status_update' || data.type === 'new_request') {
+    console.log('StatisticsPanel: Fetching new statistics due to update');
+    fetchStatistics();
   }
 };
 
-watch(period, fetchStatistics);
+watch(period, () => {
+  console.log('StatisticsPanel: Period changed, fetching new data');
+  fetchStatistics();
+});
 
 onMounted(() => {
   console.log('StatisticsPanel: Component mounted');
