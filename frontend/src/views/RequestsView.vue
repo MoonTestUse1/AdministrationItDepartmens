@@ -48,7 +48,6 @@
             <option value="low">Низкий</option>
             <option value="medium">Средний</option>
             <option value="high">Высокий</option>
-            <option value="critical">Критический</option>
           </select>
         </div>
 
