@@ -61,12 +61,20 @@
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">Чат поддержки</h2>
               <button
-                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
+                @click="showChatModal = true"
+                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105 relative"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
                 </svg>
                 <span>Открыть чат</span>
+                <!-- Индикатор непрочитанных сообщений -->
+                <span
+                  v-if="unreadMessagesCount > 0"
+                  class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
+                >
+                  {{ unreadMessagesCount }}
+                </span>
               </button>
             </div>
             <p class="text-gray-600 leading-relaxed">
@@ -323,12 +331,29 @@
       @close="showNotification = false"
     />
   </div>
+
+  <!-- Добавляем компоненты в конец template -->
+  <ChatModal
+    v-if="showChatModal"
+    :show="showChatModal"
+    :current-user-id="currentUser.id"
+    @close="showChatModal = false"
+  />
+
+  <ChatNotification
+    :show="showChatNotification"
+    :message="chatNotificationMessage"
+    @close="showChatNotification = false"
+    @action="showChatModal = true"
+  />
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Notification from '@/components/Notification.vue'
+import ChatModal from '@/components/ChatModal.vue'
+import ChatNotification from '@/components/ChatNotification.vue'
 
 const router = useRouter()
 const requests = ref([])
@@ -337,6 +362,10 @@ const showRequestModal = ref(false)
 const showRequestsModal = ref(false)
 const isDarkMode = ref(false)
 const showNotification = ref(false)
+const showChatModal = ref(false)
+const showChatNotification = ref(false)
+const chatNotificationMessage = ref('')
+const unreadMessagesCount = ref(0)
 
 // Типы заявок
 const requestTypes = [
@@ -401,6 +430,14 @@ onMounted(() => {
   }
   
   fetchRequests()
+  checkUnreadMessages()
+  // Проверяем каждые 30 секунд
+  const interval = setInterval(checkUnreadMessages, 30000)
+  
+  // Очищаем интервал при размонтировании
+  onUnmounted(() => {
+    clearInterval(interval)
+  })
 })
 
 // Пагинация
@@ -525,6 +562,23 @@ const getRequestTypeLabel = (type) => {
     access: 'Доступ к системам'
   }
   return labels[type] || type
+}
+
+// Добавляем функцию для проверки непрочитанных сообщений
+const checkUnreadMessages = async () => {
+  try {
+    const response = await fetch('/api/chat/unread-count/', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    if (response.ok) {
+      const data = await response.json()
+      unreadMessagesCount.value = data.unread_count
+    }
+  } catch (error) {
+    console.error('Error checking unread messages:', error)
+  }
 }
 </script>
 
