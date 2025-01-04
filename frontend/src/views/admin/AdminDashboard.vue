@@ -95,7 +95,10 @@ const fetchData = async () => {
     console.log('AdminDashboard: Received statistics:', statsResponse.data)
     
     // Принудительно обновляем реактивное состояние
-    statistics.value = JSON.parse(JSON.stringify(statsResponse.data))
+    statistics.value = {
+      total: statsResponse.data.total,
+      by_status: statsResponse.data.by_status || {}
+    }
   } catch (error) {
     console.error('Error fetching data:', error)
   }
@@ -111,7 +114,10 @@ const handleWebSocketMessage = (data: any) => {
       console.log('AdminDashboard: Updating statistics:', data.statistics)
       
       // Принудительно обновляем реактивное состояние
-      statistics.value = JSON.parse(JSON.stringify(data.statistics))
+      statistics.value = {
+        total: data.statistics.total,
+        by_status: data.statistics.by_status || {}
+      }
       
       console.log('AdminDashboard: New statistics:', statistics.value)
     }

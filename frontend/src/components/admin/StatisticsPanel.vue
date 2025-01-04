@@ -27,15 +27,15 @@
       </div>
       <div class="bg-white p-4 rounded-lg shadow">
         <div class="text-sm text-gray-500">Новые заявки</div>
-        <div class="text-2xl font-semibold mt-1 text-blue-600">{{ statistics.by_status?.NEW || 0 }}</div>
+        <div class="text-2xl font-semibold mt-1 text-blue-600">{{ statistics.by_status?.new || 0 }}</div>
       </div>
       <div class="bg-white p-4 rounded-lg shadow">
         <div class="text-sm text-gray-500">В работе</div>
-        <div class="text-2xl font-semibold mt-1 text-yellow-600">{{ statistics.by_status?.IN_PROGRESS || 0 }}</div>
+        <div class="text-2xl font-semibold mt-1 text-yellow-600">{{ statistics.by_status?.in_progress || 0 }}</div>
       </div>
       <div class="bg-white p-4 rounded-lg shadow">
         <div class="text-sm text-gray-500">Завершенные</div>
-        <div class="text-2xl font-semibold mt-1 text-green-600">{{ statistics.by_status?.COMPLETED || 0 }}</div>
+        <div class="text-2xl font-semibold mt-1 text-green-600">{{ statistics.by_status?.completed || 0 }}</div>
       </div>
     </div>
 
@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import axios from '@/plugins/axios';
 import { wsClient } from '@/plugins/websocket';
 import VolumeChart from './charts/VolumeChart.vue';
@@ -68,7 +68,11 @@ import StatusChart from './charts/StatusChart.vue';
 const period = ref('week');
 const statistics = ref({
   total: 0,
-  by_status: {}
+  by_status: {
+    new: 0,
+    in_progress: 0,
+    completed: 0
+  }
 });
 const chartData = ref({
   volumeLabels: [],
@@ -96,7 +100,10 @@ const fetchStatistics = async () => {
     console.log('StatisticsPanel: Received statistics:', statsResponse.data);
     
     // Принудительно обновляем реактивное состояние
-    statistics.value = JSON.parse(JSON.stringify(statsResponse.data));
+    statistics.value = {
+      total: statsResponse.data.total,
+      by_status: statsResponse.data.by_status || {}
+    };
     chartData.value = chartsResponse.data;
   } catch (error) {
     console.error('Error fetching statistics:', error);
@@ -113,7 +120,10 @@ const handleWebSocketMessage = (data: any) => {
       console.log('StatisticsPanel: Updating statistics:', data.statistics);
       
       // Принудительно обновляем реактивное состояние
-      statistics.value = JSON.parse(JSON.stringify(data.statistics));
+      statistics.value = {
+        total: data.statistics.total,
+        by_status: data.statistics.by_status || {}
+      };
       
       console.log('StatisticsPanel: New statistics:', statistics.value);
     }

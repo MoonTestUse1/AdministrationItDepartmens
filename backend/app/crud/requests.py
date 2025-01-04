@@ -72,15 +72,24 @@ def update_request_status(db: Session, request_id: int, status: RequestStatus) -
         db.refresh(db_request)
     return db_request
 
-def get_statistics(db: Session) -> Dict:
-    """Get request statistics"""
-    total = db.query(func.count(Request.id)).scalar()
-    by_status = dict(
-        db.query(
-            Request.status,
-            func.count(Request.id)
-        ).group_by(Request.status).all()
+def get_statistics(db: Session) -> dict:
+    """Get requests statistics"""
+    # Получаем общее количество заявок
+    total = db.query(Request).count()
+    
+    # Получаем количество заявок по статусам
+    status_counts = (
+        db.query(Request.status, func.count(Request.id))
+        .group_by(Request.status)
+        .all()
     )
+    
+    # Формируем словарь статусов
+    by_status = {}
+    for status, count in status_counts:
+        by_status[status] = count
+    
+    # Возвращаем статистику в нужном формате
     return {
         "total": total,
         "by_status": by_status
