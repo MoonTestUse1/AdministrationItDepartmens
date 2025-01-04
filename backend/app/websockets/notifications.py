@@ -2,7 +2,6 @@ from fastapi import WebSocket
 from typing import Dict, List
 import json
 import logging
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +25,20 @@ class NotificationManager:
     async def broadcast_to_admins(self, message: dict):
         """Отправка сообщения всем подключенным админам"""
         logger.info(f"Broadcasting to admins: {message}")
+        logger.info(f"Number of admin connections: {len(self.active_connections['admin'])}")
+        
+        if not self.active_connections["admin"]:
+            logger.warning("No admin connections available")
+            return
+            
         disconnected = []
         
         for connection in self.active_connections["admin"]:
             try:
                 await connection.send_json(message)
-                logger.info("Message sent successfully")
+                logger.info("Message sent successfully to admin")
             except Exception as e:
-                logger.error(f"Error sending message: {e}")
+                logger.error(f"Error sending message to admin: {e}")
                 disconnected.append(connection)
                 continue
         
@@ -44,14 +49,20 @@ class NotificationManager:
     async def broadcast_to_employees(self, employee_id: int, message: dict):
         """Отправка сообщения конкретному сотруднику"""
         logger.info(f"Broadcasting to employee {employee_id}: {message}")
+        logger.info(f"Number of employee connections: {len(self.active_connections['employee'])}")
+        
+        if not self.active_connections["employee"]:
+            logger.warning("No employee connections available")
+            return
+            
         disconnected = []
         
         for connection in self.active_connections["employee"]:
             try:
                 await connection.send_json(message)
-                logger.info("Message sent successfully")
+                logger.info("Message sent successfully to employee")
             except Exception as e:
-                logger.error(f"Error sending message: {e}")
+                logger.error(f"Error sending message to employee: {e}")
                 disconnected.append(connection)
                 continue
         
