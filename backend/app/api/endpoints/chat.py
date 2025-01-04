@@ -17,7 +17,7 @@ router = APIRouter()
 UPLOAD_DIR = "uploads/chat_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.websocket("/ws/chat")
+@router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     await handle_chat_connection(websocket, db)
 
@@ -62,6 +62,24 @@ def get_messages(
 
     # Получаем сообщения
     messages = db.query(Message).filter(Message.chat_id == chat.id).all()
+    return messages
+
+@router.get("/messages/{chat_id}/", response_model=List[Message])
+def get_chat_messages(
+    chat_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Проверяем доступ к чату
+    chat = db.query(Chat).filter(Chat.id == chat_id).first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    if not current_user.is_admin and chat.employee_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Получаем сообщения
+    messages = db.query(Message).filter(Message.chat_id == chat_id).all()
     return messages
 
 @router.get("/unread-count/")
@@ -116,26 +134,4 @@ def get_admin_chats(
             ).count()
         chat.unread_count = unread_count
 
-    return chats
-
-@router.get("/messages/{chat_id}/", response_model=List[Message])
-def get_chat_messages(
-    chat_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    # Проверяем доступ к чату
-    chat = db.query(Chat).filter(Chat.id == chat_id).first()
-    if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
-
-    if not current_user.is_admin and chat.employee_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    # Получаем сообщения чата
-    messages = db.query(Message)\
-        .filter(Message.chat_id == chat_id)\
-        .order_by(Message.created_at.asc())\
-        .all()
-
-    return messages 
+    return chats 

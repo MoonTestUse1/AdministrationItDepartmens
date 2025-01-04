@@ -66,6 +66,18 @@ async def handle_chat_connection(
                 db.add(message)
                 db.commit()
                 
+                # Если есть файлы, создаем записи для них
+                if 'files' in data and data['files']:
+                    for file_data in data['files']:
+                        chat_file = ChatFile(
+                            message_id=message.id,
+                            file_name=file_data['filename'],
+                            file_path=file_data['saved_path'],
+                            file_size=file_data['size']
+                        )
+                        db.add(chat_file)
+                    db.commit()
+                
                 # Определяем получателя
                 recipient_id = chat.admin_id if current_user.id == chat.employee_id else chat.employee_id
                 
@@ -76,7 +88,14 @@ async def handle_chat_connection(
                     'sender_id': current_user.id,
                     'content': message.content,
                     'created_at': message.created_at.isoformat(),
-                    'is_read': False
+                    'is_read': False,
+                    'files': [
+                        {
+                            'id': f.id,
+                            'file_name': f.file_name,
+                            'file_path': f.file_path
+                        } for f in message.files
+                    ] if message.files else []
                 }
                 
                 if manager.is_connected(recipient_id):
