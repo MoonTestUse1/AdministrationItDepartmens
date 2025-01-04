@@ -22,65 +22,86 @@ class WebSocketClient {
       `${baseUrl}/api/requests/ws/admin` : 
       `${baseUrl}/api/requests/ws/employee/${id}`
 
-    console.log('Connecting to WebSocket:', url)
+    console.log('WebSocket: Connecting to', url)
     
     if (this.socket) {
-      console.log('Closing existing connection')
+      console.log('WebSocket: Closing existing connection')
       this.socket.close()
+      this.socket = null
     }
 
-    this.socket = new WebSocket(url)
+    try {
+      this.socket = new WebSocket(url)
 
-    this.socket.onopen = () => {
-      console.log('WebSocket connected')
-      this.isConnected.value = true
-      this.reconnectAttempts = 0
-    }
-
-    this.socket.onmessage = (event) => {
-      console.log('WebSocket message received:', event.data)
-      try {
-        const data = JSON.parse(event.data)
-        this.messageHandlers.forEach(handler => handler(data))
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error)
+      this.socket.onopen = () => {
+        console.log('WebSocket: Connected successfully')
+        this.isConnected.value = true
+        this.reconnectAttempts = 0
       }
-    }
 
-    this.socket.onclose = () => {
-      console.log('WebSocket disconnected')
+      this.socket.onmessage = (event) => {
+        console.log('WebSocket: Message received', event.data)
+        try {
+          const data = JSON.parse(event.data)
+          this.messageHandlers.forEach(handler => {
+            try {
+              handler(data)
+            } catch (error) {
+              console.error('WebSocket: Error in message handler:', error)
+            }
+          })
+        } catch (error) {
+          console.error('WebSocket: Error parsing message:', error)
+        }
+      }
+
+      this.socket.onclose = (event) => {
+        console.log('WebSocket: Connection closed', event.code, event.reason)
+        this.isConnected.value = false
+        this.tryReconnect()
+      }
+
+      this.socket.onerror = (error) => {
+        console.error('WebSocket: Error occurred:', error)
+        this.isConnected.value = false
+      }
+    } catch (error) {
+      console.error('WebSocket: Error creating connection:', error)
       this.isConnected.value = false
       this.tryReconnect()
-    }
-
-    this.socket.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      this.isConnected.value = false
     }
   }
 
   private tryReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts && this.currentType) {
       this.reconnectAttempts++
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+      const delay = this.reconnectTimeout * Math.min(this.reconnectAttempts, 3)
+      console.log(`WebSocket: Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`)
+      
       setTimeout(() => {
+        console.log('WebSocket: Reconnecting...')
         this.connect(this.currentType!, this.currentId)
-      }, this.reconnectTimeout * this.reconnectAttempts)
+      }, delay)
+    } else {
+      console.log('WebSocket: Max reconnection attempts reached')
     }
   }
 
   addMessageHandler(handler: (data: any) => void) {
     this.messageHandlers.push(handler)
+    console.log('WebSocket: Message handler added')
   }
 
   removeMessageHandler(handler: (data: any) => void) {
     const index = this.messageHandlers.indexOf(handler)
     if (index > -1) {
       this.messageHandlers.splice(index, 1)
+      console.log('WebSocket: Message handler removed')
     }
   }
 
   disconnect() {
+    console.log('WebSocket: Disconnecting...')
     if (this.socket) {
       this.socket.close()
       this.socket = null

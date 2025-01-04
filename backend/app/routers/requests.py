@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import logging
 from ..database import get_db
 from ..crud import requests
 from ..schemas.request import Request, RequestCreate, RequestUpdate
@@ -11,16 +12,19 @@ from ..utils.telegram import notify_new_request
 from ..websockets.notifications import notification_manager
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.websocket("/ws/admin")
 async def websocket_admin_endpoint(websocket: WebSocket):
     """WebSocket endpoint для админов"""
+    logger.info("Admin WebSocket connection attempt")
     await notification_manager.connect(websocket, "admin")
     try:
         while True:
             data = await websocket.receive_text()
-            # Здесь можно добавить обработку сообщений от админа
+            logger.info(f"Received message from admin: {data}")
     except WebSocketDisconnect:
+        logger.info("Admin WebSocket disconnected")
         notification_manager.disconnect(websocket, "admin")
 
 @router.websocket("/ws/employee/{employee_id}")
@@ -41,12 +45,15 @@ async def create_request(
     current_employee: dict = Depends(get_current_employee)
 ):
     """Create new request"""
+    logger.info(f"Creating new request from employee {current_employee['id']}")
     db_request = requests.create_request(db, request, current_employee["id"])
+    
     # Отправляем уведомление в Telegram
     await notify_new_request(db_request.id)
     
     # Получаем актуальную статистику
     stats = requests.get_statistics(db)
+    logger.info(f"Current statistics: {stats}")
     
     # Получаем полные данные о заявке для отправки через WebSocket
     request_data = {
@@ -61,15 +68,17 @@ async def create_request(
         "created_at": db_request.created_at.isoformat()
     }
     
-    # Отправляем уведомление через WebSocket всем админам
-    await notification_manager.broadcast_to_admins({
+    # Формируем сообщение для WebSocket
+    ws_message = {
         "type": "new_request",
         "data": request_data,
-        "statistics": {
-            "total": stats["total"],
-            "by_status": stats["by_status"]
-        }
-    })
+        "statistics": stats
+    }
+    
+    logger.info(f"Broadcasting WebSocket message: {ws_message}")
+    # Отправляем уведомление через WebSocket всем админам
+    await notification_manager.broadcast_to_admins(ws_message)
+    
     return db_request
 
 @router.get("/my", response_model=List[Request])
@@ -99,25 +108,29 @@ async def update_request_status(
     _: dict = Depends(get_current_admin)
 ):
     """Update request status (admin only)"""
+    logger.info(f"Updating request {request_id} status to {request_update.status}")
     db_request = requests.update_request_status(db, request_id, request_update.status)
     if db_request is None:
         raise HTTPException(status_code=404, detail="Request not found")
     
     # Получаем актуальную статистику
     stats = requests.get_statistics(db)
+    logger.info(f"Current statistics after status update: {stats}")
     
-    # Отправляем уведомление через WebSocket
-    await notification_manager.broadcast_to_admins({
+    # Формируем сообщение для WebSocket
+    ws_message = {
         "type": "status_update",
         "data": {
             "id": request_id,
             "status": db_request.status
         },
-        "statistics": {
-            "total": stats["total"],
-            "by_status": stats["by_status"]
-        }
-    })
+        "statistics": stats
+    }
+    
+    logger.info(f"Broadcasting WebSocket message for status update: {ws_message}")
+    # Отправляем уведомление через WebSocket
+    await notification_manager.broadcast_to_admins(ws_message)
+    
     return db_request
 
 @router.get("/statistics")

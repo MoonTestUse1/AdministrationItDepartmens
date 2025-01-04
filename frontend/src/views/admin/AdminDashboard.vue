@@ -98,20 +98,24 @@ const fetchData = async () => {
 }
 
 // Обработчик WebSocket сообщений
-const handleWebSocketMessage = async (data: any) => {
+const handleWebSocketMessage = (data: any) => {
   console.log('Received WebSocket message:', data)
   
   // Обновляем статистику, если она пришла в сообщении
   if (data.statistics) {
-    statistics.value = data.statistics
+    console.log('Updating statistics:', data.statistics)
+    statistics.value = {
+      total: data.statistics.total,
+      by_status: { ...data.statistics.by_status }
+    }
   }
   
-  if (data.type === 'new_request') {
+  if (data.type === 'new_request' && data.data) {
+    console.log('Adding new request:', data.data)
     // Добавляем новую заявку в начало списка
-    if (data.data) {
-      requests.value = [data.data, ...requests.value]
-    }
-  } else if (data.type === 'status_update') {
+    requests.value = [data.data, ...requests.value.slice(0, 99)]
+  } else if (data.type === 'status_update' && data.data) {
+    console.log('Updating request status:', data.data)
     // Обновляем статус заявки в списке
     const request = requests.value.find(r => r.id === data.data.id)
     if (request) {
@@ -122,9 +126,12 @@ const handleWebSocketMessage = async (data: any) => {
 
 // Подключение к WebSocket при монтировании компонента
 onMounted(() => {
+  console.log('Component mounted, fetching initial data')
   fetchData()
+  
   // Добавляем небольшую задержку перед подключением WebSocket
   setTimeout(() => {
+    console.log('Connecting to WebSocket')
     wsClient.connect('admin')
     wsClient.addMessageHandler(handleWebSocketMessage)
   }, 1000)
@@ -132,7 +139,9 @@ onMounted(() => {
 
 // Переподключение WebSocket при потере соединения
 watch(() => wsClient.isConnected, (isConnected) => {
+  console.log('WebSocket connection status changed:', isConnected)
   if (!isConnected) {
+    console.log('Attempting to reconnect WebSocket')
     setTimeout(() => {
       wsClient.connect('admin')
     }, 3000)
@@ -141,6 +150,7 @@ watch(() => wsClient.isConnected, (isConnected) => {
 
 // Отключение от WebSocket при размонтировании компонента
 onUnmounted(() => {
+  console.log('Component unmounting, disconnecting WebSocket')
   wsClient.removeMessageHandler(handleWebSocketMessage)
   wsClient.disconnect()
 })
