@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .db.base import Base
 from .database import engine
-from .routers import auth, requests, employees
+from .routers import auth, requests, employees, admin, statistics
 from .websockets.notifications import notification_manager
 
 # Настраиваем логирование
@@ -30,9 +30,11 @@ app.add_middleware(
 )
 
 # Подключаем роутеры
-app.include_router(auth.router, prefix="/api", tags=["auth"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
 app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
 
 # Добавляем WebSocket маршруты
 app.websocket("/api/ws/admin")(notification_manager.admin_endpoint)

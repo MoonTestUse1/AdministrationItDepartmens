@@ -6,25 +6,31 @@ from typing import Optional
 class Settings(BaseSettings):
     """Application settings"""
     # Database settings
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    POSTGRES_HOST: str
-    POSTGRES_PORT: str
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "support"
+    POSTGRES_HOST: str = "support-db"
+    POSTGRES_PORT: str = "5432"
+    DATABASE_URL: str = None  # Будет установлено в __init__
 
-    @property
-    def DATABASE_URL(self) -> str:
-        """Get database URL"""
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    # Redis settings
+    REDIS_HOST: str = "support-redis"
+    REDIS_PORT: int = 6379
 
     # JWT settings
-    JWT_SECRET: str
-    JWT_ALGORITHM: str = "HS256"
+    SECRET_KEY: str = "your-secret-key"  # В продакшене нужно заменить на безопасный ключ
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
 
     # Telegram settings
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_CHAT_ID: Optional[str] = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Формируем URL для подключения к базе данных
+        if not self.DATABASE_URL:
+            self.DATABASE_URL = f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     class Config:
         """Pydantic config"""
