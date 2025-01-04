@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@vueuse/core": "^10.9.0",
+    "axios": "^1.6.2",
     "chart.js": "^4.4.1",
     "lucide-vue-next": "^0.344.0",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0",
-    "axios": "^1.7.9"
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.11",

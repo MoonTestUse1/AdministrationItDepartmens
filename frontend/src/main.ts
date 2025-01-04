@@ -1,13 +1,18 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import axios from 'axios';
-import App from './App.vue';
-import router from './router';
-import './assets/main.css';
+import './assets/main.css'
 
-const app = createApp(App);
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import axios from './plugins/axios'
 
-app.use(createPinia());
-app.use(router);
+import App from './App.vue'
+import router from './router'
 
-app.mount('#app');
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+
+// Добавляем axios как глобальное свойство
+app.config.globalProperties.$axios = axios
+
+app.mount('#app')
