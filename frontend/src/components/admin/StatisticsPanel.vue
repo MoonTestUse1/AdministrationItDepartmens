@@ -20,14 +20,22 @@
     </div>
 
     <!-- Summary cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div
-        v-for="stat in summaryStats"
-        :key="stat.label"
-        class="bg-white p-4 rounded-lg shadow"
-      >
-        <div class="text-sm text-gray-500">{{ stat.label }}</div>
-        <div class="text-2xl font-semibold mt-1">{{ stat.value }}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="text-sm text-gray-500">Всего заявок</div>
+        <div class="text-2xl font-semibold mt-1">{{ statistics.total || 0 }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="text-sm text-gray-500">Новые заявки</div>
+        <div class="text-2xl font-semibold mt-1 text-blue-600">{{ statistics.by_status?.NEW || 0 }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="text-sm text-gray-500">В работе</div>
+        <div class="text-2xl font-semibold mt-1 text-yellow-600">{{ statistics.by_status?.IN_PROGRESS || 0 }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="text-sm text-gray-500">Завершенные</div>
+        <div class="text-2xl font-semibold mt-1 text-green-600">{{ statistics.by_status?.COMPLETED || 0 }}</div>
       </div>
     </div>
 
@@ -50,22 +58,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
+import axios from '@/plugins/axios';
+import { wsClient } from '@/plugins/websocket';
 import VolumeChart from './charts/VolumeChart.vue';
 import TypesChart from './charts/TypesChart.vue';
 import StatusChart from './charts/StatusChart.vue';
 
 const period = ref('week');
+const statistics = ref({
+  total: 0,
+  by_status: {}
+});
 const chartData = ref({
   volumeLabels: [],
   volumeData: [],
   typeLabels: [],
   typeData: [],
   statusLabels: [],
-  statusData: [],
-  totalRequests: 0,
-  resolvedRequests: 0,
-  averageResolutionTime: '0ч'
+  statusData: []
 });
 
 const periodOptions = [
@@ -74,22 +85,50 @@ const periodOptions = [
   { value: 'month', label: 'Месяц' }
 ];
 
-const summaryStats = computed(() => [
-  { label: 'Всего заявок', value: chartData.value.totalRequests },
-  { label: 'Решено за период', value: chartData.value.resolvedRequests },
-  { label: 'Среднее время решения', value: chartData.value.averageResolutionTime }
-]);
-
-async function fetchStatistics() {
+// Загрузка статистики
+const fetchStatistics = async () => {
   try {
-    const response = await fetch(`/api/statistics?period=${period.value}`);
-    if (!response.ok) throw new Error('Failed to fetch statistics');
-    chartData.value = await response.json();
+    const [statsResponse, chartsResponse] = await Promise.all([
+      axios.get('/api/requests/statistics'),
+      axios.get(`/api/statistics?period=${period.value}`)
+    ]);
+    statistics.value = statsResponse.data;
+    chartData.value = chartsResponse.data;
   } catch (error) {
     console.error('Error fetching statistics:', error);
   }
-}
+};
+
+// Обработчик WebSocket сообщений
+const handleWebSocketMessage = (data: any) => {
+  console.log('StatisticsPanel: Received WebSocket message:', data);
+  
+  if (data.statistics) {
+    console.log('StatisticsPanel: Updating statistics:', data.statistics);
+    statistics.value = data.statistics;
+  }
+  
+  // Обновляем статистику при изменении статуса заявки
+  if (data.type === 'status_update' && data.data) {
+    fetchStatistics(); // Обновляем графики
+  }
+};
 
 watch(period, fetchStatistics);
-onMounted(fetchStatistics);
+
+onMounted(() => {
+  console.log('StatisticsPanel: Component mounted');
+  fetchStatistics();
+  
+  // Подключаемся к WebSocket
+  setTimeout(() => {
+    console.log('StatisticsPanel: Adding WebSocket handler');
+    wsClient.addMessageHandler(handleWebSocketMessage);
+  }, 1000);
+});
+
+onUnmounted(() => {
+  console.log('StatisticsPanel: Component unmounting');
+  wsClient.removeMessageHandler(handleWebSocketMessage);
+});
 </script>
