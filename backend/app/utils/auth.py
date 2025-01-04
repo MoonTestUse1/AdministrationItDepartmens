@@ -3,10 +3,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-import re
+import logging
 
 from .jwt import verify_token
 from ..database import get_db
+
+# Настраиваем логирование
+logger = logging.getLogger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
@@ -46,6 +49,7 @@ def get_current_admin(
             
         return {"is_admin": True}
     except Exception as e:
+        logger.error(f"Authentication error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
@@ -78,7 +82,8 @@ def get_current_employee(
             )
             
         return {"id": employee_id}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from ..core.config import settings
+from ..config import settings
 from ..models.token import Token
 from ..crud.employees import get_employee
 
