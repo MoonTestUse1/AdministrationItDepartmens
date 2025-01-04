@@ -313,11 +313,22 @@
       </form>
     </div>
   </div>
+
+  <!-- Уведомление -->
+  <div class="fixed bottom-4 right-4 z-50">
+    <Notification
+      :show="showNotification"
+      title="Заявка принята"
+      message="Ваша заявка успешно создана. Ожидайте ответа от службы поддержки."
+      @close="showNotification = false"
+    />
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import Notification from '@/components/Notification.vue'
 
 const router = useRouter()
 const requests = ref([])
@@ -325,6 +336,7 @@ const isSubmitting = ref(false)
 const showRequestModal = ref(false)
 const showRequestsModal = ref(false)
 const isDarkMode = ref(false)
+const showNotification = ref(false)
 
 // Типы заявок
 const requestTypes = [
@@ -459,6 +471,12 @@ const submitRequest = async () => {
       priority: 'low'
     }
     showRequestModal.value = false
+
+    // Показываем уведомление
+    showNotification.value = true
+    setTimeout(() => {
+      showNotification.value = false
+    }, 5000) // Скрываем через 5 секунд
 
     // Обновляем список заявок
     await fetchRequests()
