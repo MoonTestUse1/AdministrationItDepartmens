@@ -99,10 +99,15 @@ const fetchStatistics = async () => {
     ]);
     console.log('StatisticsPanel: Received statistics:', statsResponse.data);
     
-    // Принудительно обновляем реактивное состояние
+    // Обновляем статистику
     statistics.value = {
       total: statsResponse.data.total,
-      by_status: statsResponse.data.by_status || {}
+      by_status: {
+        new: statsResponse.data.by_status?.new || 0,
+        in_progress: statsResponse.data.by_status?.in_progress || 0,
+        completed: statsResponse.data.by_status?.completed || 0,
+        rejected: statsResponse.data.by_status?.rejected || 0
+      }
     };
     chartData.value = chartsResponse.data;
   } catch (error) {
@@ -119,10 +124,15 @@ const handleWebSocketMessage = (data: any) => {
       console.log('StatisticsPanel: Old statistics:', statistics.value);
       console.log('StatisticsPanel: Updating statistics:', data.statistics);
       
-      // Принудительно обновляем реактивное состояние
+      // Обновляем статистику
       statistics.value = {
         total: data.statistics.total,
-        by_status: data.statistics.by_status || {}
+        by_status: {
+          new: data.statistics.by_status?.new || 0,
+          in_progress: data.statistics.by_status?.in_progress || 0,
+          completed: data.statistics.by_status?.completed || 0,
+          rejected: data.statistics.by_status?.rejected || 0
+        }
       };
       
       console.log('StatisticsPanel: New statistics:', statistics.value);

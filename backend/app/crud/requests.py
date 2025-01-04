@@ -84,10 +84,17 @@ def get_statistics(db: Session) -> dict:
         .all()
     )
     
-    # Формируем словарь статусов
-    by_status = {}
+    # Формируем словарь статусов с преобразованием в нижний регистр
+    by_status = {
+        'new': 0,
+        'in_progress': 0,
+        'completed': 0,
+        'rejected': 0
+    }
+    
     for status, count in status_counts:
-        by_status[status] = count
+        status_key = status.lower() if isinstance(status, str) else status.value.lower()
+        by_status[status_key] = count
     
     # Возвращаем статистику в нужном формате
     return {
