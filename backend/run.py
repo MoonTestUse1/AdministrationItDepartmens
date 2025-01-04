@@ -34,5 +34,5 @@ async def main():
         logger.error(f"Application crashed: {e}", exc_info=True)
 
 if __name__ == "__main__":
-    # Запускаем в основном потоы
+    # Запускаем в основном потоыы
     asyncio.run(main())
