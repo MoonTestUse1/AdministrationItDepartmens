@@ -94,7 +94,9 @@ const fetchStatistics = async () => {
       axios.get(`/api/statistics?period=${period.value}`)
     ]);
     console.log('StatisticsPanel: Received statistics:', statsResponse.data);
-    statistics.value = statsResponse.data;
+    
+    // Принудительно обновляем реактивное состояние
+    statistics.value = JSON.parse(JSON.stringify(statsResponse.data));
     chartData.value = chartsResponse.data;
   } catch (error) {
     console.error('Error fetching statistics:', error);
@@ -105,20 +107,16 @@ const fetchStatistics = async () => {
 const handleWebSocketMessage = (data: any) => {
   console.log('StatisticsPanel: Received WebSocket message:', data);
   
-  if (data.statistics) {
-    console.log('StatisticsPanel: Old statistics:', statistics.value);
-    console.log('StatisticsPanel: Updating statistics:', data.statistics);
-    statistics.value = {
-      total: data.statistics.total,
-      by_status: { ...data.statistics.by_status }
-    };
-    console.log('StatisticsPanel: New statistics:', statistics.value);
-  }
-  
-  // Обновляем статистику при изменении статуса заявки или новой заявке
-  if (data.type === 'status_update' || data.type === 'new_request') {
-    console.log('StatisticsPanel: Fetching new statistics due to update');
-    fetchStatistics();
+  if (data.type === 'new_request' || data.type === 'status_update') {
+    if (data.statistics) {
+      console.log('StatisticsPanel: Old statistics:', statistics.value);
+      console.log('StatisticsPanel: Updating statistics:', data.statistics);
+      
+      // Принудительно обновляем реактивное состояние
+      statistics.value = JSON.parse(JSON.stringify(data.statistics));
+      
+      console.log('StatisticsPanel: New statistics:', statistics.value);
+    }
   }
 };
 

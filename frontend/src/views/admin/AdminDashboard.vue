@@ -93,7 +93,9 @@ const fetchData = async () => {
     ])
     requests.value = requestsResponse.data
     console.log('AdminDashboard: Received statistics:', statsResponse.data)
-    statistics.value = statsResponse.data
+    
+    // Принудительно обновляем реактивное состояние
+    statistics.value = JSON.parse(JSON.stringify(statsResponse.data))
   } catch (error) {
     console.error('Error fetching data:', error)
   }
@@ -103,27 +105,28 @@ const fetchData = async () => {
 const handleWebSocketMessage = (data: any) => {
   console.log('AdminDashboard: Received WebSocket message:', data)
   
-  // Обновляем статистику, если она пришла в сообщении
-  if (data.statistics) {
-    console.log('AdminDashboard: Old statistics:', statistics.value)
-    console.log('AdminDashboard: Updating statistics:', data.statistics)
-    statistics.value = {
-      total: data.statistics.total,
-      by_status: { ...data.statistics.by_status }
+  if (data.type === 'new_request' || data.type === 'status_update') {
+    if (data.statistics) {
+      console.log('AdminDashboard: Old statistics:', statistics.value)
+      console.log('AdminDashboard: Updating statistics:', data.statistics)
+      
+      // Принудительно обновляем реактивное состояние
+      statistics.value = JSON.parse(JSON.stringify(data.statistics))
+      
+      console.log('AdminDashboard: New statistics:', statistics.value)
     }
-    console.log('AdminDashboard: New statistics:', statistics.value)
-  }
-  
-  if (data.type === 'new_request' && data.data) {
-    console.log('AdminDashboard: Adding new request:', data.data)
-    // Добавляем новую заявку в начало списка
-    requests.value = [data.data, ...requests.value]
-  } else if (data.type === 'status_update' && data.data) {
-    console.log('AdminDashboard: Updating request status:', data.data)
-    // Обновляем статус заявки в списке
-    const request = requests.value.find(r => r.id === data.data.id)
-    if (request) {
-      request.status = data.data.status
+    
+    if (data.type === 'new_request' && data.data) {
+      console.log('AdminDashboard: Adding new request:', data.data)
+      // Добавляем новую заявку в начало списка
+      requests.value = [data.data, ...requests.value]
+    } else if (data.type === 'status_update' && data.data) {
+      console.log('AdminDashboard: Updating request status:', data.data)
+      // Обновляем статус заявки в списке
+      const request = requests.value.find(r => r.id === data.data.id)
+      if (request) {
+        request.status = data.data.status
+      }
     }
   }
 }
