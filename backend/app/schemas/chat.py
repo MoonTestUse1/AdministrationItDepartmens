@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
-from app.schemas.user import User
+from models.user import User
 
 class ChatFileBase(BaseModel):
     file_name: str
