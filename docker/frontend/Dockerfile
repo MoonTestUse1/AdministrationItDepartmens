@@ -7,16 +7,14 @@ COPY frontend/package*.json ./
 
 # Очищаем cache и node_modules
 RUN npm cache clean --force
-RUN rm -rf node_modules
+RUN rm -rf node_modules package-lock.json
 
 # Устанавливаем зависимости
 RUN npm install
+RUN npm install axios@1.6.2
 
 # Копируем исходный код
 COPY frontend/ .
-
-# Создаем .env файл
-RUN echo "VITE_API_URL=/api" > .env
 
 # Открываем порт для Vite
 EXPOSE 5173
