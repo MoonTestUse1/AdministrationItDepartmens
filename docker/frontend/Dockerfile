@@ -2,15 +2,17 @@ FROM node:18
 
 WORKDIR /app
 
-# Копируем файлы package.json и package-lock.json
+# Копируем package.json и package-lock.json
 COPY frontend/package*.json ./
 
-# Очищаем cache и node_modules
-RUN npm cache clean --force
-RUN rm -rf node_modules
-
-# Устанавливаем зависимости и обновляем package-lock.json
+# Устанавливаем зависимости
 RUN npm install
+
+# Устанавливаем Tailwind и его зависимости
+RUN npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
+
+# Инициализируем Tailwind
+RUN npx tailwindcss init -p
 
 # Копируем исходный код
 COPY frontend/ .
