@@ -9,21 +9,11 @@ COPY frontend/package*.json ./
 RUN npm cache clean --force
 RUN rm -rf node_modules
 
-# Устанавливаем основные зависимости
-RUN npm install
-
-# Устанавливаем tailwind и его плагины
-RUN npm install -D tailwindcss postcss autoprefixer @tailwindcss/forms
-
-# Устанавливаем дополнительные зависимости
-RUN npm install axios
-RUN npm rebuild rollup
+# Устанавливаем зависимости через npm ci для точного соответствия package-lock.json
+RUN npm ci
 
 # Копируем исходный код
 COPY frontend/ .
-
-# Генерируем tailwind конфигурацию
-RUN npx tailwindcss init -p
 
 # Открываем порт для Vite
 EXPOSE 5173
