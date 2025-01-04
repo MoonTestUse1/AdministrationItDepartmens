@@ -7,6 +7,7 @@ COPY frontend/package*.json ./
 
 # Устанавливаем зависимости
 RUN npm install
+RUN npm install axios @tailwindcss/forms
 RUN npm rebuild rollup
 
 # Копируем исходный код
