@@ -1,17 +1,34 @@
-"""Application configuration module"""
+"""Application configuration"""
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from typing import Optional
+
 
 class Settings(BaseSettings):
     """Application settings"""
-    database_url: str = Field(..., alias="DATABASE_URL")
-    bot_token: str = Field(..., alias="TELEGRAM_BOT_TOKEN")
-    chat_id: str = Field(..., alias="TELEGRAM_CHAT_ID")
+    # Database settings
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: str
+
+    @property
+    def DATABASE_URL(self) -> str:
+        """Get database URL"""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    # JWT settings
+    JWT_SECRET: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+
+    # Telegram settings
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
 
     class Config:
+        """Pydantic config"""
         env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "ignore"
+
 
 settings = Settings()
