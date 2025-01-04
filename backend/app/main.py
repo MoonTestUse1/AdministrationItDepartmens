@@ -1,51 +1,30 @@
-"""Main application module"""
-from fastapi import FastAPI, Request
+"""Main FastAPI application"""
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import models
-from .routers import admin, employees, requests, auth, statistics
-import logging
+from .db.base_class import Base
+from .database import engine
+from .routers import auth, requests, employees
+from .websockets.notifications import notification_manager
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Создаем таблицы в базе данных
+Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    # Включаем автоматическое перенаправление со слэшем
-    redirect_slashes=True,
-    # Добавляем описание API
-    title="Support System API",
-    description="API для системы поддержки",
-    version="1.0.0"
-)
+app = FastAPI(title="Support API")
 
-# CORS configuration
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:8080",
-    "http://185.139.70.62",  # Добавляем ваш production домен
-]
-
+# Настраиваем CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
+# Подключаем роутеры
+app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
-app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
-app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
+app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Request: {request.method} {request.url}")
-    response = await call_next(request)
-    return response
+# Добавляем WebSocket маршруты
+app.websocket("/api/ws/admin")(notification_manager.admin_endpoint)
+app.websocket("/api/ws/employee/{employee_id}")(notification_manager.employee_endpoint)

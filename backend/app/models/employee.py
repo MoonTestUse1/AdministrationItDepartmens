@@ -1,7 +1,7 @@
 """Employee models"""
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from ..db.base import Base
+from ..db.base_class import Base
 
 
 class Employee(Base):

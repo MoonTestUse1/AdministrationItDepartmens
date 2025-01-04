@@ -1,7 +1,7 @@
 """Database session configuration"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .db.base import Base
+from .db.base_class import Base
 from .config import settings
 
 # Создаем URL для подключения к базе данных
