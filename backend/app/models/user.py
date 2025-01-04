@@ -16,4 +16,7 @@ class User(Base):
     # Отношения для чата
     employee_chats = relationship("Chat", foreign_keys="[Chat.employee_id]", back_populates="employee")
     admin_chats = relationship("Chat", foreign_keys="[Chat.admin_id]", back_populates="admin")
-    sent_messages = relationship("Message", back_populates="sender") 
+    sent_messages = relationship("Message", back_populates="sender")
+    
+    # Отношения для заявок
+    requests = relationship("Request", back_populates="employee") 

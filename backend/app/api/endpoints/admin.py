@@ -1,8 +1,10 @@
 """Admin router"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from datetime import datetime, timedelta
+
 from app.database import get_db
 from app.models.user import User
 from app.models.request import Request
@@ -14,30 +16,79 @@ router = APIRouter()
 
 @router.get("/statistics")
 def get_statistics(
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Get system statistics"""
-    return statistics.get_request_statistics(db)
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
 
-@router.get("/requests", response_model=List[Request])
+    # Общая статистика
+    total_requests = db.query(func.count(Request.id)).scalar()
+    total_users = db.query(func.count(User.id)).filter(User.is_admin == False).scalar()
+
+    # Статистика по статусам
+    status_stats = db.query(
+        Request.status,
+        func.count(Request.id)
+    ).group_by(Request.status).all()
+
+    # Статистика за последние 7 дней
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    daily_stats = db.query(
+        func.date(Request.created_at),
+        func.count(Request.id)
+    ).filter(
+        Request.created_at >= week_ago
+    ).group_by(
+        func.date(Request.created_at)
+    ).all()
+
+    return {
+        "total_requests": total_requests,
+        "total_users": total_users,
+        "status_stats": {
+            status: count for status, count in status_stats
+        },
+        "daily_stats": {
+            date.strftime("%Y-%m-%d"): count
+            for date, count in daily_stats
+        }
+    }
+
+@router.get("/requests", response_model=List[RequestSchema])
 def get_all_requests(
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get all requests"""
-    return requests.get_requests(db)
+    """Get all requests (admin only)"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
 
-@router.get("/requests/{request_id}", response_model=Request)
-async def get_request_by_id(
-    request_id: int,
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+    requests = db.query(Request).offset(skip).limit(limit).all()
+    return requests
+
+@router.get("/users", response_model=List[UserSchema])
+def get_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """
-    Получить заявку по ID (только для админа)
-    """
-    request = requests.get_request(db, request_id)
-    if request is None:
-        raise HTTPException(status_code=404, detail="Request not found")
-    return request
+    """Get all users (admin only)"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+
+    users = db.query(User).filter(User.is_admin == False).offset(skip).limit(limit).all()
+    return users
