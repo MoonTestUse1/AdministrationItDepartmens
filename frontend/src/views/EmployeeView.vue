@@ -18,80 +18,131 @@
 
     <!-- Основной контент -->
     <main class="container mx-auto px-4 py-8">
-      <!-- Форма создания заявки -->
-      <div class="bg-card rounded-lg shadow-lg p-6 mb-8">
-        <h2 class="text-lg font-semibold mb-4">Создать заявку</h2>
-        <form @submit.prevent="submitRequest" class="space-y-4">
-          <div>
-            <label class="block text-secondary mb-1">Тема</label>
-            <input
-              v-model="requestForm.title"
-              type="text"
-              required
-              class="w-full px-4 py-2 rounded-lg bg-input text-primary border border-input-border focus:border-button-primary transition-colors"
-              placeholder="Введите тему заявки"
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Блок 1: Создать заявку -->
+        <div class="bg-card rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Создать заявку</h2>
+            <button
+              @click="showRequestModal = true"
+              class="bg-button-primary hover:bg-button-hover text-white px-4 py-2 rounded-lg transition-colors"
             >
+              Создать
+            </button>
           </div>
-          <div>
-            <label class="block text-secondary mb-1">Описание</label>
-            <textarea
-              v-model="requestForm.description"
-              required
-              rows="4"
-              class="w-full px-4 py-2 rounded-lg bg-input text-primary border border-input-border focus:border-button-primary transition-colors"
-              placeholder="Опишите вашу проблему"
-            ></textarea>
-          </div>
-          <div>
-            <label class="block text-secondary mb-1">Приоритет</label>
-            <select
-              v-model="requestForm.priority"
-              required
-              class="w-full px-4 py-2 rounded-lg bg-input text-primary border border-input-border focus:border-button-primary transition-colors"
-            >
-              <option value="low">Низкий</option>
-              <option value="medium">Средний</option>
-              <option value="high">Высокий</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            class="w-full bg-button-primary hover:bg-button-hover text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            :disabled="isSubmitting"
-          >
-            {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
-          </button>
-        </form>
-      </div>
+          <p class="text-secondary">
+            Создайте новую заявку в службу поддержки
+          </p>
+        </div>
 
-      <!-- Список заявок -->
-      <div class="bg-card rounded-lg shadow-lg p-6">
-        <h2 class="text-lg font-semibold mb-4">Мои заявки</h2>
-        <div class="space-y-4">
-          <div
-            v-for="request in requests"
-            :key="request.id"
-            class="border border-border rounded-lg p-4"
-          >
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-medium">{{ request.title }}</h3>
-                <p class="text-secondary mt-1">{{ request.description }}</p>
+        <!-- Блок 2: Перейти в чат -->
+        <div class="bg-card rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Чат поддержки</h2>
+            <button
+              class="bg-button-primary hover:bg-button-hover text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Открыть чат
+            </button>
+          </div>
+          <p class="text-secondary">
+            Общайтесь с технической поддержкой в реальном времени
+          </p>
+        </div>
+
+        <!-- Блок 3: Мои заявки -->
+        <div class="bg-card rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Мои заявки</h2>
+            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+              {{ requests.length }} заявок
+            </span>
+          </div>
+          <div class="space-y-4">
+            <div
+              v-for="request in requests"
+              :key="request.id"
+              class="border border-border rounded-lg p-4"
+            >
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium">{{ request.request_type }}</h3>
+                  <p class="text-secondary mt-1">{{ request.description }}</p>
+                </div>
+                <span 
+                  class="px-2 py-1 rounded-full text-sm"
+                  :class="getStatusClass(request.status)"
+                >
+                  {{ getStatusLabel(request.status) }}
+                </span>
               </div>
-              <span 
-                class="px-2 py-1 rounded-full text-sm"
-                :class="getStatusClass(request.status)"
-              >
-                {{ getStatusLabel(request.status) }}
-              </span>
-            </div>
-            <div class="mt-2 text-sm text-secondary">
-              {{ new Date(request.created_at).toLocaleString() }}
+              <div class="mt-2 text-sm text-secondary">
+                {{ new Date(request.created_at).toLocaleString() }}
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Модальное окно создания заявки -->
+  <div v-if="showRequestModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-card rounded-lg max-w-md w-full shadow-xl">
+      <div class="flex justify-between items-center p-6 border-b border-border">
+        <h3 class="text-lg font-semibold">Создать заявку</h3>
+        <button 
+          @click="showRequestModal = false"
+          class="text-secondary hover:text-primary transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+      <form @submit.prevent="submitRequest" class="p-6 space-y-4">
+        <div>
+          <label class="block text-secondary mb-1">Тип заявки</label>
+          <select
+            v-model="requestForm.request_type"
+            required
+            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+          >
+            <option value="">Выберите тип</option>
+            <option value="hardware">Проблема с оборудованием</option>
+            <option value="software">Проблема с ПО</option>
+            <option value="network">Проблема с сетью</option>
+            <option value="access">Доступ к системам</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-secondary mb-1">Описание</label>
+          <textarea
+            v-model="requestForm.description"
+            required
+            rows="4"
+            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-secondary mb-1">Приоритет</label>
+          <select
+            v-model="requestForm.priority"
+            required
+            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+          >
+            <option value="low">Низкий</option>
+            <option value="medium">Средний</option>
+            <option value="high">Высокий</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          class="w-full bg-button-primary hover:bg-button-hover text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          :disabled="isSubmitting"
+        >
+          {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
+        </button>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -103,9 +154,10 @@ import ThemeToggle from '@/components/ThemeToggle.vue'
 const router = useRouter()
 const requests = ref([])
 const isSubmitting = ref(false)
+const showRequestModal = ref(false)
 
 const requestForm = ref({
-  title: '',
+  request_type: '',
   description: '',
   priority: 'low'
 })
@@ -114,7 +166,7 @@ const requestForm = ref({
 const fetchRequests = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/requests/', {
+    const response = await fetch('/api/requests/my', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -139,20 +191,25 @@ const submitRequest = async () => {
       },
       body: JSON.stringify(requestForm.value)
     })
-    
-    if (!response.ok) throw new Error('Failed to create request')
-    
-    // Очищаем форму
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Failed to create request')
+    }
+
+    // Очищаем форму и закрываем модальное окно
     requestForm.value = {
-      title: '',
+      request_type: '',
       description: '',
       priority: 'low'
     }
-    
+    showRequestModal.value = false
+
     // Обновляем список заявок
     await fetchRequests()
   } catch (error) {
     console.error('Error creating request:', error)
+    alert(error.message)
   } finally {
     isSubmitting.value = false
   }
