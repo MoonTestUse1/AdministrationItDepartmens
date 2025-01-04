@@ -49,8 +49,8 @@ async def create_request(
     request_data = {
         "id": db_request.id,
         "description": db_request.description,
-        "status": db_request.status.value,
-        "priority": db_request.priority.value,
+        "status": db_request.status,
+        "priority": db_request.priority,
         "request_type": db_request.request_type,
         "department": db_request.department,
         "employee_id": current_employee["id"],
@@ -101,7 +101,7 @@ async def update_request_status(
         "type": "status_update",
         "data": {
             "id": request_id,
-            "status": request_update.status
+            "status": db_request.status
         }
     })
     return db_request
