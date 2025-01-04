@@ -1,71 +1,105 @@
 """Requests router"""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from ..database import get_db
-from ..crud import requests
-from ..schemas.request import Request, RequestCreate, RequestUpdate
-from ..models.request import RequestStatus
-from ..utils.auth import get_current_employee, get_current_admin
-from ..utils.telegram import notify_new_request
+from typing import List
+
+from app.core.auth import get_current_user
+from app.database import get_db
+from app.models.user import User
+from app.models.request import Request
+from app.schemas.request import RequestCreate, Request as RequestSchema
 
 router = APIRouter()
 
-@router.post("/", response_model=Request)
-async def create_request(
+@router.post("/", response_model=RequestSchema)
+def create_request(
     request: RequestCreate,
-    db: Session = Depends(get_db),
-    current_employee: dict = Depends(get_current_employee)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Create new request"""
-    db_request = requests.create_request(db, request, current_employee["id"])
-    # Отправляем уведомление в Telegram
-    await notify_new_request(db_request.id)
+    db_request = Request(
+        **request.dict(),
+        employee_id=current_user.id,
+        status="new"
+    )
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
     return db_request
 
-@router.get("/my", response_model=List[Request])
-def get_employee_requests(
-    db: Session = Depends(get_db),
-    current_employee: dict = Depends(get_current_employee)
-):
-    """Get current employee's requests"""
-    return requests.get_employee_requests(db, current_employee["id"])
-
-@router.get("/admin", response_model=List[Request])
-def get_all_requests(
-    status: Optional[RequestStatus] = Query(None),
+@router.get("/", response_model=List[RequestSchema])
+def read_requests(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Get all requests (admin only)"""
-    return requests.get_requests(db, status=status, skip=skip, limit=limit)
+    if current_user.is_admin:
+        requests = db.query(Request).offset(skip).limit(limit).all()
+    else:
+        requests = db.query(Request).filter(
+            Request.employee_id == current_user.id
+        ).offset(skip).limit(limit).all()
+    return requests
 
-@router.patch("/{request_id}/status", response_model=Request)
-def update_request_status(
+@router.get("/{request_id}", response_model=RequestSchema)
+def read_request(
     request_id: int,
-    request_update: RequestUpdate,
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Update request status (admin only)"""
-    db_request = requests.update_request_status(db, request_id, request_update.status)
-    if db_request is None:
+    """Get a specific request"""
+    request = db.query(Request).filter(Request.id == request_id).first()
+    if not request:
         raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Проверяем права доступа
+    if not current_user.is_admin and request.employee_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    return request
+
+@router.put("/{request_id}", response_model=RequestSchema)
+def update_request(
+    request_id: int,
+    request_update: RequestCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a request"""
+    db_request = db.query(Request).filter(Request.id == request_id).first()
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Проверяем права доступа
+    if not current_user.is_admin and db_request.employee_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Обновляем заявку
+    for key, value in request_update.dict().items():
+        setattr(db_request, key, value)
+    
+    db.commit()
+    db.refresh(db_request)
     return db_request
 
-@router.get("/statistics")
-def get_request_statistics(
-    db: Session = Depends(get_db),
-    _: dict = Depends(get_current_admin)
+@router.delete("/{request_id}", response_model=RequestSchema)
+def delete_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get request statistics (admin only)"""
-    stats = requests.get_statistics(db)
-    return {
-        "total": stats["total"],
-        "by_status": {
-            status: count
-            for status, count in stats["by_status"].items()
-        }
-    }
+    """Delete a request"""
+    db_request = db.query(Request).filter(Request.id == request_id).first()
+    if not db_request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Только админ может удалять заявки
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    db.delete(db_request)
+    db.commit()
+    return db_request

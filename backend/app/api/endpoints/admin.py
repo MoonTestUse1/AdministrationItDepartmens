@@ -1,11 +1,14 @@
 """Admin router"""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from ..database import get_db
-from ..crud import requests, statistics
-from ..schemas.request import Request
-from ..utils.auth import get_current_admin
+from datetime import datetime, timedelta
+from app.database import get_db
+from app.models.user import User
+from app.models.request import Request
+from app.core.auth import get_current_user
+from app.schemas.request import RequestCreate, Request as RequestSchema
+from app.schemas.user import User as UserSchema
 
 router = APIRouter()
 
