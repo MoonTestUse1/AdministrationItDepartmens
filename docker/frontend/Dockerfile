@@ -9,8 +9,9 @@ COPY frontend/package*.json ./
 RUN npm cache clean --force
 RUN rm -rf node_modules package-lock.json
 
-# Устанавливаем зависимости
-RUN npm install
+# Устанавливаем зависимости и плагин для форм
+RUN npm install && \
+    npm install -D @tailwindcss/forms
 
 # Копируем исходный код
 COPY frontend/ .

@@ -1,13 +1,26 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+  <div :class="{'dark': isDarkMode}" class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
     <!-- Шапка -->
-    <header class="bg-white shadow-md">
+    <header class="bg-white shadow-md dark:bg-gray-800 transition-colors duration-200">
       <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">IT Support</h1>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">IT Support</h1>
         <div class="flex items-center space-x-4">
+          <!-- Переключатель темы -->
+          <button
+            @click="toggleDarkMode"
+            class="p-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200"
+            :title="isDarkMode ? 'Включить светлую тему' : 'Включить темную тему'"
+          >
+            <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
           <button
             @click="handleLogout"
-            class="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-300 flex items-center space-x-2"
+            class="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200 flex items-center space-x-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3zm11 4.414l-4.293 4.293a1 1 0 0 1-1.414 0L4 7.414 5.414 6l3.293 3.293L12 6l2 1.414z" clip-rule="evenodd" />
@@ -184,12 +197,12 @@
 
   <!-- Модальное окно создания заявки -->
   <div v-if="showRequestModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl transform transition-all">
-      <div class="flex justify-between items-center p-6 border-b border-gray-100">
-        <h3 class="text-xl font-bold text-gray-800">Создать заявку</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-xl w-full shadow-2xl transform transition-all">
+      <div class="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Создать заявку</h3>
         <button 
           @click="showRequestModal = false"
-          class="text-gray-400 hover:text-gray-600 transition-colors"
+          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -197,45 +210,98 @@
         </button>
       </div>
       <form @submit.prevent="submitRequest" class="p-6 space-y-6">
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Тип заявки</label>
-          <select
-            v-model="requestForm.request_type"
-            required
-            class="w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700"
-          >
-            <option value="">Выберите тип</option>
-            <option value="hardware">Проблема с оборудованием</option>
-            <option value="software">Проблема с ПО</option>
-            <option value="network">Проблема с сетью</option>
-            <option value="access">Доступ к системам</option>
-          </select>
+        <!-- Тип заявки -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Тип заявки</label>
+          <div class="grid grid-cols-2 gap-4">
+            <label 
+              v-for="type in requestTypes" 
+              :key="type.value"
+              class="relative flex cursor-pointer rounded-lg border border-gray-200 dark:border-gray-700 p-4 focus:outline-none"
+              :class="{'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700': requestForm.request_type === type.value}"
+            >
+              <input 
+                type="radio" 
+                :value="type.value" 
+                v-model="requestForm.request_type"
+                class="sr-only"
+                required
+              >
+              <span class="flex flex-1">
+                <span class="flex flex-col">
+                  <span class="block text-sm font-medium text-gray-900 dark:text-white">
+                    {{ type.label }}
+                  </span>
+                  <span class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    {{ type.description }}
+                  </span>
+                </span>
+              </span>
+              <svg 
+                class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                :class="{'hidden': requestForm.request_type !== type.value}"
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </label>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Описание</label>
-          <textarea
-            v-model="requestForm.description"
-            required
-            rows="4"
-            class="w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700"
-            placeholder="Опишите вашу проблему подробно..."
-          ></textarea>
+
+        <!-- Описание -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Описание проблемы</label>
+          <div class="relative">
+            <textarea
+              v-model="requestForm.description"
+              required
+              rows="4"
+              class="w-full rounded-xl border-gray-200 dark:border-gray-700 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+              placeholder="Опишите вашу проблему подробно..."
+            ></textarea>
+            <div class="absolute bottom-3 right-3 text-sm text-gray-400 dark:text-gray-500">
+              {{ requestForm.description.length }}/500
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-2">Приоритет</label>
-          <select
-            v-model="requestForm.priority"
-            required
-            class="w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-700"
-          >
-            <option value="low">Низкий</option>
-            <option value="medium">Средний</option>
-            <option value="high">Высокий</option>
-          </select>
+
+        <!-- Приоритет -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">Приоритет</label>
+          <div class="flex space-x-4">
+            <label 
+              v-for="priority in priorities" 
+              :key="priority.value"
+              class="flex-1 relative"
+            >
+              <input 
+                type="radio" 
+                :value="priority.value" 
+                v-model="requestForm.priority"
+                class="sr-only"
+                required
+              >
+              <div 
+                class="w-full p-4 text-center rounded-xl cursor-pointer transition-all"
+                :class="{
+                  'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700': priority.value === 'low' && requestForm.priority === 'low',
+                  'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700': priority.value === 'medium' && requestForm.priority === 'medium',
+                  'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700': priority.value === 'high' && requestForm.priority === 'high',
+                  'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700': requestForm.priority !== priority.value
+                }"
+              >
+                <span class="block font-medium">{{ priority.label }}</span>
+                <span class="mt-1 text-sm opacity-75">{{ priority.description }}</span>
+              </div>
+            </label>
+          </div>
         </div>
+
         <button
           type="submit"
-          class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+          class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           :disabled="isSubmitting"
         >
           <svg v-if="isSubmitting" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -258,6 +324,72 @@ const requests = ref([])
 const isSubmitting = ref(false)
 const showRequestModal = ref(false)
 const showRequestsModal = ref(false)
+const isDarkMode = ref(false)
+
+// Типы заявок
+const requestTypes = [
+  {
+    value: 'hardware',
+    label: 'Проблема с оборудованием',
+    description: 'Неполадки с компьютером, принтером или другим оборудованием'
+  },
+  {
+    value: 'software',
+    label: 'Проблема с ПО',
+    description: 'Проблемы с программным обеспечением'
+  },
+  {
+    value: 'network',
+    label: 'Проблема с сетью',
+    description: 'Проблемы с интернетом или локальной сетью'
+  },
+  {
+    value: 'access',
+    label: 'Доступ к системам',
+    description: 'Запрос доступа к системам или сервисам'
+  }
+]
+
+// Приоритеты
+const priorities = [
+  {
+    value: 'low',
+    label: 'Низкий',
+    description: 'Не срочно'
+  },
+  {
+    value: 'medium',
+    label: 'Средний',
+    description: 'Важно'
+  },
+  {
+    value: 'high',
+    label: 'Высокий',
+    description: 'Срочно'
+  }
+]
+
+// Переключение темы
+const toggleDarkMode = () => {
+  isDarkMode.value = !isDarkMode.value
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+}
+
+// Проверяем предпочтения пользователя при загрузке
+onMounted(() => {
+  // Проверяем сохраненные настройки темы
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDarkMode.value = true
+    document.documentElement.classList.add('dark')
+  }
+  
+  fetchRequests()
+})
 
 // Пагинация
 const currentPage = ref(1)
@@ -376,8 +508,16 @@ const getRequestTypeLabel = (type) => {
   }
   return labels[type] || type
 }
+</script>
 
-onMounted(() => {
-  fetchRequests()
-})
-</script> 
+<style>
+/* Добавляем плавные переходы для смены темы */
+.dark {
+  color-scheme: dark;
+}
+
+* {
+  transition-property: color, background-color, border-color;
+  transition-duration: 200ms;
+}
+</style> 
