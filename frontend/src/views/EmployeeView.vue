@@ -1,14 +1,13 @@
 <template>
-  <div class="min-h-screen bg-primary text-primary">
+  <div class="min-h-screen bg-gray-100">
     <!-- Шапка -->
-    <header class="bg-secondary border-b border-border">
+    <header class="bg-white shadow">
       <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="text-xl font-semibold">IT Support</h1>
+        <h1 class="text-xl font-semibold text-gray-800">IT Support</h1>
         <div class="flex items-center space-x-4">
-          <ThemeToggle />
           <button 
             @click="handleLogout" 
-            class="text-button-primary hover:text-button-hover transition-colors"
+            class="text-gray-600 hover:text-gray-800 transition-colors"
           >
             Выйти
           </button>
@@ -20,41 +19,47 @@
     <main class="container mx-auto px-4 py-8">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <!-- Блок 1: Создать заявку -->
-        <div class="bg-card rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Создать заявку</h2>
+            <h2 class="text-lg font-semibold text-gray-800">Создать заявку</h2>
             <button
               @click="showRequestModal = true"
-              class="bg-button-primary hover:bg-button-hover text-white px-4 py-2 rounded-lg transition-colors"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
               Создать
             </button>
           </div>
-          <p class="text-secondary">
-            Создайте новую заявку в службу поддержки
+          <p class="text-gray-600">
+            Создайте новую заявку в службу поддержки для решения технических проблем
           </p>
         </div>
 
         <!-- Блок 2: Перейти в чат -->
-        <div class="bg-card rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Чат поддержки</h2>
+            <h2 class="text-lg font-semibold text-gray-800">Чат поддержки</h2>
             <button
-              class="bg-button-primary hover:bg-button-hover text-white px-4 py-2 rounded-lg transition-colors"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+              </svg>
               Открыть чат
             </button>
           </div>
-          <p class="text-secondary">
-            Общайтесь с технической поддержкой в реальном времени
+          <p class="text-gray-600">
+            Общайтесь с технической поддержкой в реальном времени для быстрого решения проблем
           </p>
         </div>
 
         <!-- Блок 3: Мои заявки -->
-        <div class="bg-card rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">Мои заявки</h2>
-            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+            <h2 class="text-lg font-semibold text-gray-800">Мои заявки</h2>
+            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
               {{ requests.length }} заявок
             </span>
           </div>
@@ -62,21 +67,24 @@
             <div
               v-for="request in requests"
               :key="request.id"
-              class="border border-border rounded-lg p-4"
+              class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors"
             >
               <div class="flex justify-between items-start">
                 <div>
-                  <h3 class="font-medium">{{ request.request_type }}</h3>
-                  <p class="text-secondary mt-1">{{ request.description }}</p>
+                  <h3 class="font-medium text-gray-800">{{ getRequestTypeLabel(request.request_type) }}</h3>
+                  <p class="text-gray-600 mt-1">{{ request.description }}</p>
                 </div>
                 <span 
-                  class="px-2 py-1 rounded-full text-sm"
+                  class="px-3 py-1 rounded-full text-sm font-medium"
                   :class="getStatusClass(request.status)"
                 >
                   {{ getStatusLabel(request.status) }}
                 </span>
               </div>
-              <div class="mt-2 text-sm text-secondary">
+              <div class="mt-2 text-sm text-gray-500 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
                 {{ new Date(request.created_at).toLocaleString() }}
               </div>
             </div>
@@ -87,24 +95,26 @@
   </div>
 
   <!-- Модальное окно создания заявки -->
-  <div v-if="showRequestModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-    <div class="bg-card rounded-lg max-w-md w-full shadow-xl">
-      <div class="flex justify-between items-center p-6 border-b border-border">
-        <h3 class="text-lg font-semibold">Создать заявку</h3>
+  <div v-if="showRequestModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg max-w-md w-full shadow-xl">
+      <div class="flex justify-between items-center p-6 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800">Создать заявку</h3>
         <button 
           @click="showRequestModal = false"
-          class="text-secondary hover:text-primary transition-colors"
+          class="text-gray-400 hover:text-gray-600 transition-colors"
         >
-          ✕
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
       <form @submit.prevent="submitRequest" class="p-6 space-y-4">
         <div>
-          <label class="block text-secondary mb-1">Тип заявки</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Тип заявки</label>
           <select
             v-model="requestForm.request_type"
             required
-            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="">Выберите тип</option>
             <option value="hardware">Проблема с оборудованием</option>
@@ -114,20 +124,21 @@
           </select>
         </div>
         <div>
-          <label class="block text-secondary mb-1">Описание</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
           <textarea
             v-model="requestForm.description"
             required
             rows="4"
-            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            placeholder="Опишите вашу проблему подробно..."
           ></textarea>
         </div>
         <div>
-          <label class="block text-secondary mb-1">Приоритет</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Приоритет</label>
           <select
             v-model="requestForm.priority"
             required
-            class="w-full bg-input border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:border-button-primary"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="low">Низкий</option>
             <option value="medium">Средний</option>
@@ -136,9 +147,13 @@
         </div>
         <button
           type="submit"
-          class="w-full bg-button-primary hover:bg-button-hover text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
           :disabled="isSubmitting"
         >
+          <svg v-if="isSubmitting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
           {{ isSubmitting ? 'Отправка...' : 'Отправить заявку' }}
         </button>
       </form>
@@ -149,7 +164,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const router = useRouter()
 const requests = ref([])
@@ -243,58 +257,18 @@ const getStatusLabel = (status) => {
   return labels[status] || 'Новая'
 }
 
+// Получение метки для типа заявки
+const getRequestTypeLabel = (type) => {
+  const labels = {
+    hardware: 'Проблема с оборудованием',
+    software: 'Проблема с ПО',
+    network: 'Проблема с сетью',
+    access: 'Доступ к системам'
+  }
+  return labels[type] || type
+}
+
 onMounted(() => {
   fetchRequests()
 })
-</script>
-
-<style>
-/* Используем CSS переменные для цветов */
-.bg-primary {
-  background-color: var(--color-bg-primary);
-}
-
-.bg-secondary {
-  background-color: var(--color-bg-secondary);
-}
-
-.bg-card {
-  background-color: var(--color-card-bg);
-}
-
-.bg-input {
-  background-color: var(--color-input-bg);
-}
-
-.text-primary {
-  color: var(--color-text-primary);
-}
-
-.text-secondary {
-  color: var(--color-text-secondary);
-}
-
-.border-border {
-  border-color: var(--color-border);
-}
-
-.border-input-border {
-  border-color: var(--color-input-border);
-}
-
-.bg-button-primary {
-  background-color: var(--color-button-primary);
-}
-
-.hover\:bg-button-hover:hover {
-  background-color: var(--color-button-hover);
-}
-
-.text-button-primary {
-  color: var(--color-button-primary);
-}
-
-.hover\:text-button-hover:hover {
-  color: var(--color-button-hover);
-}
-</style> 
+</script> 
