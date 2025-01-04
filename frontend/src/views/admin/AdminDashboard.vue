@@ -104,26 +104,41 @@ const handleWebSocketMessage = (data: any) => {
   // Обновляем статистику, если она пришла в сообщении
   if (data.statistics) {
     console.log('AdminDashboard: Updating statistics:', data.statistics)
-    console.log('AdminDashboard: Old statistics:', statistics.value)
     statistics.value = {
       total: data.statistics.total,
       by_status: { ...data.statistics.by_status }
     }
-    console.log('AdminDashboard: New statistics:', statistics.value)
   }
   
   if (data.type === 'new_request' && data.data) {
     console.log('AdminDashboard: Adding new request:', data.data)
-    console.log('AdminDashboard: Current requests:', requests.value.length)
+    // Добавляем новую заявку в начало списка
     requests.value = [data.data, ...requests.value]
-    console.log('AdminDashboard: Updated requests:', requests.value.length)
+    
+    // Обновляем счетчик для нового статуса
+    const status = data.data.status
+    if (!statistics.value.by_status[status]) {
+      statistics.value.by_status[status] = 0
+    }
+    statistics.value.by_status[status]++
+    statistics.value.total++
   } else if (data.type === 'status_update' && data.data) {
     console.log('AdminDashboard: Updating request status:', data.data)
+    // Обновляем статус заявки в списке
     const request = requests.value.find(r => r.id === data.data.id)
     if (request) {
       const oldStatus = request.status
-      request.status = data.data.status
-      console.log(`AdminDashboard: Status updated from ${oldStatus} to ${data.data.status}`)
+      const newStatus = data.data.status
+      request.status = newStatus
+      
+      // Обновляем счетчики статусов
+      if (statistics.value.by_status[oldStatus]) {
+        statistics.value.by_status[oldStatus]--
+      }
+      if (!statistics.value.by_status[newStatus]) {
+        statistics.value.by_status[newStatus] = 0
+      }
+      statistics.value.by_status[newStatus]++
     }
   }
 }
