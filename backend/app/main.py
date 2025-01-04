@@ -37,8 +37,13 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
 
 # Добавляем WebSocket маршруты
-app.websocket("/api/ws/admin")(notification_manager.admin_endpoint)
-app.websocket("/api/ws/employee/{employee_id}")(notification_manager.employee_endpoint)
+@app.websocket("/api/ws/admin")
+async def admin_websocket(websocket):
+    await notification_manager.admin_endpoint(websocket)
+
+@app.websocket("/api/ws/employee/{employee_id}")
+async def employee_websocket(websocket, employee_id: int):
+    await notification_manager.employee_endpoint(websocket, employee_id)
 
 @app.on_event("startup")
 async def startup_event():
