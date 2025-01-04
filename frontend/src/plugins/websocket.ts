@@ -8,6 +8,7 @@ class WebSocketClient {
   private messageHandlers: ((data: any) => void)[] = []
   private currentType: 'admin' | 'employee' | null = null
   private currentId: number | undefined = undefined
+  private pingInterval: number | null = null
 
   // Состояние подключения
   isConnected = ref(false)
@@ -28,6 +29,10 @@ class WebSocketClient {
       console.log('WebSocket: Closing existing connection')
       this.socket.close()
       this.socket = null
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval)
+        this.pingInterval = null
+      }
     }
 
     try {
@@ -37,19 +42,28 @@ class WebSocketClient {
         console.log('WebSocket: Connected successfully')
         this.isConnected.value = true
         this.reconnectAttempts = 0
+        
+        // Устанавливаем ping интервал для поддержания соединения
+        this.pingInterval = window.setInterval(() => {
+          if (this.socket?.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ type: 'ping' }))
+          }
+        }, 30000) // Пинг каждые 30 секунд
       }
 
       this.socket.onmessage = (event) => {
         console.log('WebSocket: Message received', event.data)
         try {
           const data = JSON.parse(event.data)
-          this.messageHandlers.forEach(handler => {
-            try {
-              handler(data)
-            } catch (error) {
-              console.error('WebSocket: Error in message handler:', error)
-            }
-          })
+          if (data.type !== 'pong') { // Игнорируем pong сообщения
+            this.messageHandlers.forEach(handler => {
+              try {
+                handler(data)
+              } catch (error) {
+                console.error('WebSocket: Error in message handler:', error)
+              }
+            })
+          }
         } catch (error) {
           console.error('WebSocket: Error parsing message:', error)
         }
@@ -58,6 +72,10 @@ class WebSocketClient {
       this.socket.onclose = (event) => {
         console.log('WebSocket: Connection closed', event.code, event.reason)
         this.isConnected.value = false
+        if (this.pingInterval) {
+          clearInterval(this.pingInterval)
+          this.pingInterval = null
+        }
         this.tryReconnect()
       }
 
@@ -105,6 +123,10 @@ class WebSocketClient {
     if (this.socket) {
       this.socket.close()
       this.socket = null
+    }
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval)
+      this.pingInterval = null
     }
     this.currentType = null
     this.currentId = undefined

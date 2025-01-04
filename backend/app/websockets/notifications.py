@@ -2,6 +2,7 @@ from fastapi import WebSocket
 from typing import Dict, List
 import json
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -57,5 +58,13 @@ class NotificationManager:
         # Удаляем отключенные соединения
         for connection in disconnected:
             self.disconnect(connection, "employee")
+
+    async def handle_ping(self, websocket: WebSocket):
+        """Обработка ping сообщений"""
+        try:
+            await websocket.send_json({"type": "pong"})
+            logger.debug("Sent pong response")
+        except Exception as e:
+            logger.error(f"Error sending pong: {e}")
 
 notification_manager = NotificationManager() 

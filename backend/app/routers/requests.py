@@ -21,21 +21,35 @@ async def websocket_admin_endpoint(websocket: WebSocket):
     await notification_manager.connect(websocket, "admin")
     try:
         while True:
-            data = await websocket.receive_text()
+            data = await websocket.receive_json()
             logger.info(f"Received message from admin: {data}")
+            
+            if data.get("type") == "ping":
+                await notification_manager.handle_ping(websocket)
     except WebSocketDisconnect:
         logger.info("Admin WebSocket disconnected")
+        notification_manager.disconnect(websocket, "admin")
+    except Exception as e:
+        logger.error(f"Error in admin websocket: {e}")
         notification_manager.disconnect(websocket, "admin")
 
 @router.websocket("/ws/employee/{employee_id}")
 async def websocket_employee_endpoint(websocket: WebSocket, employee_id: int):
     """WebSocket endpoint для сотрудников"""
+    logger.info(f"Employee {employee_id} WebSocket connection attempt")
     await notification_manager.connect(websocket, "employee")
     try:
         while True:
-            data = await websocket.receive_text()
-            # Здесь можно добавить обработку сообщений от сотрудника
+            data = await websocket.receive_json()
+            logger.info(f"Received message from employee {employee_id}: {data}")
+            
+            if data.get("type") == "ping":
+                await notification_manager.handle_ping(websocket)
     except WebSocketDisconnect:
+        logger.info(f"Employee {employee_id} WebSocket disconnected")
+        notification_manager.disconnect(websocket, "employee")
+    except Exception as e:
+        logger.error(f"Error in employee websocket: {e}")
         notification_manager.disconnect(websocket, "employee")
 
 @router.post("/", response_model=Request)

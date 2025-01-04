@@ -1,8 +1,13 @@
 """Main application module"""
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from . import models
 from .routers import admin, employees, requests, auth, statistics
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     # Включаем автоматическое перенаправление со слэшем
@@ -38,3 +43,9 @@ app.include_router(employees.router, prefix="/api/employees", tags=["employees"]
 app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url}")
+    response = await call_next(request)
+    return response
