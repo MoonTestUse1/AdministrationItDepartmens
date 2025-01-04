@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { InternalAxiosRequestConfig } from 'axios'
 
 const axiosInstance = axios.create({
   baseURL: '/api',
@@ -10,7 +10,7 @@ const axiosInstance = axios.create({
 
 // Добавляем перехватчик для добавления токена
 axiosInstance.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
