@@ -99,39 +99,43 @@ const fetchData = async () => {
 
 // Обработчик WebSocket сообщений
 const handleWebSocketMessage = (data: any) => {
-  console.log('Received WebSocket message:', data)
+  console.log('AdminDashboard: Received WebSocket message:', data)
   
   // Обновляем статистику, если она пришла в сообщении
   if (data.statistics) {
-    console.log('Updating statistics:', data.statistics)
+    console.log('AdminDashboard: Updating statistics:', data.statistics)
+    console.log('AdminDashboard: Old statistics:', statistics.value)
     statistics.value = {
       total: data.statistics.total,
       by_status: { ...data.statistics.by_status }
     }
+    console.log('AdminDashboard: New statistics:', statistics.value)
   }
   
   if (data.type === 'new_request' && data.data) {
-    console.log('Adding new request:', data.data)
-    // Добавляем новую заявку в начало списка
-    requests.value = [data.data, ...requests.value.slice(0, 99)]
+    console.log('AdminDashboard: Adding new request:', data.data)
+    console.log('AdminDashboard: Current requests:', requests.value.length)
+    requests.value = [data.data, ...requests.value]
+    console.log('AdminDashboard: Updated requests:', requests.value.length)
   } else if (data.type === 'status_update' && data.data) {
-    console.log('Updating request status:', data.data)
-    // Обновляем статус заявки в списке
+    console.log('AdminDashboard: Updating request status:', data.data)
     const request = requests.value.find(r => r.id === data.data.id)
     if (request) {
+      const oldStatus = request.status
       request.status = data.data.status
+      console.log(`AdminDashboard: Status updated from ${oldStatus} to ${data.data.status}`)
     }
   }
 }
 
 // Подключение к WebSocket при монтировании компонента
 onMounted(() => {
-  console.log('Component mounted, fetching initial data')
+  console.log('AdminDashboard: Component mounted')
   fetchData()
   
   // Добавляем небольшую задержку перед подключением WebSocket
   setTimeout(() => {
-    console.log('Connecting to WebSocket')
+    console.log('AdminDashboard: Connecting to WebSocket')
     wsClient.connect('admin')
     wsClient.addMessageHandler(handleWebSocketMessage)
   }, 1000)
@@ -139,9 +143,9 @@ onMounted(() => {
 
 // Переподключение WebSocket при потере соединения
 watch(() => wsClient.isConnected, (isConnected) => {
-  console.log('WebSocket connection status changed:', isConnected)
+  console.log('AdminDashboard: WebSocket connection status changed:', isConnected)
   if (!isConnected) {
-    console.log('Attempting to reconnect WebSocket')
+    console.log('AdminDashboard: Attempting to reconnect')
     setTimeout(() => {
       wsClient.connect('admin')
     }, 3000)
@@ -150,7 +154,7 @@ watch(() => wsClient.isConnected, (isConnected) => {
 
 // Отключение от WebSocket при размонтировании компонента
 onUnmounted(() => {
-  console.log('Component unmounting, disconnecting WebSocket')
+  console.log('AdminDashboard: Component unmounting')
   wsClient.removeMessageHandler(handleWebSocketMessage)
   wsClient.disconnect()
 })
