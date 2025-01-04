@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
@@ -7,6 +7,7 @@ COPY frontend/package*.json ./
 
 # Устанавливаем зависимости
 RUN npm install
+RUN npm rebuild rollup
 
 # Копируем исходный код
 COPY frontend/ .
@@ -15,4 +16,4 @@ COPY frontend/ .
 EXPOSE 5173
 
 # Запускаем Vite сервер
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
