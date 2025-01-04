@@ -73,7 +73,7 @@
             </div>
             <div class="space-y-4">
               <div
-                v-for="request in requests"
+                v-for="request in displayedRequests"
                 :key="request.id"
                 class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors group-hover:border-purple-200 border-2 border-transparent"
               >
@@ -97,10 +97,89 @@
                 </div>
               </div>
             </div>
+            <div class="mt-6 flex justify-center">
+              <button
+                @click="showRequestsModal = true"
+                class="text-purple-600 hover:text-purple-700 font-semibold flex items-center space-x-2 group"
+              >
+                <span>Показать все заявки</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Модальное окно всех заявок -->
+  <div v-if="showRequestsModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl transform transition-all max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center p-6 border-b border-gray-100">
+        <h3 class="text-xl font-bold text-gray-800">Все заявки</h3>
+        <button 
+          @click="showRequestsModal = false"
+          class="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="overflow-y-auto flex-1 p-6">
+        <div class="space-y-4">
+          <div
+            v-for="request in paginatedRequests"
+            :key="request.id"
+            class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors border-2 border-transparent hover:border-purple-200"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-semibold text-gray-800">{{ getRequestTypeLabel(request.request_type) }}</h3>
+                <p class="text-gray-600 mt-1">{{ request.description }}</p>
+              </div>
+              <span 
+                class="px-4 py-1 rounded-lg text-sm font-semibold shadow-sm"
+                :class="getStatusClass(request.status)"
+              >
+                {{ getStatusLabel(request.status) }}
+              </span>
+            </div>
+            <div class="mt-3 text-sm text-gray-500 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+              </svg>
+              {{ new Date(request.created_at).toLocaleString() }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-100">
+        <div class="flex justify-between items-center">
+          <div class="text-sm text-gray-600">
+            Показано {{ startIndex + 1 }}-{{ Math.min(endIndex, requests.length) }} из {{ requests.length }} заявок
+          </div>
+          <div class="flex space-x-2">
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Назад
+            </button>
+            <button
+              @click="currentPage++"
+              :disabled="currentPage >= totalPages"
+              class="px-4 py-2 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Вперед
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Модальное окно создания заявки -->
@@ -171,13 +250,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const requests = ref([])
 const isSubmitting = ref(false)
 const showRequestModal = ref(false)
+const showRequestsModal = ref(false)
+
+// Пагинация
+const currentPage = ref(1)
+const itemsPerPage = 5
+const displayedRequestsCount = 3 // Количество заявок для отображения в блоке
+
+// Вычисляемые свойства для пагинации
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
+const endIndex = computed(() => startIndex.value + itemsPerPage)
+const totalPages = computed(() => Math.ceil(requests.value.length / itemsPerPage))
+
+// Заявки для текущей страницы
+const paginatedRequests = computed(() => {
+  return requests.value.slice(startIndex.value, endIndex.value)
+})
+
+// Заявки для отображения в блоке
+const displayedRequests = computed(() => {
+  return requests.value.slice(0, displayedRequestsCount)
+})
 
 const requestForm = ref({
   request_type: '',
