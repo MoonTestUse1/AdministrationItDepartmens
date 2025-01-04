@@ -2,27 +2,22 @@
   <div class="p-6">
     <div class="mb-6">
       <h1 class="text-2xl font-bold mb-4">Панель администратора</h1>
-      <div class="mb-4">
-        <span :class="wsClient.isConnected ? 'text-green-600' : 'text-red-600'">
-          {{ wsClient.isConnected ? 'WebSocket подключен' : 'WebSocket отключен' }}
-        </span>
-      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-2">Новые заявки</h3>
-          <p class="text-3xl font-bold text-blue-600">{{ statistics.by_status?.NEW || 0 }}</p>
+          <p class="text-3xl font-bold text-blue-600">{{ statistics.by_status?.new || 0 }}</p>
         </div>
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-2">В работе</h3>
-          <p class="text-3xl font-bold text-yellow-600">{{ statistics.by_status?.IN_PROGRESS || 0 }}</p>
+          <p class="text-3xl font-bold text-yellow-600">{{ statistics.by_status?.in_progress || 0 }}</p>
         </div>
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-2">Завершено</h3>
-          <p class="text-3xl font-bold text-green-600">{{ statistics.by_status?.COMPLETED || 0 }}</p>
+          <p class="text-3xl font-bold text-green-600">{{ statistics.by_status?.completed || 0 }}</p>
         </div>
         <div class="bg-white p-4 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-2">Отклонено</h3>
-          <p class="text-3xl font-bold text-red-600">{{ statistics.by_status?.REJECTED || 0 }}</p>
+          <p class="text-3xl font-bold text-red-600">{{ statistics.by_status?.rejected || 0 }}</p>
         </div>
       </div>
     </div>
@@ -80,34 +75,13 @@ import { formatDate } from '@/utils/date'
 const requests = ref([])
 const statistics = ref({
   total: 0,
-  by_status: {}
-})
-
-// Загрузка данных
-const fetchData = async () => {
-  try {
-    console.log('AdminDashboard: Fetching data')
-    const [requestsResponse, statsResponse] = await Promise.all([
-      axios.get('/api/requests/admin'),
-      axios.get('/api/requests/statistics')
-    ])
-    requests.value = requestsResponse.data
-    console.log('AdminDashboard: Received statistics:', statsResponse.data)
-    
-    // Обновляем статистику
-    statistics.value = {
-      total: statsResponse.data.total,
-      by_status: {
-        new: statsResponse.data.by_status?.new || 0,
-        in_progress: statsResponse.data.by_status?.in_progress || 0,
-        completed: statsResponse.data.by_status?.completed || 0,
-        rejected: statsResponse.data.by_status?.rejected || 0
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching data:', error)
+  by_status: {
+    new: 0,
+    in_progress: 0,
+    completed: 0,
+    rejected: 0
   }
-}
+})
 
 // Обработчик WebSocket сообщений
 const handleWebSocketMessage = (data: any) => {
@@ -147,6 +121,56 @@ const handleWebSocketMessage = (data: any) => {
   }
 }
 
+// Загрузка данных
+const fetchData = async () => {
+  try {
+    console.log('AdminDashboard: Fetching data')
+    const [requestsResponse, statsResponse] = await Promise.all([
+      axios.get('/api/requests/admin'),
+      axios.get('/api/requests/statistics')
+    ])
+    requests.value = requestsResponse.data
+    console.log('AdminDashboard: Received statistics:', statsResponse.data)
+    
+    // Обновляем статистику
+    statistics.value = {
+      total: statsResponse.data.total,
+      by_status: {
+        new: statsResponse.data.by_status?.new || 0,
+        in_progress: statsResponse.data.by_status?.in_progress || 0,
+        completed: statsResponse.data.by_status?.completed || 0,
+        rejected: statsResponse.data.by_status?.rejected || 0
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+  }
+}
+
+const getPriorityClass = (priority: string) => {
+  const classes = {
+    high: 'text-red-600',
+    medium: 'text-yellow-600',
+    low: 'text-green-600'
+  }
+  return classes[priority] || ''
+}
+
+const getStatusClass = (status: string) => {
+  const classes = {
+    new: 'text-blue-600',
+    in_progress: 'text-yellow-600',
+    completed: 'text-green-600',
+    rejected: 'text-red-600'
+  }
+  return classes[status] || ''
+}
+
+const openRequestDetails = (request: any) => {
+  // Здесь можно добавить логику открытия модального окна с деталями заявки
+  console.log('Opening request details:', request)
+}
+
 // Подключение к WebSocket при монтировании компонента
 onMounted(() => {
   console.log('AdminDashboard: Component mounted')
@@ -177,28 +201,4 @@ onUnmounted(() => {
   wsClient.removeMessageHandler(handleWebSocketMessage)
   wsClient.disconnect()
 })
-
-const getPriorityClass = (priority: string) => {
-  const classes = {
-    HIGH: 'text-red-600',
-    MEDIUM: 'text-yellow-600',
-    LOW: 'text-green-600'
-  }
-  return classes[priority] || ''
-}
-
-const getStatusClass = (status: string) => {
-  const classes = {
-    NEW: 'text-blue-600',
-    IN_PROGRESS: 'text-yellow-600',
-    COMPLETED: 'text-green-600',
-    REJECTED: 'text-red-600'
-  }
-  return classes[status] || ''
-}
-
-const openRequestDetails = (request: any) => {
-  // Здесь можно добавить логику открытия модального окна с деталями заявки
-  console.log('Opening request details:', request)
-}
 </script> 

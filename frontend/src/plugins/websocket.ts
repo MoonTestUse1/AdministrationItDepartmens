@@ -57,7 +57,9 @@ class WebSocketClient {
           const data = JSON.parse(event.data)
           if (data.type !== 'pong') {
             console.log('WebSocket: Broadcasting message to handlers:', data)
-            this.messageHandlers.forEach(handler => {
+            // Копируем обработчики, чтобы избежать проблем с удалением во время итерации
+            const handlers = [...this.messageHandlers]
+            handlers.forEach(handler => {
               try {
                 handler(data)
               } catch (error) {
@@ -134,6 +136,7 @@ class WebSocketClient {
     this.currentType = null
     this.currentId = undefined
     this.isConnected.value = false
+    this.messageHandlers = [] // Очищаем все обработчики при отключении
     console.log('WebSocket: Disconnected')
   }
 }
