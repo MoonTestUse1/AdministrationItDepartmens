@@ -48,10 +48,9 @@ async def create_request(
     # Получаем полные данные о заявке для отправки через WebSocket
     request_data = {
         "id": db_request.id,
-        "title": db_request.title,
         "description": db_request.description,
-        "status": db_request.status,
-        "priority": db_request.priority,
+        "status": db_request.status.value,
+        "priority": db_request.priority.value,
         "request_type": db_request.request_type,
         "department": db_request.department,
         "employee_id": current_employee["id"],
