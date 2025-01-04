@@ -6,16 +6,28 @@ class WebSocketClient {
   private maxReconnectAttempts = 5
   private reconnectTimeout = 3000
   private messageHandlers: ((data: any) => void)[] = []
+  private currentType: 'admin' | 'employee' | null = null
+  private currentId: number | undefined = undefined
 
   // Состояние подключения
   isConnected = ref(false)
 
   connect(type: 'admin' | 'employee', id?: number) {
+    this.currentType = type
+    this.currentId = id
+    
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const baseUrl = `${protocol}//${window.location.host}`
     const url = type === 'admin' ? 
       `${baseUrl}/api/requests/ws/admin` : 
       `${baseUrl}/api/requests/ws/employee/${id}`
+
+    console.log('Connecting to WebSocket:', url)
+    
+    if (this.socket) {
+      console.log('Closing existing connection')
+      this.socket.close()
+    }
 
     this.socket = new WebSocket(url)
 
@@ -26,8 +38,13 @@ class WebSocketClient {
     }
 
     this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      this.messageHandlers.forEach(handler => handler(data))
+      console.log('WebSocket message received:', event.data)
+      try {
+        const data = JSON.parse(event.data)
+        this.messageHandlers.forEach(handler => handler(data))
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error)
+      }
     }
 
     this.socket.onclose = () => {
@@ -43,12 +60,12 @@ class WebSocketClient {
   }
 
   private tryReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (this.reconnectAttempts < this.maxReconnectAttempts && this.currentType) {
       this.reconnectAttempts++
+      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
       setTimeout(() => {
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
-        this.connect('admin')
-      }, this.reconnectTimeout)
+        this.connect(this.currentType!, this.currentId)
+      }, this.reconnectTimeout * this.reconnectAttempts)
     }
   }
 
@@ -68,6 +85,9 @@ class WebSocketClient {
       this.socket.close()
       this.socket = null
     }
+    this.currentType = null
+    this.currentId = undefined
+    this.isConnected.value = false
   }
 }
 
