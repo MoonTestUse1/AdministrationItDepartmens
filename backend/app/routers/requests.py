@@ -1,5 +1,5 @@
 """Requests router"""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
@@ -8,8 +8,31 @@ from ..schemas.request import Request, RequestCreate, RequestUpdate
 from ..models.request import RequestStatus
 from ..utils.auth import get_current_employee, get_current_admin
 from ..utils.telegram import notify_new_request
+from ..websockets.notifications import notification_manager
 
 router = APIRouter()
+
+@router.websocket("/ws/admin")
+async def websocket_admin_endpoint(websocket: WebSocket):
+    """WebSocket endpoint для админов"""
+    await notification_manager.connect(websocket, "admin")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Здесь можно добавить обработку сообщений от админа
+    except WebSocketDisconnect:
+        notification_manager.disconnect(websocket, "admin")
+
+@router.websocket("/ws/employee/{employee_id}")
+async def websocket_employee_endpoint(websocket: WebSocket, employee_id: int):
+    """WebSocket endpoint для сотрудников"""
+    await notification_manager.connect(websocket, "employee")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Здесь можно добавить обработку сообщений от сотрудника
+    except WebSocketDisconnect:
+        notification_manager.disconnect(websocket, "employee")
 
 @router.post("/", response_model=Request)
 async def create_request(
@@ -21,6 +44,17 @@ async def create_request(
     db_request = requests.create_request(db, request, current_employee["id"])
     # Отправляем уведомление в Telegram
     await notify_new_request(db_request.id)
+    # Отправляем уведомление через WebSocket всем админам
+    await notification_manager.broadcast_to_admins({
+        "type": "new_request",
+        "data": {
+            "id": db_request.id,
+            "employee_id": current_employee["id"],
+            "status": db_request.status,
+            "priority": db_request.priority,
+            "created_at": db_request.created_at.isoformat()
+        }
+    })
     return db_request
 
 @router.get("/my", response_model=List[Request])
@@ -43,7 +77,7 @@ def get_all_requests(
     return requests.get_requests(db, status=status, skip=skip, limit=limit)
 
 @router.patch("/{request_id}/status", response_model=Request)
-def update_request_status(
+async def update_request_status(
     request_id: int,
     request_update: RequestUpdate,
     db: Session = Depends(get_db),
@@ -53,6 +87,15 @@ def update_request_status(
     db_request = requests.update_request_status(db, request_id, request_update.status)
     if db_request is None:
         raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Отправляем уведомление через WebSocket
+    await notification_manager.broadcast_to_admins({
+        "type": "status_update",
+        "data": {
+            "id": request_id,
+            "status": request_update.status
+        }
+    })
     return db_request
 
 @router.get("/statistics")
