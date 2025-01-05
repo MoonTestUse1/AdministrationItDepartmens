@@ -1,36 +1,28 @@
 """Settings configuration"""
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     """Application settings"""
-    PROJECT_NAME: str = "Support Service"
-    VERSION: str = "1.0.0"
+    PROJECT_NAME: str = "Support System"
     API_V1_STR: str = "/api"
+    SECRET_KEY: str = "your-secret-key-for-jwt"  # В продакшене использовать безопасный ключ
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 дней
     
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres123@db:5432/support_db"
-    
-    # JWT
-    SECRET_KEY: str = "your-secret-key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-    # Redis
-    REDIS_HOST: str = "redis"
-    REDIS_PORT: int = 6379
-    
-    # Admin
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin123"
+    POSTGRES_SERVER: str = "db"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "support_db"
+    SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
-    # Telegram
-    TELEGRAM_BOT_TOKEN: str = "your-bot-token"
-    TELEGRAM_CHAT_ID: str = "your-chat-id"
+    @property
+    def get_database_url(self) -> str:
+        """Get database URL."""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True
-    )
+    class Config:
+        case_sensitive = True
+        env_file = ".env"
 
-settings = Settings() 
+settings = Settings()
+settings.SQLALCHEMY_DATABASE_URI = settings.get_database_url 
