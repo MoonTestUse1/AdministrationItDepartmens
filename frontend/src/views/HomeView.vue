@@ -15,7 +15,7 @@
         </router-link>
 
         <router-link 
-          to="/admin" 
+          to="/admin/login" 
           class="block w-full py-3 px-4 text-center text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-lg transition-colors duration-200 font-medium border-2 border-indigo-200"
         >
           Вход для администраторов

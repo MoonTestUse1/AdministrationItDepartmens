@@ -1,0 +1,73 @@
+image: python:3.11
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+cache:
+  paths:
+    - .pip-cache/
+    - backend/venv/
+
+stages:
+  - test
+  - build
+  - deploy
+
+before_script:
+  - python -V
+  - python -m venv backend/venv
+  - source backend/venv/bin/activate
+  - pip install --upgrade pip
+
+test:
+  stage: test
+  services:
+    - redis:latest
+    - postgres:15
+  variables:
+    POSTGRES_DB: app
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app
+    REDIS_HOST: redis
+  script:
+    - cd backend
+    - pip install -r requirements.txt
+    - pytest -v
+  only:
+    - main
+    - merge_requests
+
+lint:
+  stage: test
+  script:
+    - cd backend
+    - pip install flake8
+    - flake8 .
+  only:
+    - main
+    - merge_requests
+
+build:
+  stage: build
+  script:
+    - cd backend
+    - pip install -r requirements.txt
+    - echo "Building application..."
+    - python -c "import sys; print(sys.version)"
+  artifacts:
+    paths:
+      - backend/
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying application..."
+    - cd backend
+    - alembic upgrade head
+  environment:
+    name: production
+  only:
+    - main 

@@ -1,60 +1,40 @@
 version: '3.8'
 
 services:
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - frontend
-      - backend
-    restart: always
-
-  frontend:
-    container_name: support-frontend
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=/api
-    depends_on:
-      - backend
-
   backend:
-    container_name: support-backend
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
-    volumes:
-      - ./backend:/app
+    image: ${CI_REGISTRY_IMAGE}/backend:latest
+    restart: always
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/support_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/app
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=${SECRET_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     depends_on:
       - db
       - redis
 
+  frontend:
+    image: ${CI_REGISTRY_IMAGE}/frontend:latest
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
   db:
-    container_name: support-db
     image: postgres:15
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    restart: always
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres123
-      - POSTGRES_DB=support_db
-    ports:
-      - "5432:5432"
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
-    container_name: support-redis
-    image: redis:alpine
+    image: redis:latest
+    restart: always
     volumes:
       - redis_data:/data
 
