@@ -1,9 +1,9 @@
-from .employee import Employee, EmployeeCreate, EmployeeUpdate
 from .request import Request, RequestCreate, RequestUpdate
-from .auth import Token, TokenData
+from .user import User, UserCreate
+from .token import Token
 
 __all__ = [
-    'Employee', 'EmployeeCreate', 'EmployeeUpdate',
     'Request', 'RequestCreate', 'RequestUpdate',
-    'Token', 'TokenData'
+    'User', 'UserCreate',
+    'Token'
 ] 

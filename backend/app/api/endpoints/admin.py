@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.request import Request
 from app.core.auth import get_current_user
-from app.schemas.request import RequestCreate, Request as RequestSchema
+from app.schemas.request import RequestCreate, Request as RequestSchema, RequestUpdate
 from app.schemas.user import User as UserSchema
 
 router = APIRouter()
@@ -75,6 +75,29 @@ def get_all_requests(
 
     requests = db.query(Request).offset(skip).limit(limit).all()
     return requests
+
+@router.put("/requests/{request_id}/status", response_model=RequestSchema)
+def update_request_status(
+    request_id: int,
+    request_update: RequestUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update request status (admin only)"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+
+    request = db.query(Request).filter(Request.id == request_id).first()
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    request.status = request_update.status
+    db.commit()
+    db.refresh(request)
+    return request
 
 @router.get("/users", response_model=List[UserSchema])
 def get_all_users(

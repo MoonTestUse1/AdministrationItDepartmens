@@ -11,6 +11,9 @@ class RequestBase(BaseModel):
 class RequestCreate(RequestBase):
     pass
 
+class RequestUpdate(BaseModel):
+    status: str
+
 class Request(RequestBase):
     id: int
     employee_id: int
