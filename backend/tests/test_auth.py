@@ -1,98 +1,80 @@
+"""Authentication tests."""
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.main import app
-from app.crud import employees
-from app.utils.auth import verify_password, get_password_hash
-from app.schemas.employee import EmployeeCreate
+from app.models.employee import Employee
 
-client = TestClient(app)
-
-def test_login_success(test_db: Session):
-    # Создаем тестового сотрудника
-    hashed_password = get_password_hash("testpass123")
-    employee_data = EmployeeCreate(
-        first_name="Test",
-        last_name="User",
-        department="IT",
-        office="101",
-        password="testpass123"
-    )
-    employee = employees.create_employee(test_db, employee_data, hashed_password)
-    
+def test_login_employee_success(client: TestClient, test_employee: Employee):
+    """Тест успешной авторизации сотрудника."""
     response = client.post(
         "/api/auth/login",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "username": "User",
-            "password": "testpass123"
-        }
+        data={"username": test_employee.email, "password": "testpassword"}
     )
-    
     assert response.status_code == 200
     assert "access_token" in response.json()
+    assert "token_type" in response.json()
     assert response.json()["token_type"] == "bearer"
 
-def test_login_wrong_password(test_db: Session):
-    # Создаем тестового сотрудника
-    hashed_password = get_password_hash("testpass123")
-    employee_data = EmployeeCreate(
-        first_name="Test",
-        last_name="User",
-        department="IT",
-        office="101",
-        password="testpass123"
-    )
-    employees.create_employee(test_db, employee_data, hashed_password)
-    
+def test_login_employee_wrong_password(client: TestClient, test_employee: Employee):
+    """Тест авторизации сотрудника с неверным паролем."""
     response = client.post(
         "/api/auth/login",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "username": "User",
-            "password": "wrongpass"
-        }
+        data={"username": test_employee.email, "password": "wrongpassword"}
     )
-    
     assert response.status_code == 401
-    assert "detail" in response.json()
+    assert response.json()["detail"] == "Incorrect username or password"
 
-def test_login_nonexistent_user(test_db: Session):
+def test_login_employee_wrong_username(client: TestClient):
+    """Тест авторизации с несуществующим пользователем."""
     response = client.post(
         "/api/auth/login",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "username": "NonExistent",
-            "password": "testpass123"
-        }
+        data={"username": "nonexistent@example.com", "password": "testpassword"}
     )
-    
     assert response.status_code == 401
-    assert "detail" in response.json()
+    assert response.json()["detail"] == "Incorrect username or password"
 
-def test_admin_login_success():
+def test_login_admin_success(client: TestClient, test_admin: Employee):
+    """Тест успешной авторизации администратора."""
     response = client.post(
         "/api/auth/admin/login",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "username": "admin",
-            "password": "admin123"
-        }
+        data={"username": test_admin.email, "password": "adminpassword"}
     )
-    
     assert response.status_code == 200
     assert "access_token" in response.json()
+    assert "token_type" in response.json()
     assert response.json()["token_type"] == "bearer"
 
-def test_admin_login_wrong_password():
+def test_login_admin_wrong_password(client: TestClient, test_admin: Employee):
+    """Тест авторизации администратора с неверным паролем."""
     response = client.post(
         "/api/auth/admin/login",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data={
-            "username": "admin",
-            "password": "wrongpass"
-        }
+        data={"username": test_admin.email, "password": "wrongpassword"}
     )
-    
     assert response.status_code == 401
-    assert "detail" in response.json() 
+    assert response.json()["detail"] == "Incorrect username or password"
+
+def test_protected_route_with_valid_token(client: TestClient, employee_token: str, test_employee: Employee, db: Session):
+    """Тест доступа к защищенному маршруту с валидным токеном."""
+    response = client.get(
+        "/api/employees/me",
+        headers={"Authorization": f"Bearer {employee_token}"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == test_employee.email
+    assert data["full_name"] == test_employee.full_name
+
+def test_protected_route_without_token(client: TestClient):
+    """Тест доступа к защищенному маршруту без токена."""
+    response = client.get("/api/employees/me")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
+def test_protected_route_with_invalid_token(client: TestClient):
+    """Тест доступа к защищенному маршруту с недействительным токеном."""
+    response = client.get(
+        "/api/employees/me",
+        headers={"Authorization": "Bearer invalid_token"}
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Could not validate credentials" 

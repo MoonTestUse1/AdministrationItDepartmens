@@ -7,6 +7,7 @@ import re
 
 from .jwt import verify_token
 from ..database import get_db
+from ..models.employee import Employee
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
@@ -22,7 +23,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_current_admin(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
-) -> dict:
+) -> Employee:
     """Get current admin from token"""
     if not credentials:
         raise HTTPException(
@@ -36,26 +37,28 @@ def get_current_admin(
         payload = verify_token(token, db)
         employee_id = int(payload.get("sub"))
         
-        # Проверяем, что это админ (id = -1)
-        if employee_id != -1:
+        # Получаем сотрудника из БД
+        from ..crud.employees import get_employee
+        employee = get_employee(db, employee_id)
+        if not employee or not employee.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not an admin",
+                detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
             
-        return {"is_admin": True}
-    except Exception as e:
+        return employee
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
 def get_current_employee(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
-) -> dict:
+) -> Employee:
     """Get current employee from token"""
     if not credentials:
         raise HTTPException(
@@ -69,18 +72,20 @@ def get_current_employee(
         payload = verify_token(token, db)
         employee_id = int(payload.get("sub"))
         
-        # Проверяем, что это не админ
-        if employee_id == -1:
+        # Получаем сотрудника из БД
+        from ..crud.employees import get_employee
+        employee = get_employee(db, employee_id)
+        if not employee:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Admin cannot access employee endpoints",
+                detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
             
-        return {"id": employee_id}
+        return employee
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )

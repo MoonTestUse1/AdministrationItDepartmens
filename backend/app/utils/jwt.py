@@ -35,18 +35,9 @@ def verify_token(token: str, db: Session) -> dict:
             
         # Проверяем токен в Redis
         if not redis.get(f"token:{token}"):
-            # Если токена нет в Redis, проверяем в БД
-            db_token = db.query(Token).filter(Token.token == token).first()
-            if not db_token:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token is invalid",
-                )
-            # Если токен валиден, кэшируем его в Redis
-            redis.setex(
-                f"token:{token}",
-                timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-                "valid"
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
             )
             
         return payload

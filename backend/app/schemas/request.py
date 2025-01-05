@@ -23,7 +23,7 @@ class Request(RequestBase):
     id: int
     status: RequestStatus
     employee_id: int
-    department: str
+    department: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True) 

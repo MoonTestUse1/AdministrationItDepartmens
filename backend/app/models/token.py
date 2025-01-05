@@ -8,5 +8,5 @@ class Token(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String, unique=True, index=True)
-    user_id = Column(Integer, index=True)  # -1 для админа, остальные для сотрудников
+    user_id = Column(Integer, index=True)  # ID сотрудника из таблицы employees
     created_at = Column(DateTime(timezone=True), server_default=func.now()) 

@@ -48,8 +48,7 @@ def get_request_details(db: Session, request_id: int) -> Optional[Dict]:
         "status": request.status,
         "department": request.department,
         "created_at": request.created_at.isoformat(),
-        "employee_first_name": employee.first_name,
-        "employee_last_name": employee.last_name
+        "employee_full_name": employee.full_name
     }
 
 def get_employee_requests(db: Session, employee_id: int) -> list[Request]:
@@ -81,6 +80,12 @@ def get_statistics(db: Session) -> Dict:
             func.count(Request.id)
         ).group_by(Request.status).all()
     )
+    
+    # Добавляем статусы с нулевым количеством
+    for status in RequestStatus:
+        if status not in by_status:
+            by_status[status] = 0
+            
     return {
         "total": total,
         "by_status": by_status

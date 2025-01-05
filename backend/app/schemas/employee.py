@@ -4,21 +4,26 @@ from datetime import datetime
 from typing import Optional
 
 class EmployeeBase(BaseModel):
-    first_name: str
-    last_name: str
+    email: str
+    full_name: str
     department: str
-    office: str
+    is_active: bool = True
+    is_admin: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
 class EmployeeCreate(EmployeeBase):
     password: str
 
-class EmployeeUpdate(EmployeeBase):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+class EmployeeUpdate(BaseModel):
+    email: Optional[str] = None
+    full_name: Optional[str] = None
     department: Optional[str] = None
-    office: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 class Employee(EmployeeBase):
     id: int
