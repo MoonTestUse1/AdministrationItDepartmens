@@ -1,9 +1,9 @@
 from .request import Request, RequestCreate, RequestUpdate
-from .user import User, UserCreate
+from .employee import Employee, EmployeeCreate
 from .token import Token
 
 __all__ = [
     'Request', 'RequestCreate', 'RequestUpdate',
-    'User', 'UserCreate',
+    'Employee', 'EmployeeCreate',
     'Token'
 ] 

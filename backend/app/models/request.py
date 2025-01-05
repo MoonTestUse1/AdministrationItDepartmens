@@ -10,7 +10,7 @@ class Request(Base):
     __tablename__ = "requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     request_type = Column(String, nullable=False)
     description = Column(Text, nullable=False)
     priority = Column(Enum(RequestPriority), nullable=False)
@@ -19,4 +19,4 @@ class Request(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Отношения
-    employee = relationship("User", back_populates="requests")
+    employee = relationship("Employee", back_populates="requests")

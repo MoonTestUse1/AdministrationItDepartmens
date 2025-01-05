@@ -10,7 +10,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Import all models here
-from app.models.user import User  # noqa
+from app.models.employee import Employee  # noqa
 from app.models.request import Request  # noqa
 from app.models.chat import Chat, Message, ChatFile  # noqa
 
