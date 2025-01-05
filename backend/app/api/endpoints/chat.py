@@ -1,137 +1,74 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, status
 from sqlalchemy.orm import Session
 from typing import List
-import os
-import aiofiles
-import uuid
-
 from app.database import get_db
-from app.models.user import User
 from app.core.auth import get_current_user
-from app.schemas.chat import Chat, Message, ChatFile
-from app.websockets.chat import handle_chat_connection
+from app.core.ws_auth import get_current_user_ws
+from app.models.user import User
+from app.schemas.chat import (
+    Chat, ChatCreate,
+    Message, MessageCreate,
+    ChatFile, ChatFileCreate
+)
 
 router = APIRouter()
 
-# Путь для сохранения файлов
-UPLOAD_DIR = "uploads/chat_files"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
-    await handle_chat_connection(websocket, db)
-
-@router.post("/files/")
-async def upload_file(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+async def chat_websocket(
+    websocket: WebSocket,
     db: Session = Depends(get_db)
 ):
+    user = await get_current_user_ws(websocket, db)
+    if not user:
+        return
+    
+    await websocket.accept()
     try:
-        # Генерируем уникальное имя файла
-        file_extension = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-
-        # Сохраняем файл
-        async with aiofiles.open(file_path, 'wb') as out_file:
-            content = await file.read()
-            await out_file.write(content)
-
-        return {
-            "filename": file.filename,
-            "saved_path": file_path,
-            "size": len(content)
-        }
+        while True:
+            data = await websocket.receive_text()
+            # Обработка сообщений
+            await websocket.send_text(f"Message received: {data}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error: {e}")
+    finally:
+        await websocket.close()
 
-@router.get("/messages/", response_model=List[Message])
-def get_messages(
+@router.post("/", response_model=Chat)
+def create_chat(
+    chat: ChatCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Получаем чат пользователя
-    chat = db.query(Chat).filter(
-        (Chat.employee_id == current_user.id) |
-        (Chat.admin_id == current_user.id)
-    ).first()
+    """Create new chat."""
+    # Здесь будет логика создания чата
+    pass
 
-    if not chat:
-        return []
+@router.get("/", response_model=List[Chat])
+def get_chats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all chats for current user."""
+    # Здесь будет логика получения чатов
+    pass
 
-    # Получаем сообщения
-    messages = db.query(Message).filter(Message.chat_id == chat.id).all()
-    return messages
+@router.post("/{chat_id}/messages", response_model=Message)
+def create_message(
+    chat_id: int,
+    message: MessageCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create new message in chat."""
+    # Здесь будет логика создания сообщения
+    pass
 
-@router.get("/messages/{chat_id}/", response_model=List[Message])
-def get_chat_messages(
+@router.get("/{chat_id}/messages", response_model=List[Message])
+def get_messages(
     chat_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Проверяем доступ к чату
-    chat = db.query(Chat).filter(Chat.id == chat_id).first()
-    if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
-
-    if not current_user.is_admin and chat.employee_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    # Получаем сообщения
-    messages = db.query(Message).filter(Message.chat_id == chat_id).all()
-    return messages
-
-@router.get("/unread-count/")
-def get_unread_count(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    # Получаем чат пользователя
-    chat = db.query(Chat).filter(
-        (Chat.employee_id == current_user.id) |
-        (Chat.admin_id == current_user.id)
-    ).first()
-
-    if not chat:
-        return {"unread_count": 0}
-
-    # Считаем непрочитанные сообщения
-    unread_count = db.query(Message).filter(
-        Message.chat_id == chat.id,
-        Message.sender_id != current_user.id,
-        Message.is_read == False
-    ).count()
-
-    return {"unread_count": unread_count}
-
-@router.get("/admin/chats/", response_model=List[Chat])
-def get_admin_chats(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    # Получаем все чаты с последними сообщениями и количеством непрочитанных
-    chats = db.query(Chat).all()
-    
-    # Для каждого чата добавляем дополнительную информацию
-    for chat in chats:
-        # Последнее сообщение
-        last_message = db.query(Message)\
-            .filter(Message.chat_id == chat.id)\
-            .order_by(Message.created_at.desc())\
-            .first()
-        chat.last_message = last_message
-
-        # Количество непрочитанных сообщений
-        unread_count = db.query(Message)\
-            .filter(
-                Message.chat_id == chat.id,
-                Message.sender_id != current_user.id,
-                Message.is_read == False
-            ).count()
-        chat.unread_count = unread_count
-
-    return chats 
+    """Get all messages in chat."""
+    # Здесь будет логика получения сообщений
+    pass 

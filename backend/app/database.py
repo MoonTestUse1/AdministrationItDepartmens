@@ -1,20 +1,21 @@
-"""Database configuration"""
+"""Database configuration."""
 from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from .core.config import settings
-from .db.base import Base
+from app.core.config import settings
 
-# Для создания таблиц импортируем модели
-from .models.employee import Employee  # noqa
-from .models.request import Request  # noqa
-from .models.token import Token  # noqa
-
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+Base = declarative_base()
+
+# Import all models here
+from app.models.user import User  # noqa
+from app.models.request import Request  # noqa
+from app.models.chat import Chat, Message, ChatFile  # noqa
+
 def get_db():
+    """Get database session."""
     db = SessionLocal()
     try:
         yield db

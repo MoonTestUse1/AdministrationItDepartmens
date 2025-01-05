@@ -1,18 +1,20 @@
-"""Request model"""
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
+"""Request model."""
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from app.db.base_class import Base
+from app.database import Base
+from app.schemas.request import RequestPriority, RequestStatus
 
 class Request(Base):
+    """Request model."""
     __tablename__ = "requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     request_type = Column(String, nullable=False)
     description = Column(Text, nullable=False)
-    priority = Column(String, nullable=False)
-    status = Column(String, default="new")
+    priority = Column(Enum(RequestPriority), nullable=False)
+    status = Column(Enum(RequestStatus), default=RequestStatus.NEW)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

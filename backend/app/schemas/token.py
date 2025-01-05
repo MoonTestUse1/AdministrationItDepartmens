@@ -1,13 +1,7 @@
-"""Token schemas"""
-from pydantic import BaseModel, ConfigDict
+"""Token schemas."""
+from pydantic import BaseModel
 
 class Token(BaseModel):
+    """Token schema."""
     access_token: str
-    token_type: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-class TokenData(BaseModel):
-    user_id: int | None = None
-
-    model_config = ConfigDict(from_attributes=True) 
+    token_type: str 

@@ -5,15 +5,29 @@ from typing import Optional
 class Settings(BaseSettings):
     """Application settings"""
     PROJECT_NAME: str = "Support System"
+    VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
-    SECRET_KEY: str = "your-secret-key-for-jwt"  # В продакшене использовать безопасный ключ
+    
+    # Security
+    SECRET_KEY: str = "your-secret-key-for-jwt"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 дней
     
+    # Database
     POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "support_db"
-    SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    DATABASE_URL: Optional[str] = None
+    
+    # Redis
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: Optional[str] = None
+    
+    # Telegram
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
 
     @property
     def get_database_url(self) -> str:
@@ -23,6 +37,8 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
+        extra = "allow"  # Разрешаем дополнительные поля
 
 settings = Settings()
-settings.SQLALCHEMY_DATABASE_URI = settings.get_database_url 
+if not settings.DATABASE_URL:
+    settings.DATABASE_URL = settings.get_database_url 

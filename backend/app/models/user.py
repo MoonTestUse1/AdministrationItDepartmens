@@ -1,9 +1,10 @@
+"""User model."""
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import relationship
-
 from app.database import Base
 
 class User(Base):
+    """User model."""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -13,10 +14,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
 
-    # Отношения для чата
-    employee_chats = relationship("Chat", foreign_keys="[Chat.employee_id]", back_populates="employee")
-    admin_chats = relationship("Chat", foreign_keys="[Chat.admin_id]", back_populates="admin")
-    sent_messages = relationship("Message", back_populates="sender")
-    
-    # Отношения для заявок
-    requests = relationship("Request", back_populates="employee") 
+    # Отношения
+    requests = relationship("Request", back_populates="employee")
+    chats = relationship("Chat", back_populates="employee")
+    messages = relationship("Message", back_populates="sender") 

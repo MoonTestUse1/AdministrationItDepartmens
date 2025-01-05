@@ -1,4 +1,4 @@
-"""Authentication router"""
+"""Authentication endpoints."""
 from datetime import timedelta
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,6 +14,7 @@ from app.database import get_db
 from app.core.config import settings
 from app.models.user import User
 from app.schemas.token import Token
+from app.schemas.user import User as UserSchema
 
 router = APIRouter()
 
@@ -22,9 +23,7 @@ def login(
     db: Session = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    """
-    OAuth2 compatible token login, get an access token for future requests
-    """
+    """OAuth2 compatible token login, get an access token for future requests."""
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -49,10 +48,8 @@ def login(
         "token_type": "bearer"
     }
 
-@router.get("/me", response_model=Any)
+@router.get("/me", response_model=UserSchema)
 def read_users_me(current_user: User = Depends(get_current_user)):
-    """
-    Get current user.
-    """
+    """Get current user."""
     return current_user
 

@@ -1,101 +1,123 @@
+"""Test configuration."""
 import pytest
+from typing import Generator, Dict
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import MagicMock
-from app.db.base import Base
-from app.database import get_db
+from app.database import Base, get_db
 from app.main import app
-from app.utils.jwt import create_and_save_token, redis
-from app.crud import employees
-from app.utils.auth import get_password_hash
-from app.models.token import Token
-from app.models.employee import Employee
-from app.models.request import Request
-from app.schemas.employee import EmployeeCreate
+from app.core.config import settings
+from app.models.user import User
+from app.core.auth import get_password_hash
 
-# Используем SQLite для тестов
+# Создаем тестовую базу данных
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Создаем мок для Redis
-class RedisMock:
+# Создаем фиктивный Redis для тестов
+class FakeRedis:
+    """Fake Redis for testing."""
     def __init__(self):
         self.data = {}
 
-    def setex(self, name, time, value):
-        self.data[name] = value
-        return True
+    def get(self, key):
+        return self.data.get(key)
 
-    def get(self, name):
-        return self.data.get(name)
+    def set(self, key, value, ex=None):
+        self.data[key] = value
 
-    def delete(self, name):
-        if name in self.data:
-            del self.data[name]
-        return True
+    def delete(self, key):
+        if key in self.data:
+            del self.data[key]
 
-@pytest.fixture(autouse=True)
-def mock_redis(monkeypatch):
-    redis_mock = RedisMock()
-    monkeypatch.setattr("app.utils.jwt.redis", redis_mock)
-    return redis_mock
+@pytest.fixture(scope="session")
+def redis():
+    """Redis fixture."""
+    return FakeRedis()
 
-@pytest.fixture(scope="function")
-def test_db():
-    # Удаляем все таблицы
-    Base.metadata.drop_all(bind=engine)
-    # Создаем все таблицы заново
-    Base.metadata.create_all(bind=engine)
-    
-    # Создаем сессию
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@pytest.fixture(scope="function")
-def test_employee(test_db):
-    hashed_password = get_password_hash("testpass123")
-    employee_data = EmployeeCreate(
-        first_name="Test",
-        last_name="User",
-        department="IT",
-        office="101",
-        password="testpass123"
-    )
-    employee = employees.create_employee(test_db, employee_data, hashed_password)
-    return employee
-
-@pytest.fixture(scope="function")
-def test_token(test_db, test_employee):
-    token = create_and_save_token(test_employee.id, test_db)
-    return token
-
-@pytest.fixture(scope="function")
-def test_auth_header(test_token):
-    return {"Authorization": f"Bearer {test_token}"}
-
-@pytest.fixture(scope="function")
-def admin_token(test_db):
-    token = create_and_save_token(-1, test_db)  # -1 для админа
-    return token
-
-@pytest.fixture(scope="function")
-def admin_auth_header(admin_token):
-    return {"Authorization": f"Bearer {admin_token}"}
-
-@pytest.fixture(scope="function")
-def test_employee_id(test_employee):
-    return test_employee.id
-
-# Переопределяем зависимость для получения БД
 def override_get_db():
-    db = TestingSessionLocal()
+    """Override get_db for testing."""
     try:
+        db = TestingSessionLocal()
         yield db
     finally:
         db.close()
 
-app.dependency_overrides[get_db] = override_get_db 
+app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    """Setup database for testing."""
+    # Создаем все таблицы
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Удаляем все таблицы после тестов
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(scope="function")
+def db() -> Generator:
+    """Database fixture."""
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+@pytest.fixture(scope="function")
+def client(db) -> Generator:
+    """Test client fixture."""
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+
+@pytest.fixture(scope="function")
+def test_user(db) -> Dict[str, str]:
+    """Test user fixture."""
+    user_data = {
+        "email": "test@example.com",
+        "password": "test123",
+        "full_name": "Test User",
+        "is_admin": False
+    }
+    
+    user = User(
+        email=user_data["email"],
+        hashed_password=get_password_hash(user_data["password"]),
+        full_name=user_data["full_name"],
+        is_admin=user_data["is_admin"]
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    return user_data
+
+@pytest.fixture(scope="function")
+def test_admin(db) -> Dict[str, str]:
+    """Test admin fixture."""
+    admin_data = {
+        "email": "admin@example.com",
+        "password": "admin123",
+        "full_name": "Admin User",
+        "is_admin": True
+    }
+    
+    admin = User(
+        email=admin_data["email"],
+        hashed_password=get_password_hash(admin_data["password"]),
+        full_name=admin_data["full_name"],
+        is_admin=admin_data["is_admin"]
+    )
+    db.add(admin)
+    db.commit()
+    db.refresh(admin)
+    
+    return admin_data 

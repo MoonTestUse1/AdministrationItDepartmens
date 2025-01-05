@@ -1,4 +1,4 @@
-"""Admin router"""
+"""Admin endpoints."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -19,7 +19,7 @@ def get_statistics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get system statistics"""
+    """Get system statistics."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -66,7 +66,7 @@ def get_all_requests(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all requests (admin only)"""
+    """Get all requests (admin only)."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -83,7 +83,7 @@ def update_request_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Update request status (admin only)"""
+    """Update request status (admin only)."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -106,7 +106,7 @@ def get_all_users(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all users (admin only)"""
+    """Get all users (admin only)."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

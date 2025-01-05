@@ -62,31 +62,4 @@ async def get_current_user(
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise credentials_exception
-    return user
-
-async def get_current_user_ws(websocket: WebSocket, db: Session = Depends(get_db)) -> Optional[User]:
-    try:
-        # Получаем токен из параметров запроса
-        token = websocket.query_params.get("token")
-        if not token:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return None
-
-        # Проверяем токен
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return None
-
-        # Получаем пользователя
-        user = db.query(User).filter(User.email == email).first()
-        if user is None:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return None
-
-        return user
-
-    except JWTError:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return None 
+    return user 

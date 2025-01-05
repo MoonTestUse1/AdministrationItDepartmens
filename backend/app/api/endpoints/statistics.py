@@ -1,13 +1,13 @@
-"""Statistics router"""
+"""Statistics endpoints."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timedelta
 
-from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.models.request import Request
+from app.core.auth import get_current_user
 
 router = APIRouter()
 
@@ -16,6 +16,7 @@ def get_statistics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Get system statistics (admin only)."""
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
