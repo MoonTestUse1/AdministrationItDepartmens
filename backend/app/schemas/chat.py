@@ -1,34 +1,43 @@
-from pydantic import BaseModel
+"""Chat schemas"""
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional, List
 from app.models.user import User
 
+class ChatBase(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    employee_id: int
+
+class ChatCreate(ChatBase):
+    pass
+
+class MessageBase(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    content: str
+    chat_id: int
+    sender_id: int
+
+class MessageCreate(MessageBase):
+    pass
+
 class ChatFileBase(BaseModel):
-    file_name: str
-    file_size: int
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    filename: str
+    file_path: str
+    message_id: int
 
 class ChatFileCreate(ChatFileBase):
     pass
 
 class ChatFile(ChatFileBase):
     id: int
-    message_id: int
-    file_path: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-class MessageBase(BaseModel):
-    content: str
-
-class MessageCreate(MessageBase):
-    pass
-
 class Message(MessageBase):
     id: int
-    chat_id: int
-    sender_id: int
     is_read: bool
     created_at: datetime
     files: List[ChatFile] = []
@@ -36,20 +45,12 @@ class Message(MessageBase):
     class Config:
         from_attributes = True
 
-class ChatBase(BaseModel):
-    employee_id: int
-    admin_id: int
-
-class ChatCreate(ChatBase):
-    pass
-
 class Chat(ChatBase):
     id: int
-    created_at: datetime
     employee: User
-    admin: User
-    last_message: Optional[Message] = None
-    unread_count: Optional[int] = 0
+    messages: List[Message] = []
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
