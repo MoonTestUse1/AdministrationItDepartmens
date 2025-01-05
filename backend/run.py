@@ -24,7 +24,7 @@ async def run_api():
 async def main():
     """Run both bot and API in the main thread"""
     try:
-        # Создаем задачи для бота и API
+        # Создаем задачи для бота и AP
         bot_task = asyncio.create_task(start_bot())
         api_task = asyncio.create_task(run_api())
         
