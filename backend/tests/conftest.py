@@ -16,7 +16,7 @@ from app.database import Base, get_db
 from app.models.employee import Employee
 from app.utils.auth import get_password_hash
 
-# Создаем тестовую базу данных в памяти
+# Создаем тестовую базу данных в памяти222
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
