@@ -40,7 +40,8 @@ build_backend:
     - docker save backend:latest > backend.tar
   artifacts:
     paths:
-      - backend.tar
+      - backend/backend.tar
+    expire_in: 1 hour
   only:
     - main
 
@@ -61,7 +62,8 @@ build_frontend:
     - docker save frontend:latest > frontend.tar
   artifacts:
     paths:
-      - frontend.tar
+      - frontend/frontend.tar
+    expire_in: 1 hour
   only:
     - main
 
@@ -71,7 +73,7 @@ deploy:
   script:
     - apt-get update -qy
     - apt-get install -y sshpass
-    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no backend.tar frontend.tar docker-compose.yml root@185.139.70.62:/root/app/
+    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no backend/backend.tar frontend/frontend.tar docker-compose.yml root@185.139.70.62:/root/app/
     - |
       sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c '
         cd /root/app && 
