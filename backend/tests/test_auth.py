@@ -3,7 +3,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-def test_login_success(client: TestClient, test_employee: dict):
+from app.models.employee import Employee
+
+def test_login_success(client: TestClient, test_employee: Employee):
     """Test successful login"""
     response = client.post(
         "/api/auth/login",
@@ -13,10 +15,11 @@ def test_login_success(client: TestClient, test_employee: dict):
         }
     )
     assert response.status_code == 200
-    assert "access_token" in response.json()
-    assert response.json()["token_type"] == "bearer"
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
 
-def test_login_wrong_password(client: TestClient, test_employee: dict):
+def test_login_wrong_password(client: TestClient, test_employee: Employee):
     """Test login with wrong password"""
     response = client.post(
         "/api/auth/login",
@@ -49,10 +52,10 @@ def test_login_invalid_username_format(client: TestClient):
             "password": "testpass123"
         }
     )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Username should be in format: 'First Last'"
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Username must be in format: 'First Last'"
 
-def test_admin_login_success(client: TestClient, test_admin: dict):
+def test_admin_login_success(client: TestClient, test_admin: Employee):
     """Test successful admin login"""
     response = client.post(
         "/api/auth/admin/login",
@@ -62,10 +65,11 @@ def test_admin_login_success(client: TestClient, test_admin: dict):
         }
     )
     assert response.status_code == 200
-    assert "access_token" in response.json()
-    assert response.json()["token_type"] == "bearer"
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
 
-def test_admin_login_not_admin(client: TestClient, test_employee: dict):
+def test_admin_login_not_admin(client: TestClient, test_employee: Employee):
     """Test admin login with non-admin user"""
     response = client.post(
         "/api/auth/admin/login",
@@ -74,14 +78,14 @@ def test_admin_login_not_admin(client: TestClient, test_employee: dict):
             "password": "testpass123"
         }
     )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect username or password"
+    assert response.status_code == 403
+    assert response.json()["detail"] == "User is not an admin"
 
 def test_protected_route_with_invalid_token(client: TestClient):
-    """Test accessing protected route with invalid token"""
+    """Test protected route with invalid token"""
     response = client.get(
         "/api/employees/me",
         headers={"Authorization": "Bearer invalid_token"}
     )
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid authentication credentials" 
+    assert response.json()["detail"] == "Could not validate credentials" 
