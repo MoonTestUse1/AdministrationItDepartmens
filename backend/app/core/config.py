@@ -1,4 +1,5 @@
 """Settings configuration"""
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -8,7 +9,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres123@db:5432/support_db"
+    TESTING: bool = os.getenv("TESTING", "False") == "True"
+    DATABASE_URL: str = "sqlite:///./test.db" if TESTING else "postgresql://postgres:postgres123@postgres:5432/support_db"
     
     # JWT
     SECRET_KEY: str = "your-secret-key"

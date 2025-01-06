@@ -8,16 +8,23 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from unittest.mock import Mock, patch
 
-from app.database import Base, get_db
+from app.database import get_db
 from app.main import app
+from app.models.base import Base
 from app.models.employee import Employee
 from app.utils.auth import get_password_hash
 from app.utils.jwt import create_access_token
-from app.core.config import settings
+
+# Устанавливаем переменную окружения для тестов
+os.environ["TESTING"] = "True"
 
 # Создаем тестовую базу данных в памяти
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class MockRedis:
@@ -78,12 +85,11 @@ def client(db: TestingSessionLocal, redis_mock) -> Generator:
 def test_employee(db: TestingSessionLocal) -> Employee:
     """Фикстура для создания тестового сотрудника."""
     employee = Employee(
-        email="test@example.com",
-        full_name="Test Employee",
-        hashed_password=get_password_hash("testpassword"),
-        is_active=True,
-        is_admin=False,
-        department="IT"
+        first_name="Test",
+        last_name="User",
+        department="IT",
+        office="101",
+        hashed_password=get_password_hash("testpassword")
     )
     db.add(employee)
     db.commit()
@@ -94,12 +100,11 @@ def test_employee(db: TestingSessionLocal) -> Employee:
 def test_admin(db: TestingSessionLocal) -> Employee:
     """Фикстура для создания тестового администратора."""
     admin = Employee(
-        email="admin@example.com",
-        full_name="Test Admin",
-        hashed_password=get_password_hash("adminpassword"),
-        is_active=True,
-        is_admin=True,
-        department="Administration"
+        first_name="Admin",
+        last_name="User",
+        department="Administration",
+        office="100",
+        hashed_password=get_password_hash("adminpassword")
     )
     db.add(admin)
     db.commit()
