@@ -1,73 +1,42 @@
 image: python:3.11
 
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
-
-cache:
-  paths:
-    - .pip-cache/
-    - backend/venv/
-
 stages:
   - test
-  - build
   - deploy
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  SSH_PRIVATE_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDI1N1+AZhGX1QHu6x5vzH3kLiWnddDkKd4gkok+9Vu2dhREiQ/uIVJA1KZgqUZ0vdaD1GTJmtDN6qvn0ef7GIvKE9QuGki/JimFmrZJx75jfsXt2Un7/lTX1Zfa1O9n2fGPFuULGEj7A4eeIxe9RVjbbYRyJR30j2oJ9wr0wC7IP6pnjDZELoJYLEm9x1UfwQeQp6f"
+
+services:
+  - docker:dind
 
 before_script:
   - python -V
-  - python -m venv backend/venv
-  - source backend/venv/bin/activate
-  - pip install --upgrade pip
+  - pip install -r backend/requirements.txt
 
 test:
   stage: test
-  services:
-    - redis:latest
-    - postgres:15
-  variables:
-    POSTGRES_DB: app
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: postgres
-    DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app
-    REDIS_HOST: redis
   script:
     - cd backend
-    - pip install -r requirements.txt
     - pytest -v
   only:
     - main
-    - merge_requests
-
-lint:
-  stage: test
-  script:
-    - cd backend
-    - pip install flake8
-    - flake8 .
-  only:
-    - main
-    - merge_requests
-
-build:
-  stage: build
-  script:
-    - cd backend
-    - pip install -r requirements.txt
-    - echo "Building application..."
-    - python -c "import sys; print(sys.version)"
-  artifacts:
-    paths:
-      - backend/
-  only:
-    - main
+    - Testing
 
 deploy:
   stage: deploy
   script:
-    - echo "Deploying application..."
-    - cd backend
-    - alembic upgrade head
-  environment:
-    name: production
+    - apt-get update -qy
+    - apt-get install -y openssh-client
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - scp -r * root@185.139.70.62:/root/app/
+    - ssh root@185.139.70.62 "cd /root/app && docker-compose down && docker-compose up -d"
   only:
-    - main 
+    - main
+  environment:
+    name: production 
