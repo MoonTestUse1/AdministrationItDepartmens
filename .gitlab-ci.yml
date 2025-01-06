@@ -6,7 +6,6 @@ stages:
   - deploy
 
 variables:
-  DOCKER_HOST: tcp://docker:2375
   SECRET_KEY: "your-super-secret-key-123"
 
 test:
@@ -27,8 +26,12 @@ test:
 build_backend:
   stage: build
   image: docker:latest
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
   before_script:
     - docker info
   script:
@@ -44,8 +47,12 @@ build_backend:
 build_frontend:
   stage: build
   image: docker:latest
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
   before_script:
     - docker info
   script:
