@@ -1,14 +1,13 @@
 """Employee schemas"""
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
 class EmployeeBase(BaseModel):
-    email: EmailStr
-    full_name: str
-    department: Optional[str] = None
-    is_active: bool = True
-    is_admin: bool = False
+    first_name: str
+    last_name: str
+    department: str
+    office: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -16,11 +15,10 @@ class EmployeeCreate(EmployeeBase):
     password: str
 
 class EmployeeUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     department: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_admin: Optional[bool] = None
+    office: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

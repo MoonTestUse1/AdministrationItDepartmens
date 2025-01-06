@@ -6,17 +6,16 @@ from app.utils.auth import get_password_hash
 
 def init_db(db: Session) -> None:
     """Initialize database with default data"""
-    # Создаем администратора по умолчанию
-    admin = db.query(Employee).filter(Employee.email == settings.ADMIN_USERNAME).first()
-    if not admin:
-        admin = Employee(
-            email=settings.ADMIN_USERNAME,
-            full_name="System Administrator",
-            hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
-            is_active=True,
-            is_admin=True,
-            department="Administration"
+    # Создаем тестового сотрудника
+    test_employee = db.query(Employee).filter(Employee.last_name == "User").first()
+    if not test_employee:
+        test_employee = Employee(
+            first_name="Test",
+            last_name="User",
+            department="IT",
+            office="101",
+            hashed_password=get_password_hash("testpass123")
         )
-        db.add(admin)
+        db.add(test_employee)
         db.commit()
-        db.refresh(admin) 
+        db.refresh(test_employee) 

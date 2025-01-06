@@ -13,20 +13,19 @@ def get_employee(db: Session, employee_id: int) -> Optional[Employee]:
     """Get employee by ID"""
     return db.query(Employee).filter(Employee.id == employee_id).first()
 
-def get_employee_by_email(db: Session, email: str) -> Optional[Employee]:
-    """Get employee by email"""
-    return db.query(Employee).filter(Employee.email == email).first()
+def get_employee_by_last_name(db: Session, last_name: str) -> Optional[Employee]:
+    """Get employee by last name"""
+    return db.query(Employee).filter(Employee.last_name == last_name).first()
 
 def create_employee(db: Session, employee: EmployeeCreate, hashed_password: str) -> Employee:
     """Create new employee"""
     try:
         db_employee = Employee(
-            email=employee.email,
-            full_name=employee.full_name,
-            hashed_password=hashed_password,
-            is_active=employee.is_active,
-            is_admin=employee.is_admin,
-            department=employee.department
+            first_name=employee.first_name,
+            last_name=employee.last_name,
+            department=employee.department,
+            office=employee.office,
+            hashed_password=hashed_password
         )
         db.add(db_employee)
         db.commit()
