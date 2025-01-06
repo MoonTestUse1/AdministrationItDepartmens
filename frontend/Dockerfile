@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18 as build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -11,6 +11,9 @@ RUN npm install
 
 # Copy source code
 COPY . .
+
+# Install TypeScript and Vue compiler globally
+RUN npm install -g typescript @vue/compiler-sfc
 
 # Build the application
 RUN npm run build
