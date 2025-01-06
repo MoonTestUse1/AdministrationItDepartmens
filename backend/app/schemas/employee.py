@@ -8,6 +8,7 @@ class EmployeeBase(BaseModel):
     last_name: str
     department: str
     office: str
+    is_admin: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -19,6 +20,7 @@ class EmployeeUpdate(BaseModel):
     last_name: Optional[str] = None
     department: Optional[str] = None
     office: Optional[str] = None
+    is_admin: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -1,29 +1,30 @@
 """Request schemas"""
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from pydantic import BaseModel
 from datetime import datetime
-from ..models.request import RequestStatus, RequestPriority
+from typing import Optional
+from ..models.request import RequestStatus, RequestPriority, RequestType
 
 class RequestBase(BaseModel):
-    request_type: str
+    """Base request schema"""
+    request_type: RequestType
     description: str
-    priority: RequestPriority
-
-    model_config = ConfigDict(from_attributes=True)
+    priority: RequestPriority = RequestPriority.MEDIUM
 
 class RequestCreate(RequestBase):
+    """Request create schema"""
     pass
 
-class RequestUpdate(BaseModel):
-    status: RequestStatus
-
-    model_config = ConfigDict(from_attributes=True)
-
 class Request(RequestBase):
+    """Request schema"""
     id: int
     status: RequestStatus
-    employee_id: int
-    department: Optional[str] = None
     created_at: datetime
+    employee_id: int
 
-    model_config = ConfigDict(from_attributes=True) 
+    class Config:
+        """Pydantic config"""
+        from_attributes = True
+
+class RequestUpdate(BaseModel):
+    """Request update schema"""
+    status: RequestStatus 

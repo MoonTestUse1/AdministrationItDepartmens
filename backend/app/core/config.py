@@ -1,16 +1,13 @@
-"""Settings configuration"""
-import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""Application configuration"""
+from functools import lru_cache
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     """Application settings"""
-    PROJECT_NAME: str = "Support Service"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api"
+    PROJECT_NAME: str = "Employee Request System"
     
     # Database
-    TESTING: bool = os.getenv("TESTING", "False") == "True"
-    DATABASE_URL: str = "sqlite:///./test.db" if TESTING else "postgresql://postgres:postgres123@postgres:5432/support_db"
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/employee_requests"
     
     # JWT
     SECRET_KEY: str = "your-secret-key"
@@ -18,21 +15,16 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Redis
-    REDIS_HOST: str = "redis"
+    REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     
-    # Admin
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin123"
+    class Config:
+        """Pydantic config"""
+        case_sensitive = True
 
-    # Telegram
-    TELEGRAM_BOT_TOKEN: str = "your-bot-token"
-    TELEGRAM_CHAT_ID: str = "your-chat-id"
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings"""
+    return Settings()
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True
-    )
-
-settings = Settings() 
+settings = get_settings() 

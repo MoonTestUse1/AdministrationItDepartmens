@@ -1,39 +1,27 @@
-"""Database configuration"""
+"""Database module"""
+import os
 from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
 from .core.config import settings
 
-# Для создания таблиц импортируем модели
-from .models.employee import Employee  # noqa
-from .models.request import Request  # noqa
-from .models.token import Token  # noqa
+# Определяем, используем ли тестовую базу данных
+TESTING = os.getenv("TESTING", "False") == "True"
+DATABASE_URL = "sqlite:///:memory:" if TESTING else settings.DATABASE_URL
 
-def get_database_url():
-    """Получение URL базы данных в зависимости от окружения."""
-    try:
-        from .core.test_config import test_settings
-        return test_settings.DATABASE_URL
-    except ImportError:
-        return settings.DATABASE_URL
+# Создаем базовый класс для моделей
+Base = declarative_base()
 
-# Используем правильный URL для базы данных
-SQLALCHEMY_DATABASE_URL = get_database_url()
-
-# Создаем движок с нужными параметрами
-connect_args = {}
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    connect_args["check_same_thread"] = False
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args
-)
+# Создаем движок базы данных
+connect_args = {"check_same_thread": False} if TESTING else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 # Создаем фабрику сессий
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
-    """Получение сессии базы данных."""
+    """Get database session"""
     db = SessionLocal()
     try:
         yield db

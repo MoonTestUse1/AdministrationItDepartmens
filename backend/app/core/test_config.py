@@ -1,36 +1,24 @@
-"""Test settings configuration"""
-from pydantic_settings import BaseSettings, SettingsConfigDict
+"""Test configuration"""
+from pydantic_settings import BaseSettings
 
 class TestSettings(BaseSettings):
-    """Test application settings"""
-    PROJECT_NAME: str = "Support Service Test"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api"
+    """Test settings"""
+    PROJECT_NAME: str = "Employee Request System Test"
     
     # Database
     DATABASE_URL: str = "sqlite:///:memory:"
     
     # JWT
-    SECRET_KEY: str = "test-secret-key"
+    SECRET_KEY: str = "test_secret_key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Redis
-    REDIS_HOST: str = "redis"
+    REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     
-    # Admin
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin123"
-
-    # Telegram
-    TELEGRAM_BOT_TOKEN: str = "test-bot-token"
-    TELEGRAM_CHAT_ID: str = "test-chat-id"
-
-    model_config = SettingsConfigDict(
-        env_file=".env.test",
-        env_file_encoding="utf-8",
-        case_sensitive=True
-    )
+    class Config:
+        """Pydantic config"""
+        case_sensitive = True
 
 test_settings = TestSettings() 
