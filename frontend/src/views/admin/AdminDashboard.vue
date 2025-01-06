@@ -142,13 +142,15 @@ const handleWebSocketMessage = (data: WebSocketMessage) => {
     if (data.type === 'new_request' && data.data) {
       console.log('AdminDashboard: Adding new request:', data.data)
       // Добавляем новую заявку в начало списка
-      requests.value = [data.data, ...requests.value]
+      const newRequest = data.data as Request
+      requests.value = [newRequest, ...requests.value]
     } else if (data.type === 'status_update' && data.data) {
       console.log('AdminDashboard: Updating request status:', data.data)
       // Обновляем статус заявки в списке
-      const request = requests.value.find(r => r.id === data.data.id)
+      const updatedRequest = data.data as Request
+      const request = requests.value.find(r => r.id === updatedRequest.id)
       if (request) {
-        request.status = data.data.status
+        request.status = updatedRequest.status
       }
     }
   }

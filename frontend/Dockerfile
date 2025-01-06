@@ -12,11 +12,15 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Install TypeScript and Vue compiler globally
-RUN npm install -g typescript @vue/compiler-sfc
+# Install Vue compiler globally
+RUN npm install -g @vue/compiler-sfc
 
-# Build the application
-RUN npm run build
+# Set environment variables
+ENV NODE_ENV=production
+ENV VITE_API_URL=/api
+
+# Build the application with increased memory limit
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Production stage
 FROM nginx:alpine
