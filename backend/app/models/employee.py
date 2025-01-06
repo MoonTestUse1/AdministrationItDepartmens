@@ -13,8 +13,8 @@ class Employee(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     department = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Определяем отношение к Request
     requests = relationship("Request", back_populates="employee", cascade="all, delete-orphan")

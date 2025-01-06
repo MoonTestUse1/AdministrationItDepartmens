@@ -1,8 +1,21 @@
 """Main application module"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from . import models
 from .routers import admin, employees, requests, auth, statistics
+from .database import engine, SessionLocal
+from .db.init_db import init_db
+
+# Создаем таблицы
+models.Base.metadata.create_all(bind=engine)
+
+# Инициализируем базу данных
+db = SessionLocal()
+try:
+    init_db(db)
+finally:
+    db.close()
 
 app = FastAPI(
     # Включаем автоматическое перенаправление со слэшем
