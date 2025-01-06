@@ -2,20 +2,19 @@ version: '3.8'
 
 services:
   backend:
-    image: ${CI_REGISTRY_IMAGE}/backend:latest
+    image: backend:latest
     restart: always
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/app
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SECRET_KEY=${SECRET_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     depends_on:
       - db
       - redis
 
   frontend:
-    image: ${CI_REGISTRY_IMAGE}/frontend:latest
+    image: frontend:latest
     restart: always
     ports:
       - "80:80"

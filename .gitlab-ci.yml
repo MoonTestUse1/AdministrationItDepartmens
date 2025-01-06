@@ -2,10 +2,12 @@ image: python:3.11
 
 stages:
   - test
+  - build
   - deploy
 
 variables:
   DOCKER_HOST: tcp://docker:2375
+  SECRET_KEY: "your-super-secret-key-123"
 
 services:
   - docker:dind
@@ -25,13 +27,47 @@ test:
     - main
     - Testing
 
+build_backend:
+  stage: build
+  image: docker:latest
+  script:
+    - cd backend
+    - docker build -t backend:latest .
+    - docker save backend:latest > backend.tar
+  artifacts:
+    paths:
+      - backend.tar
+  only:
+    - main
+
+build_frontend:
+  stage: build
+  image: docker:latest
+  script:
+    - cd frontend
+    - docker build -t frontend:latest .
+    - docker save frontend:latest > frontend.tar
+  artifacts:
+    paths:
+      - frontend.tar
+  only:
+    - main
+
 deploy:
   stage: deploy
   script:
     - apt-get update -qy
     - apt-get install -y sshpass
-    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@185.139.70.62:/root/app/
-    - sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c 'cd /root/app && /usr/bin/docker compose down && /usr/bin/docker compose up -d'"
+    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no backend.tar frontend.tar docker-compose.yml root@185.139.70.62:/root/app/
+    - |
+      sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c '
+        cd /root/app && 
+        docker load < backend.tar &&
+        docker load < frontend.tar &&
+        export SECRET_KEY=\"your-super-secret-key-123\" && 
+        /usr/bin/docker compose down && 
+        /usr/bin/docker compose up -d
+      '"
   only:
     - main
   environment:
