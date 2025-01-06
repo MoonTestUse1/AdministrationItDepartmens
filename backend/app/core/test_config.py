@@ -1,4 +1,5 @@
 """Test configuration"""
+import os
 from pydantic_settings import BaseSettings
 
 class TestSettings(BaseSettings):
@@ -8,7 +9,7 @@ class TestSettings(BaseSettings):
     # Database
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_HOST: str = "localhost"
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "test_app"
     
@@ -33,6 +34,9 @@ class TestSettings(BaseSettings):
 
     def get_database_url(self) -> str:
         """Get database URL"""
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return os.getenv(
+            "DATABASE_URL",
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
 test_settings = TestSettings() 

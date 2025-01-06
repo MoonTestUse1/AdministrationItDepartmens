@@ -24,24 +24,15 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db() -> Generator[None, Any, None]:
     """Setup test database"""
-    # Пробуем создать базу данных test_app
-    default_engine = create_engine(f"postgresql://{test_settings.POSTGRES_USER}:{test_settings.POSTGRES_PASSWORD}@{test_settings.POSTGRES_HOST}:{test_settings.POSTGRES_PORT}/postgres")
-    with default_engine.connect() as conn:
-        conn.execute(text("COMMIT"))  # Завершаем текущую транзакцию
-        try:
-            conn.execute(text("DROP DATABASE IF EXISTS test_app"))
-            conn.execute(text("CREATE DATABASE test_app"))
-        except Exception as e:
-            print(f"Error creating database: {e}")
-    
-    # Создаем все таблицы
-    Base.metadata.create_all(bind=engine)
-    yield
-    # Удаляем все таблицы
-    Base.metadata.drop_all(bind=engine)
-    
-    # Закрываем соединение с тестовой базой
-    engine.dispose()
+    try:
+        # Создаем все таблицы
+        Base.metadata.create_all(bind=engine)
+        yield
+    finally:
+        # Удаляем все таблицы
+        Base.metadata.drop_all(bind=engine)
+        # Закрываем соединение с тестовой базой
+        engine.dispose()
 
 @pytest.fixture
 def db_session() -> Generator[Any, Any, None]:
