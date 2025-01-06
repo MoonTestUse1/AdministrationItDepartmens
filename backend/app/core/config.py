@@ -1,5 +1,6 @@
 """Application configuration"""
 import os
+from typing import Any
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -12,7 +13,6 @@ class Settings(BaseSettings):
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "app"
     POSTGRES_TEST_DB: str = "test_app"
-    DATABASE_URL: str | None = None
 
     # JWT
     SECRET_KEY: str = "your-secret-key"
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Режим тестирования
-    TESTING: bool = bool(os.getenv("TESTING"))
+    TESTING: bool = bool(os.getenv("TESTING", ""))
 
     # Redis
     REDIS_HOST: str = "redis"
@@ -28,11 +28,18 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_TEST_DB: int = 1
 
+    # Telegram
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""
+
+    model_config = {
+        "case_sensitive": True,
+        "env_file": ".env",
+        "extra": "allow"
+    }
+
     def get_database_url(self) -> str:
         """Get database URL"""
-        if self.DATABASE_URL:
-            return self.DATABASE_URL
-            
         if self.TESTING:
             return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@localhost:5432/{self.POSTGRES_TEST_DB}"
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
@@ -42,15 +49,6 @@ class Settings(BaseSettings):
         db = self.REDIS_TEST_DB if self.TESTING else self.REDIS_DB
         host = "localhost" if self.TESTING else self.REDIS_HOST
         return f"redis://{host}:{self.REDIS_PORT}/{db}"
-
-    # Telegram
-    TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
-
-    class Config:
-        """Pydantic config"""
-        env_file = ".env"
-        case_sensitive = True
 
 @lru_cache()
 def get_settings() -> Settings:

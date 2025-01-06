@@ -11,7 +11,6 @@ class TestSettings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "test_app"
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/test_app"
     
     # JWT
     SECRET_KEY: str = "test_secret_key"
@@ -26,9 +25,14 @@ class TestSettings(BaseSettings):
     # Testing
     TESTING: bool = True
     
-    class Config:
-        """Pydantic config"""
-        case_sensitive = True
-        env_file = ".env.test"
+    model_config = {
+        "case_sensitive": True,
+        "env_file": ".env.test",
+        "extra": "allow"
+    }
+
+    def get_database_url(self) -> str:
+        """Get database URL"""
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 test_settings = TestSettings() 

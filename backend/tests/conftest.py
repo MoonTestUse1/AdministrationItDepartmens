@@ -7,16 +7,16 @@ from fastapi.testclient import TestClient
 from typing import Generator, Any
 
 # Устанавливаем переменную окружения для тестов
-os.environ["TESTING"] = "True"
+os.environ["TESTING"] = "1"
 
 from app.database import Base
 from app.main import app
 from app.core.test_config import test_settings
 from app.dependencies import get_db
-from .fixtures import *  # импортируем все фикстуsры
+from .test_fixtures import *  # импортируем все фикстуры
 
 # Создаем тестовый движок базы данных
-engine = create_engine(test_settings.DATABASE_URL)
+engine = create_engine(test_settings.get_database_url())
 
 # Создаем тестовую фабрику сессий
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -25,7 +25,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 def setup_test_db() -> Generator[None, Any, None]:
     """Setup test database"""
     # Пробуем создать базу данных test_app
-    default_engine = create_engine("postgresql://postgres:postgres@localhost:5432/postgres")
+    default_engine = create_engine(f"postgresql://{test_settings.POSTGRES_USER}:{test_settings.POSTGRES_PASSWORD}@{test_settings.POSTGRES_HOST}:{test_settings.POSTGRES_PORT}/postgres")
     with default_engine.connect() as conn:
         conn.execute(text("COMMIT"))  # Завершаем текущую транзакцию
         try:
