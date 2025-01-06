@@ -16,23 +16,30 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_token(token: str, db: Session) -> Optional[TokenData]:
-    """Verify token"""
+def verify_token(token: str) -> Optional[int]:
+    """Verify token and return employee_id"""
     try:
         # Проверяем, что токен действителен
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         employee_id = int(payload.get("sub"))
         if employee_id is None:
             return None
-        
-        # Проверяем, что токен существует в базе
-        db_token = db.query(Token).filter(Token.token == token).first()
-        if not db_token:
-            return None
-            
-        return TokenData(employee_id=employee_id)
+        return employee_id
     except (JWTError, ValueError):
         return None
+
+def verify_token_in_db(token: str, db: Session) -> Optional[TokenData]:
+    """Verify token in database"""
+    employee_id = verify_token(token)
+    if employee_id is None:
+        return None
+        
+    # Проверяем, что токен существует в базе
+    db_token = db.query(Token).filter(Token.token == token).first()
+    if not db_token:
+        return None
+        
+    return TokenData(employee_id=employee_id)
 
 def create_and_save_token(employee_id: int, db: Session) -> str:
     """Create and save token"""

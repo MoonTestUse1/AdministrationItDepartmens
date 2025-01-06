@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from .database import SessionLocal
 from .core.config import settings
-from .utils.jwt import verify_token
+from .utils.jwt import verify_token, verify_token_in_db
 from .models.employee import Employee
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -30,11 +30,13 @@ async def get_current_employee(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    employee_id = verify_token(token)
-    if not employee_id:
+    # Проверяем токен
+    token_data = verify_token_in_db(token, db)
+    if not token_data:
         raise credentials_exception
     
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    # Получаем сотрудника
+    employee = db.query(Employee).filter(Employee.id == token_data.employee_id).first()
     if not employee:
         raise credentials_exception
     

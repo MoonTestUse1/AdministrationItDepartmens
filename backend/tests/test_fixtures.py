@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.crud import employees
 from app.schemas.employee import EmployeeCreate
 from app.utils.auth import get_password_hash
+from app.utils.jwt import create_and_save_token
 from app.models.employee import Employee
 
 @pytest.fixture(scope="function")
@@ -53,25 +54,11 @@ def test_admin(db_session: Session) -> Employee:
     return db_admin
 
 @pytest.fixture(scope="function")
-def employee_token(client: TestClient, test_employee: Employee) -> str:
+def employee_token(db_session: Session, test_employee: Employee) -> str:
     """Get employee token"""
-    response = client.post(
-        "/api/auth/login",
-        data={
-            "username": f"{test_employee.first_name} {test_employee.last_name}",
-            "password": "testpass123"
-        }
-    )
-    return response.json()["access_token"]
+    return create_and_save_token(test_employee.id, db_session)
 
 @pytest.fixture(scope="function")
-def admin_token(client: TestClient, test_admin: Employee) -> str:
+def admin_token(db_session: Session, test_admin: Employee) -> str:
     """Get admin token"""
-    response = client.post(
-        "/api/auth/admin/login",
-        data={
-            "username": f"{test_admin.first_name} {test_admin.last_name}",
-            "password": "adminpass123"
-        }
-    )
-    return response.json()["access_token"] 
+    return create_and_save_token(test_admin.id, db_session) 
