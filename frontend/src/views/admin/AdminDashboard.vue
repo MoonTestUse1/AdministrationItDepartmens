@@ -91,6 +91,20 @@ interface Statistics {
   };
 }
 
+interface WebSocketMessage {
+  type: 'new_request' | 'status_update';
+  data?: Request;
+  statistics?: {
+    total: number;
+    by_status: {
+      new: number;
+      in_progress: number;
+      completed: number;
+      rejected: number;
+    };
+  };
+}
+
 const requests = ref<Request[]>([])
 const statistics = ref<Statistics>({
   total: 0,
@@ -103,7 +117,7 @@ const statistics = ref<Statistics>({
 })
 
 // Обработчик WebSocket сообщений
-const handleWebSocketMessage = (data: any) => {
+const handleWebSocketMessage = (data: WebSocketMessage) => {
   console.log('AdminDashboard: Received WebSocket message:', data)
   
   if (data.type === 'new_request' || data.type === 'status_update') {
@@ -167,7 +181,7 @@ const fetchData = async () => {
 }
 
 const getPriorityClass = (priority: 'high' | 'medium' | 'low'): string => {
-  const classes = {
+  const classes: Record<'high' | 'medium' | 'low', string> = {
     high: 'text-red-600',
     medium: 'text-yellow-600',
     low: 'text-green-600'
@@ -176,7 +190,7 @@ const getPriorityClass = (priority: 'high' | 'medium' | 'low'): string => {
 }
 
 const getStatusClass = (status: 'new' | 'in_progress' | 'completed' | 'rejected'): string => {
-  const classes = {
+  const classes: Record<'new' | 'in_progress' | 'completed' | 'rejected', string> = {
     new: 'text-blue-600',
     in_progress: 'text-yellow-600',
     completed: 'text-green-600',
