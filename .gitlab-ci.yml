@@ -9,17 +9,14 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   SECRET_KEY: "your-super-secret-key-123"
 
-services:
-  - docker:dind
-
-before_script:
-  - python -V
-  - python -m pip install --upgrade pip
-  - pip install pytest
-  - pip install -r backend/requirements.txt
-
 test:
+  image: python:3.11
   stage: test
+  before_script:
+    - python -V
+    - python -m pip install --upgrade pip
+    - pip install pytest
+    - pip install -r backend/requirements.txt
   script:
     - cd backend
     - python -m pytest -v
@@ -30,6 +27,10 @@ test:
 build_backend:
   stage: build
   image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
   script:
     - cd backend
     - docker build -t backend:latest .
@@ -43,6 +44,10 @@ build_backend:
 build_frontend:
   stage: build
   image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
   script:
     - cd frontend
     - docker build -t frontend:latest .
@@ -55,6 +60,7 @@ build_frontend:
 
 deploy:
   stage: deploy
+  image: python:3.11
   script:
     - apt-get update -qy
     - apt-get install -y sshpass
