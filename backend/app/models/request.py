@@ -3,7 +3,7 @@ from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from app.db.base_class import Base
+from .base import Base
 
 class RequestStatus(str, Enum):
     NEW = "new"
@@ -20,7 +20,6 @@ class Request(Base):
     __tablename__ = "requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    department = Column(String, index=True)
     request_type = Column(String, index=True)
     description = Column(String)
     priority = Column(String)
