@@ -6,7 +6,6 @@ stages:
 
 variables:
   DOCKER_HOST: tcp://docker:2375
-  SSH_PRIVATE_KEY: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDI1N1+AZhGX1QHu6x5vzH3kLiWnddDkKd4gkok+9Vu2dhREiQ/uIVJA1KZgqUZ0vdaD1GTJmtDN6qvn0ef7GIvKE9QuGki/JimFmrZJx75jfsXt2Un7/lTX1Zfa1O9n2fGPFuULGEj7A4eeIxe9RVjbbYRyJR30j2oJ9wr0wC7IP6pnjDZELoJYLEm9x1UfwQeQp6f"
 
 services:
   - docker:dind
@@ -30,14 +29,9 @@ deploy:
   stage: deploy
   script:
     - apt-get update -qy
-    - apt-get install -y openssh-client
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-    - scp -r * root@185.139.70.62:/root/app/
-    - ssh root@185.139.70.62 "cd /root/app && docker-compose down && docker-compose up -d"
+    - apt-get install -y sshpass
+    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@185.139.70.62:/root/app/
+    - sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "cd /root/app && docker-compose down && docker-compose up -d"
   only:
     - main
   environment:
