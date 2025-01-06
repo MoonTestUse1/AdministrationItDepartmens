@@ -31,7 +31,7 @@ deploy:
     - apt-get update -qy
     - apt-get install -y sshpass
     - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r * root@185.139.70.62:/root/app/
-    - sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "cd /root/app && docker compose down && docker compose up -d"
+    - sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c 'cd /root/app && /usr/bin/docker compose down && /usr/bin/docker compose up -d'"
   only:
     - main
   environment:
