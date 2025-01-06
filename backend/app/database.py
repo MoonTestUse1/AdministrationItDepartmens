@@ -8,8 +8,16 @@ from .models.employee import Employee  # noqa
 from .models.request import Request  # noqa
 from .models.token import Token  # noqa
 
-# Используем разные URL для тестов и продакшена
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+def get_database_url():
+    """Получение URL базы данных в зависимости от окружения."""
+    try:
+        from .core.test_config import test_settings
+        return test_settings.DATABASE_URL
+    except ImportError:
+        return settings.DATABASE_URL
+
+# Используем правильный URL для базы данных
+SQLALCHEMY_DATABASE_URL = get_database_url()
 
 # Создаем движок с нужными параметрами
 connect_args = {}
