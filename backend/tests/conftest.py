@@ -2,7 +2,7 @@
 import os
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from fastapi.testclient import TestClient
 from typing import Generator, Any
 
@@ -17,40 +17,43 @@ from .test_fixtures import *  # импортируем все фикстуры
 
 # Создаем тестовый движок базы данных
 DATABASE_URL = os.getenv("DATABASE_URL", test_settings.get_database_url())
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_pre_ping=True
+)
 
 # Создаем тестовую фабрику сессий
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = scoped_session(
+    sessionmaker(autocommit=False, autoflush=False, bind=engine)
+)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db() -> Generator[None, Any, None]:
     """Setup test database"""
-    try:
-        # Создаем все таблицы
-        Base.metadata.drop_all(bind=engine)  # Сначала удаляем все таблицы
-        Base.metadata.create_all(bind=engine)  # Затем создаем заново
-        yield
-    finally:
-        # Удаляем все таблицы
-        Base.metadata.drop_all(bind=engine)
-        # Закрываем соединение с тестовой базой
-        engine.dispose()
+    # Создаем все таблицы
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Удаляем все таблицы и закрываем соединения
+    TestingSessionLocal.remove()
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def db_session() -> Generator[Any, Any, None]:
     """Get database session"""
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
-    
+    session = TestingSessionLocal()
     try:
         yield session
     finally:
+        session.rollback()
         session.close()
-        transaction.rollback()
-        connection.close()
+        TestingSessionLocal.remove()
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def client(db_session: Any) -> Generator[TestClient, Any, None]:
     """Get test client"""
     def override_get_db() -> Generator[Any, Any, None]:
