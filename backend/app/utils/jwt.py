@@ -2,9 +2,11 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from ..core.config import settings
 from ..models.token import Token
+from ..schemas.auth import TokenData
 
 def create_access_token(data: dict) -> str:
     """Create access token"""
@@ -14,13 +16,22 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_token(token: str, db: Session) -> dict:
+def verify_token(token: str, db: Session) -> Optional[TokenData]:
     """Verify token"""
     try:
         # Проверяем, что токен действителен
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        return payload
-    except JWTError:
+        employee_id = int(payload.get("sub"))
+        if employee_id is None:
+            return None
+        
+        # Проверяем, что токен существует в базе
+        db_token = db.query(Token).filter(Token.token == token).first()
+        if not db_token:
+            return None
+            
+        return TokenData(employee_id=employee_id)
+    except (JWTError, ValueError):
         return None
 
 def create_and_save_token(employee_id: int, db: Session) -> str:

@@ -1,110 +1,72 @@
-"""Test fixtures"""
+"""Test configuration"""
 import os
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-import fakeredis.aioredis
-from typing import Generator
+from fastapi.testclient import TestClient
+from typing import Generator, Any
 
-# Устанавливаем флаг тестирования
+# Устанавливаем переменную окружения для тестов
 os.environ["TESTING"] = "True"
 
+from app.database import Base
 from app.main import app
-from app.database import Base, get_db
-from app.models.employee import Employee
-from app.utils.auth import get_password_hash
+from app.core.test_config import test_settings
+from app.dependencies import get_db
+from .fixtures import *  # импортируем все фикстуры
 
-# Создаем тестовую базу данных в памяти222
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+# Создаем тестовый движок базы данных
+engine = create_engine(test_settings.DATABASE_URL)
+
+# Создаем тестовую фабрику сессий
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Создаем тестовую базу данных
-Base.metadata.create_all(bind=engine)
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_db() -> Generator[None, Any, None]:
+    """Setup test database"""
+    # Пробуем создать базу данных test_app
+    default_engine = create_engine("postgresql://postgres:postgres@localhost:5432/postgres")
+    with default_engine.connect() as conn:
+        conn.execute(text("COMMIT"))  # Завершаем текущую транзакцию
+        try:
+            conn.execute(text("DROP DATABASE IF EXISTS test_app"))
+            conn.execute(text("CREATE DATABASE test_app"))
+        except Exception as e:
+            print(f"Error creating database: {e}")
+    
+    # Создаем все таблицы
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Удаляем все таблицы
+    Base.metadata.drop_all(bind=engine)
+    
+    # Закрываем соединение с тестовой базой
+    engine.dispose()
 
 @pytest.fixture
-def db() -> Generator:
-    """Фикстура для получения тестовой сессии БД."""
+def db_session() -> Generator[Any, Any, None]:
+    """Get database session"""
     connection = engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
     
-    yield session
-    
-    session.close()
-    transaction.rollback()
-    connection.close()
+    try:
+        yield session
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()
 
 @pytest.fixture
-def client(db) -> TestClient:
-    """Фикстура для получения тестового клиента."""
-    def override_get_db():
+def client(db_session: Any) -> Generator[TestClient, Any, None]:
+    """Get test client"""
+    def override_get_db() -> Generator[Any, Any, None]:
         try:
-            yield db
+            yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
-    app.dependency_overrides.clear()
-
-@pytest.fixture
-def test_employee(db) -> Employee:
-    """Фикстура для создания тестового сотрудника."""
-    employee = Employee(
-        first_name="Test",
-        last_name="Employee",
-        department="Test Department",
-        office="Test Office",
-        hashed_password=get_password_hash("testpassword"),
-        is_admin=False
-    )
-    db.add(employee)
-    db.commit()
-    db.refresh(employee)
-    return employee
-
-@pytest.fixture
-def test_admin(db) -> Employee:
-    """Фикстура для создания тестового администратора."""
-    admin = Employee(
-        first_name="Admin",
-        last_name="User",
-        department="Admin Department",
-        office="Admin Office",
-        hashed_password=get_password_hash("adminpassword"),
-        is_admin=True
-    )
-    db.add(admin)
-    db.commit()
-    db.refresh(admin)
-    return admin
-
-@pytest.fixture
-def employee_token(client: TestClient, test_employee: Employee) -> str:
-    """Фикстура для получения токена сотрудника."""
-    response = client.post(
-        "/api/auth/login",
-        data={"username": test_employee.last_name, "password": "testpassword"}
-    )
-    return response.json()["access_token"]
-
-@pytest.fixture
-def admin_token(client: TestClient, test_admin: Employee) -> str:
-    """Фикстура для получения токена администратора."""
-    response = client.post(
-        "/api/auth/admin/login",
-        data={"username": test_admin.last_name, "password": "adminpassword"}
-    )
-    return response.json()["access_token"]
-
-@pytest.fixture
-def redis_mock():
-    """Фикстура для мока Redis."""
-    return fakeredis.aioredis.FakeRedis() 
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear() 

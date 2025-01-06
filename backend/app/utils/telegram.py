@@ -3,20 +3,17 @@ from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 from datetime import datetime
-import os
 from logging import getLogger
 from ..models.request import RequestStatus, RequestPriority
 from ..crud import requests
 from ..database import get_db
+from ..core.config import settings
 
 # Initialize logger
 logger = getLogger(__name__)
 
-# Initialize bot with token
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7677506032:AAHduD5EePz3bE23DKlo35KoOp2_9lZuS34")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "5057752127")
-
-bot = Bot(token=TELEGRAM_BOT_TOKEN)
+# Initialize bot with token from settings
+bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
 
 def format_priority(priority: str) -> str:
     """Format priority with emoji"""
@@ -59,7 +56,7 @@ async def send_request_notification(request_id: int):
         )
         
         await bot.send_message(
-            chat_id=TELEGRAM_CHAT_ID,
+            chat_id=settings.TELEGRAM_CHAT_ID,
             text=message,
             parse_mode="HTML"
         )

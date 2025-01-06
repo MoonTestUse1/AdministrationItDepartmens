@@ -1,62 +1,44 @@
 """Main application module"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from pydantic_settings import BaseSettings
+import logging
 
-from .models.base import Base
-from .database import engine, SessionLocal
-from .routers import admin, employees, requests, auth, statistics
+from .routers import auth, employees, requests, admin
+from .database import engine, Base
 from .db.init_db import init_db
-from .core.config import settings
+from .database import get_db
 
-def get_application(app_settings: BaseSettings = settings) -> FastAPI:
-    """Создание экземпляра приложения с заданными настройками."""
-    # Создаем таблицы
-    Base.metadata.create_all(bind=engine)
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-    # Инициализируем базу данных
-    db = SessionLocal()
+# Создаем таблицы
+Base.metadata.create_all(bind=engine)
+
+# Создаем приложение
+app = FastAPI(title="Employee Request System API")
+
+# Настраиваем CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Подключаем роутеры
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
+app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+
+# Инициализируем базу данных
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    db = next(get_db())
     try:
         init_db(db)
     finally:
         db.close()
-
-    app = FastAPI(
-        # Включаем автоматическое перенаправление со слэшем
-        redirect_slashes=True,
-        # Добавляем описание API
-        title="Support System API",
-        description="API для системы поддержки",
-        version="1.0.0"
-    )
-
-    # CORS configuration
-    origins = [
-        "http://localhost",
-        "http://localhost:8080",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-        "http://185.139.70.62",  # Добавляем ваш production домен
-    ]
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["*"]
-    )
-
-    # Include routers
-    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-    app.include_router(employees.router, prefix="/api/employees", tags=["employees"])
-    app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
-    app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
-    app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
-
-    return app
-
-app = get_application()

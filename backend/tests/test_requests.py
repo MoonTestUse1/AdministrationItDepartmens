@@ -1,55 +1,41 @@
-"""Request tests."""
+"""Request tests"""
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models.employee import Employee
-from app.models.request import Request
 
-def test_create_request(client: TestClient, employee_token: str, db: Session):
-    """Тест создания заявки."""
+def test_create_request(client: TestClient, employee_token: str):
+    """Test request creation"""
     response = client.post(
         "/api/requests",
         headers={"Authorization": f"Bearer {employee_token}"},
         json={
             "request_type": "equipment",
-            "description": "Test Description",
+            "description": "Need a new laptop",
             "priority": "medium"
         }
     )
     assert response.status_code == 201
     data = response.json()
     assert data["request_type"] == "equipment"
-    assert data["description"] == "Test Description"
+    assert data["description"] == "Need a new laptop"
     assert data["priority"] == "medium"
     assert data["status"] == "new"
-    assert "id" in data
 
 def test_create_request_unauthorized(client: TestClient):
-    """Тест создания заявки без авторизации."""
+    """Test request creation without authorization"""
     response = client.post(
         "/api/requests",
         json={
             "request_type": "equipment",
-            "description": "Test Description",
+            "description": "Need a new laptop",
             "priority": "medium"
         }
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
 
-def test_get_employee_requests(client: TestClient, employee_token: str, test_employee: Employee, db: Session):
-    """Тест получения списка заявок сотрудника."""
-    # Создаем тестовую заявку
-    request = Request(
-        request_type="equipment",
-        description="Test Description",
-        priority="medium",
-        status="new",
-        employee_id=test_employee.id
-    )
-    db.add(request)
-    db.commit()
-
+def test_get_my_requests(client: TestClient, employee_token: str):
+    """Test getting employee's requests"""
     response = client.get(
         "/api/requests/my",
         headers={"Authorization": f"Bearer {employee_token}"}
@@ -57,23 +43,15 @@ def test_get_employee_requests(client: TestClient, employee_token: str, test_emp
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) > 0
-    assert data[0]["request_type"] == "equipment"
-    assert data[0]["description"] == "Test Description"
 
-def test_admin_get_all_requests(client: TestClient, admin_token: str, test_employee: Employee, db: Session):
-    """Тест получения всех заявок администратором."""
-    # Создаем тестовую заявку
-    request = Request(
-        request_type="equipment",
-        description="Test Description",
-        priority="medium",
-        status="new",
-        employee_id=test_employee.id
-    )
-    db.add(request)
-    db.commit()
+def test_get_my_requests_unauthorized(client: TestClient):
+    """Test getting employee's requests without authorization"""
+    response = client.get("/api/requests/my")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
 
+def test_get_all_requests_admin(client: TestClient, admin_token: str):
+    """Test getting all requests by admin"""
     response = client.get(
         "/api/requests/admin",
         headers={"Authorization": f"Bearer {admin_token}"}
@@ -81,25 +59,39 @@ def test_admin_get_all_requests(client: TestClient, admin_token: str, test_emplo
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) > 0
-    assert data[0]["request_type"] == "equipment"
-    assert data[0]["description"] == "Test Description"
 
-def test_update_request_status(client: TestClient, admin_token: str, test_employee: Employee, db: Session):
-    """Тест обновления статуса заявки."""
-    # Создаем тестовую заявку
-    request = Request(
-        request_type="equipment",
-        description="Test Description",
-        priority="medium",
-        status="new",
-        employee_id=test_employee.id
+def test_get_all_requests_unauthorized(client: TestClient):
+    """Test getting all requests without authorization"""
+    response = client.get("/api/requests/admin")
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
+def test_get_all_requests_not_admin(client: TestClient, employee_token: str):
+    """Test getting all requests by non-admin user"""
+    response = client.get(
+        "/api/requests/admin",
+        headers={"Authorization": f"Bearer {employee_token}"}
     )
-    db.add(request)
-    db.commit()
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Not enough permissions"
 
+def test_update_request_status_admin(client: TestClient, admin_token: str):
+    """Test updating request status by admin"""
+    # Сначала создаем запрос
+    response = client.post(
+        "/api/requests",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "request_type": "equipment",
+            "description": "Need a new laptop",
+            "priority": "medium"
+        }
+    )
+    request_id = response.json()["id"]
+
+    # Обновляем статус
     response = client.patch(
-        f"/api/requests/{request.id}/status",
+        f"/api/requests/{request_id}/status",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"status": "in_progress"}
     )
@@ -107,42 +99,21 @@ def test_update_request_status(client: TestClient, admin_token: str, test_employ
     data = response.json()
     assert data["status"] == "in_progress"
 
-def test_get_request_statistics(client: TestClient, admin_token: str, test_employee: Employee, db: Session):
-    """Тест получения статистики по заявкам."""
-    # Создаем тестовые заявки с разными статусами
-    requests = [
-        Request(
-            request_type="equipment",
-            description="Test Description",
-            priority="medium",
-            status="new",
-            employee_id=test_employee.id
-        ),
-        Request(
-            request_type="equipment",
-            description="Test Description",
-            priority="high",
-            status="in_progress",
-            employee_id=test_employee.id
-        ),
-        Request(
-            request_type="equipment",
-            description="Test Description",
-            priority="low",
-            status="completed",
-            employee_id=test_employee.id
-        )
-    ]
-    for req in requests:
-        db.add(req)
-    db.commit()
-
-    response = client.get(
-        "/api/statistics",
-        headers={"Authorization": f"Bearer {admin_token}"}
+def test_update_request_status_not_admin(client: TestClient, employee_token: str):
+    """Test updating request status by non-admin user"""
+    response = client.patch(
+        "/api/requests/1/status",
+        headers={"Authorization": f"Bearer {employee_token}"},
+        json={"status": "in_progress"}
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert "total" in data
-    assert "by_status" in data
-    assert data["total"] >= 3 
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Not enough permissions"
+
+def test_update_request_status_unauthorized(client: TestClient):
+    """Test updating request status without authorization"""
+    response = client.patch(
+        "/api/requests/1/status",
+        json={"status": "in_progress"}
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated" 

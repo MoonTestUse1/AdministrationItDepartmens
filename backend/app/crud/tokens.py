@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from ..models.token import Token
 
-def create_token(db: Session, token: str, user_id: int) -> Token:
+def create_token(db: Session, token: str, employee_id: int) -> Token:
     """Create new token"""
-    db_token = Token(token=token, user_id=user_id)
+    db_token = Token(token=token, employee_id=employee_id)
     db.add(db_token)
     db.commit()
     db.refresh(db_token)
@@ -24,8 +24,8 @@ def delete_token(db: Session, token: str) -> bool:
         return True
     return False
 
-def delete_user_tokens(db: Session, user_id: int) -> bool:
-    """Delete all tokens for a user"""
-    db.query(Token).filter(Token.user_id == user_id).delete()
+def delete_employee_tokens(db: Session, employee_id: int) -> bool:
+    """Delete all tokens for an employee"""
+    db.query(Token).filter(Token.employee_id == employee_id).delete()
     db.commit()
     return True 

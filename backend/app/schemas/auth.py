@@ -1,32 +1,18 @@
 """Authentication schemas"""
-from pydantic import BaseModel, ConfigDict
-
-class AdminLogin(BaseModel):
-    username: str
-    password: str
-    
-    model_config = ConfigDict(from_attributes=True)
-
-class EmployeeLogin(BaseModel):
-    last_name: str
-    password: str
-    
-    model_config = ConfigDict(from_attributes=True)
-
-class EmployeeResponse(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    department: str
-    office: str
-    access_token: str 
+from pydantic import BaseModel
+from typing import Optional
 
 class Token(BaseModel):
+    """Token schema"""
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
-    employee_id: int | None = None
+    """Token data schema"""
+    employee_id: Optional[int] = None
     is_admin: bool = False
 
-    model_config = ConfigDict(from_attributes=True) 
+class LoginCredentials(BaseModel):
+    """Login credentials schema"""
+    username: str  # В формате "Имя Фамилия"
+    password: str 

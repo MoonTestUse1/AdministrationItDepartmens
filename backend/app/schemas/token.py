@@ -8,6 +8,6 @@ class Token(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class TokenData(BaseModel):
-    user_id: int | None = None
+    employee_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True) 

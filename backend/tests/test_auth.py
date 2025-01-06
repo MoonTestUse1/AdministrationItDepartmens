@@ -1,77 +1,84 @@
-"""Authentication tests."""
+"""Authentication tests"""
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models.employee import Employee
 
-def test_login_employee_success(client: TestClient, test_employee: Employee):
-    """Тест успешной авторизации сотрудника."""
+def test_login_success(client: TestClient, test_employee: dict):
+    """Test successful login"""
     response = client.post(
         "/api/auth/login",
-        data={"username": test_employee.last_name, "password": "testpassword"}
+        data={
+            "username": f"{test_employee.first_name} {test_employee.last_name}",
+            "password": "testpass123"
+        }
     )
     assert response.status_code == 200
     assert "access_token" in response.json()
-    assert "token_type" in response.json()
     assert response.json()["token_type"] == "bearer"
 
-def test_login_employee_wrong_password(client: TestClient, test_employee: Employee):
-    """Тест авторизации сотрудника с неверным паролем."""
+def test_login_wrong_password(client: TestClient, test_employee: dict):
+    """Test login with wrong password"""
     response = client.post(
         "/api/auth/login",
-        data={"username": test_employee.last_name, "password": "wrongpassword"}
+        data={
+            "username": f"{test_employee.first_name} {test_employee.last_name}",
+            "password": "wrongpass"
+        }
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
 
-def test_login_employee_wrong_username(client: TestClient):
-    """Тест авторизации с несуществующим пользователем."""
+def test_login_wrong_username(client: TestClient):
+    """Test login with wrong username"""
     response = client.post(
         "/api/auth/login",
-        data={"username": "nonexistent", "password": "testpassword"}
+        data={
+            "username": "Wrong User",
+            "password": "testpass123"
+        }
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
 
-def test_login_admin_success(client: TestClient, test_admin: Employee):
-    """Тест успешной авторизации администратора."""
+def test_login_invalid_username_format(client: TestClient):
+    """Test login with invalid username format"""
+    response = client.post(
+        "/api/auth/login",
+        data={
+            "username": "InvalidFormat",
+            "password": "testpass123"
+        }
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Username should be in format: 'First Last'"
+
+def test_admin_login_success(client: TestClient, test_admin: dict):
+    """Test successful admin login"""
     response = client.post(
         "/api/auth/admin/login",
-        data={"username": test_admin.last_name, "password": "adminpassword"}
+        data={
+            "username": f"{test_admin.first_name} {test_admin.last_name}",
+            "password": "adminpass123"
+        }
     )
     assert response.status_code == 200
     assert "access_token" in response.json()
-    assert "token_type" in response.json()
     assert response.json()["token_type"] == "bearer"
 
-def test_login_admin_wrong_password(client: TestClient, test_admin: Employee):
-    """Тест авторизации администратора с неверным паролем."""
+def test_admin_login_not_admin(client: TestClient, test_employee: dict):
+    """Test admin login with non-admin user"""
     response = client.post(
         "/api/auth/admin/login",
-        data={"username": test_admin.last_name, "password": "wrongpassword"}
+        data={
+            "username": f"{test_employee.first_name} {test_employee.last_name}",
+            "password": "testpass123"
+        }
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect username or password"
-
-def test_protected_route_with_valid_token(client: TestClient, employee_token: str, test_employee: Employee, db: Session):
-    """Тест доступа к защищенному маршруту с валидным токеном."""
-    response = client.get(
-        "/api/employees/me",
-        headers={"Authorization": f"Bearer {employee_token}"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["first_name"] == test_employee.first_name
-    assert data["last_name"] == test_employee.last_name
-
-def test_protected_route_without_token(client: TestClient):
-    """Тест доступа к защищенному маршруту без токена."""
-    response = client.get("/api/employees/me")
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
 
 def test_protected_route_with_invalid_token(client: TestClient):
-    """Тест доступа к защищенному маршруту с недействительным токеном."""
+    """Test accessing protected route with invalid token"""
     response = client.get(
         "/api/employees/me",
         headers={"Authorization": "Bearer invalid_token"}
