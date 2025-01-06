@@ -7,16 +7,17 @@ from .models.base import Base
 from .database import engine, SessionLocal
 from .routers import admin, employees, requests, auth, statistics
 from .db.init_db import init_db
+from .core.config import settings
 
-# Создаем таблицы
-Base.metadata.create_all(bind=engine)
-
-# Инициализируем базу данных
-db = SessionLocal()
-try:
-    init_db(db)
-finally:
-    db.close()
+# Создаем таблицы только если не в тестовом режиме
+if not settings.TESTING:
+    Base.metadata.create_all(bind=engine)
+    # Инициализируем базу данных
+    db = SessionLocal()
+    try:
+        init_db(db)
+    finally:
+        db.close()
 
 app = FastAPI(
     # Включаем автоматическое перенаправление со слэшем

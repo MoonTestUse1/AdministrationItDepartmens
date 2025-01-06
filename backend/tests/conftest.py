@@ -1,31 +1,14 @@
 """Test configuration."""
-import os
 import pytest
 from typing import Generator
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
+from .test_config import engine, TestingSessionLocal
 from app.database import get_db
-from app.main import app
 from app.models.base import Base
 from app.models.employee import Employee
 from app.utils.auth import get_password_hash
-from app.utils.jwt import create_access_token
-
-# Устанавливаем переменную окружения для тестов
-os.environ["TESTING"] = "True"
-
-# Создаем тестовую базу данных в памяти
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class MockRedis:
     """Мок для Redis."""
@@ -72,6 +55,8 @@ def db() -> Generator:
 @pytest.fixture(scope="function")
 def client(db: TestingSessionLocal, redis_mock) -> Generator:
     """Фикстура для создания тестового клиента."""
+    from app.main import app
+
     def override_get_db():
         try:
             yield db
