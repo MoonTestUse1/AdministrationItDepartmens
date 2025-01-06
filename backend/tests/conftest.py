@@ -13,7 +13,7 @@ from app.database import Base
 from app.main import app
 from app.core.test_config import test_settings
 from app.dependencies import get_db
-from .fixtures import *  # импортируем все фикстуры
+from .fixtures import *  # импортируем все фикстуsры
 
 # Создаем тестовый движок базы данных
 engine = create_engine(test_settings.DATABASE_URL)
