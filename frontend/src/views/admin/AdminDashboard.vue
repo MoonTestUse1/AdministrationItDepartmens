@@ -72,8 +72,27 @@ import axios from '@/plugins/axios'
 import { wsClient } from '@/plugins/websocket'
 import { formatDate } from '@/utils/date'
 
-const requests = ref([])
-const statistics = ref({
+interface Request {
+  id: number;
+  employee_name: string;
+  request_type: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'new' | 'in_progress' | 'completed' | 'rejected';
+  created_at: string;
+}
+
+interface Statistics {
+  total: number;
+  by_status: {
+    new: number;
+    in_progress: number;
+    completed: number;
+    rejected: number;
+  };
+}
+
+const requests = ref<Request[]>([])
+const statistics = ref<Statistics>({
   total: 0,
   by_status: {
     new: 0,
@@ -147,27 +166,26 @@ const fetchData = async () => {
   }
 }
 
-const getPriorityClass = (priority: string) => {
+const getPriorityClass = (priority: 'high' | 'medium' | 'low'): string => {
   const classes = {
     high: 'text-red-600',
     medium: 'text-yellow-600',
     low: 'text-green-600'
   }
-  return classes[priority] || ''
+  return classes[priority]
 }
 
-const getStatusClass = (status: string) => {
+const getStatusClass = (status: 'new' | 'in_progress' | 'completed' | 'rejected'): string => {
   const classes = {
     new: 'text-blue-600',
     in_progress: 'text-yellow-600',
     completed: 'text-green-600',
     rejected: 'text-red-600'
   }
-  return classes[status] || ''
+  return classes[status]
 }
 
-const openRequestDetails = (request: any) => {
-  // Здесь можно добавить логику открытия модального окна с деталями заявки
+const openRequestDetails = (request: Request) => {
   console.log('Opening request details:', request)
 }
 
