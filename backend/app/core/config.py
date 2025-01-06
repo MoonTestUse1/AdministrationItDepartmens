@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # База данных
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_HOST: str = "postgres"
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "postgres")
     POSTGRES_PORT: str = "5432"
     POSTGRES_DB: str = "app"
     POSTGRES_TEST_DB: str = "test_app"
@@ -40,9 +40,19 @@ class Settings(BaseSettings):
 
     def get_database_url(self) -> str:
         """Get database URL"""
+        # Получаем URL из переменной окружения, если она есть
+        if os.getenv("DATABASE_URL"):
+            return os.getenv("DATABASE_URL")
+            
+        # Иначе формируем URL на основе настроек
         if self.TESTING:
-            return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@localhost:5432/{self.POSTGRES_TEST_DB}"
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            host = os.getenv("POSTGRES_HOST", "postgres")
+            db = self.POSTGRES_TEST_DB
+        else:
+            host = self.POSTGRES_HOST
+            db = self.POSTGRES_DB
+            
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{host}:{self.POSTGRES_PORT}/{db}"
 
     def get_redis_url(self) -> str:
         """Get Redis URL"""

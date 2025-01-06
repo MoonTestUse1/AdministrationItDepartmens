@@ -16,7 +16,8 @@ from app.dependencies import get_db
 from .test_fixtures import *  # импортируем все фикстуры
 
 # Создаем тестовый движок базы данных
-engine = create_engine(test_settings.get_database_url())
+DATABASE_URL = os.getenv("DATABASE_URL", test_settings.get_database_url())
+engine = create_engine(DATABASE_URL)
 
 # Создаем тестовую фабрику сессий
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -26,7 +27,8 @@ def setup_test_db() -> Generator[None, Any, None]:
     """Setup test database"""
     try:
         # Создаем все таблицы
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.drop_all(bind=engine)  # Сначала удаляем все таблицы
+        Base.metadata.create_all(bind=engine)  # Затем создаем заново
         yield
     finally:
         # Удаляем все таблицы

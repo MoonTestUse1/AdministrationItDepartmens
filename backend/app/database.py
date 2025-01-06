@@ -1,22 +1,16 @@
 """Database configuration"""
-import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Определяем URL базы данных в зависимости от окружения
-if os.getenv("TESTING"):
-    SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-else:
-    SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@postgres:5432/app"
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+from .core.config import settings
 
+# Создаем движок базы данных
+engine = create_engine(settings.get_database_url())
+
+# Создаем фабрику сессий
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Создаем базовый класс для моделей
 Base = declarative_base()
 
 def get_db():
