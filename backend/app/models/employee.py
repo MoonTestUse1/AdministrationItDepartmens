@@ -1,9 +1,8 @@
 """Employee model"""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
-from datetime import datetime
 
-from ..database import Base
+from ..db.base_class import Base
 
 class Employee(Base):
     """Employee model"""
@@ -17,6 +16,7 @@ class Employee(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    requests = relationship("Request", back_populates="employee")
+    # Отношения
+    requests = relationship("Request", back_populates="employee", cascade="all, delete-orphan")
+    tokens = relationship("Token", back_populates="employee", cascade="all, delete-orphan")

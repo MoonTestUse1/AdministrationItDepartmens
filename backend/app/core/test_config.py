@@ -14,7 +14,7 @@ class TestSettings(BaseSettings):
     POSTGRES_DB: str = "test_app"
     
     # JWT
-    SECRET_KEY: str = "test_secret_key"
+    SECRET_KEY: str = "test_secret_key_super_secret_test_key_123"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
