@@ -4,5 +4,5 @@ from app.models.employee import Employee  # noqa
 from app.models.request import Request  # noqa
 from app.models.token import Token  # noqa
 
-# Импортируем все модели, чтобы Alembic мог их обнаружить
+# Import all models for Alembic autogenerate support
 __all__ = ["Base", "Employee", "Request", "Token"] 

@@ -5,10 +5,10 @@ from typing import Generator
 
 from .core.config import settings
 
-# Создаем базовый класс для моделей
+# Create base class for models
 Base = declarative_base()
 
-# Создаем движок базы данных
+# Create database engine
 engine = create_engine(
     settings.get_database_url(),
     pool_pre_ping=True,
@@ -16,7 +16,7 @@ engine = create_engine(
     max_overflow=10
 )
 
-# Создаем фабрику сессий
+# Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db() -> Generator:
@@ -27,8 +27,8 @@ def get_db() -> Generator:
     finally:
         db.close()
 
-def init_db():
+def init_db() -> None:
     """Initialize database"""
-    # Импортируем модели здесь, чтобы избежать циклических зависимостей
+    # Import models here to avoid circular imports
     from .db.base import Base  # noqa: F811
     Base.metadata.create_all(bind=engine)

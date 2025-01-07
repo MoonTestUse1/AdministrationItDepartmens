@@ -1,17 +1,17 @@
 """Dependencies module"""
-from typing import Generator, Any
+from typing import Generator, Annotated
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from .database import SessionLocal
 from .core.config import settings
-from .utils.jwt import verify_token, verify_token_in_db
+from .utils.jwt import verify_token_in_db
 from .models.employee import Employee
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
-def get_db() -> Generator[Session, Any, None]:
+def get_db() -> Generator[Session, None, None]:
     """Get database session"""
     db = SessionLocal()
     try:
@@ -20,8 +20,8 @@ def get_db() -> Generator[Session, Any, None]:
         db.close()
 
 async def get_current_employee(
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str, Depends(oauth2_scheme)]
 ) -> Employee:
     """Get current employee"""
     credentials_exception = HTTPException(
@@ -30,12 +30,12 @@ async def get_current_employee(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    # Проверяем токен
+    # Verify token
     token_data = verify_token_in_db(token, db)
     if not token_data:
         raise credentials_exception
     
-    # Получаем сотрудника
+    # Get employee
     employee = db.query(Employee).filter(Employee.id == token_data.employee_id).first()
     if not employee:
         raise credentials_exception
@@ -43,7 +43,7 @@ async def get_current_employee(
     return employee
 
 async def get_current_active_employee(
-    current_employee: Employee = Depends(get_current_employee),
+    current_employee: Annotated[Employee, Depends(get_current_employee)]
 ) -> Employee:
     """Get current active employee"""
     if not current_employee.is_active:
@@ -54,7 +54,7 @@ async def get_current_active_employee(
     return current_employee
 
 async def get_current_admin(
-    current_employee: Employee = Depends(get_current_employee),
+    current_employee: Annotated[Employee, Depends(get_current_employee)]
 ) -> Employee:
     """Get current admin"""
     if not current_employee.is_admin:
