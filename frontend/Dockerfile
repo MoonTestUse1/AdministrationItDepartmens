@@ -1,6 +1,7 @@
 # Build stage
-FROM node:18-alpine AS build
+FROM node:18 as build-stage
 
+# Set working directory
 WORKDIR /app
 
 # Copy package files
@@ -9,29 +10,25 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code
+# Copy project files
 COPY . .
 
-# Install Vue compiler globally
-RUN npm install -g @vue/compiler-sfc
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV VITE_API_URL=/api
+# Install Vue dependencies
+RUN npm install vue@latest @vitejs/plugin-vue vue-tsc typescript
 
 # Build the application with increased memory limit
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM nginx:stable-alpine as production-stage
 
-# Copy built files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy built files
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
+# Expose port
 EXPOSE 80
 
 # Start nginx

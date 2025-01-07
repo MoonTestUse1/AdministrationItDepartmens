@@ -9,23 +9,26 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
-  optimizeDeps: {
-    include: ['axios']
+  build: {
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
   },
   server: {
-    host: true,
-    port: 5173,
-    watch: {
-      usePolling: true
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false
       }
     }
   }
