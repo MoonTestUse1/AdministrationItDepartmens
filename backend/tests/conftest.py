@@ -7,10 +7,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.test_config import test_settings
-from app.db.base import Base
+from app.db.base_class import Base
+from app.models.employee import Employee
+from app.models.request import Request
+from app.models.token import Token
 from app.main import app
 from app.dependencies import get_db
-from app.models.employee import Employee
 from app.utils.security import get_password_hash
 from app.utils.jwt import create_and_save_token
 
@@ -37,6 +39,8 @@ def engine():
         pool_size=5,
         max_overflow=10
     )
+    # Создаем все таблицы перед тестами
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     return engine
 
