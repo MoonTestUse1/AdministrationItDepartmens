@@ -1,45 +1,101 @@
 image: python:3.11
 
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
-  PYTHONPATH: "$CI_PROJECT_DIR/backend"
-
-cache:
-  paths:
-    - .pip-cache/
-    - venv/
-    - frontend/node_modules/
-
 stages:
   - test
+  - build
+  - deploy
+
+variables:
+  SECRET_KEY: "your-super-secret-key-123"
 
 test-backend:
+  image: python:3.11
   stage: test
   before_script:
     - python -V
-    - python -m venv venv
-    - source venv/bin/activate
-    - cd backend
-    - pip install -r requirements.txt
+    - python -m pip install --upgrade pip
+    - pip install pytest pytest-cov
+    - pip install -r backend/requirements.txt
   script:
+    - cd backend
     - python -m pytest -v tests/test_health.py
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - backend/**/*
+  only:
+    - main
+    - Testing
 
 test-frontend:
-  stage: test
   image: node:18
-  cache:
-    paths:
-      - frontend/node_modules/
+  stage: test
   before_script:
     - cd frontend
     - npm install
   script:
     - npm run test
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - frontend/**/* 
+  only:
+    - main
+    - Testing
+
+build-backend:
+  stage: build
+  image: docker:latest
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
+  before_script:
+    - docker info
+  script:
+    - cd backend
+    - docker build -t backend:latest .
+    - docker save backend:latest > backend.tar
+  artifacts:
+    paths:
+      - backend/backend.tar
+    expire_in: 1 hour
+  only:
+    - main
+
+build-frontend:
+  stage: build
+  image: docker:latest
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:dind
+      alias: docker
+      command: ["--tls=false"]
+  before_script:
+    - docker info
+  script:
+    - cd frontend
+    - docker build -t frontend:latest .
+    - docker save frontend:latest > frontend.tar
+  artifacts:
+    paths:
+      - frontend/frontend.tar
+    expire_in: 1 hour
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: python:3.11
+  script:
+    - apt-get update -qy
+    - apt-get install -y sshpass
+    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no backend/backend.tar frontend/frontend.tar docker-compose.yml root@185.139.70.62:/root/app/
+    - |
+      sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c '
+        cd /root/app && 
+        docker load < backend.tar &&
+        docker load < frontend.tar &&
+        export SECRET_KEY=\"your-super-secret-key-123\" && 
+        /usr/bin/docker compose down && 
+        /usr/bin/docker compose up -d
+      '"
+  only:
+    - main
+  environment:
+    name: production 
