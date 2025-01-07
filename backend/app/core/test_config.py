@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 class TestSettings(BaseSettings):
     """Test settings"""
     PROJECT_NAME: str = "Employee Request System Test"
+    API_V1_STR: str = "/api"
     
     # Database
     POSTGRES_USER: str = "postgres"
