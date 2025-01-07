@@ -12,6 +12,7 @@ from app.main import app
 from app.dependencies import get_db
 from app.models.employee import Employee
 from app.utils.security import get_password_hash
+from app.utils.jwt import create_and_save_token
 
 # Mock Telegram notifications
 @pytest.fixture(autouse=True)
@@ -93,4 +94,24 @@ def test_admin(db_session):
     db_session.add(admin)
     db_session.commit()
     db_session.refresh(admin)
-    return admin 
+    return admin
+
+@pytest.fixture
+def employee_token(test_employee, db_session):
+    """Create employee token"""
+    return create_and_save_token(test_employee.id, db_session)
+
+@pytest.fixture
+def admin_token(test_admin, db_session):
+    """Create admin token"""
+    return create_and_save_token(test_admin.id, db_session)
+
+@pytest.fixture
+def employee_headers(employee_token):
+    """Get employee headers"""
+    return {"Authorization": f"Bearer {employee_token}"}
+
+@pytest.fixture
+def admin_headers(admin_token):
+    """Get admin headers"""
+    return {"Authorization": f"Bearer {admin_token}"} 

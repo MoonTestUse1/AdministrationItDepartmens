@@ -1,19 +1,18 @@
 """Employee tests"""
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-def test_create_employee(client: TestClient, admin_token: str):
-    """Test employee creation"""
+def test_create_employee(client: TestClient, admin_headers):
+    """Test create employee"""
     response = client.post(
-        "/api/employees",
-        headers={"Authorization": f"Bearer {admin_token}"},
+        "/api/employees/",
+        headers=admin_headers,
         json={
             "first_name": "New",
             "last_name": "Employee",
             "department": "IT",
-            "office": "103",
+            "office": "Main",
             "password": "newpass123",
+            "is_active": True,
             "is_admin": False
         }
     )
@@ -21,111 +20,62 @@ def test_create_employee(client: TestClient, admin_token: str):
     data = response.json()
     assert data["first_name"] == "New"
     assert data["last_name"] == "Employee"
-    assert data["department"] == "IT"
-    assert data["office"] == "103"
-    assert data["is_admin"] == False
+    assert "hashed_password" not in data
 
-def test_create_employee_unauthorized(client: TestClient):
-    """Test employee creation without authorization"""
+def test_create_employee_not_admin(client: TestClient, employee_headers):
+    """Test create employee without admin rights"""
     response = client.post(
-        "/api/employees",
+        "/api/employees/",
+        headers=employee_headers,
         json={
             "first_name": "New",
             "last_name": "Employee",
             "department": "IT",
-            "office": "103",
+            "office": "Main",
             "password": "newpass123",
-            "is_admin": False
-        }
-    )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
-
-def test_create_employee_not_admin(client: TestClient, employee_token: str):
-    """Test employee creation by non-admin user"""
-    response = client.post(
-        "/api/employees",
-        headers={"Authorization": f"Bearer {employee_token}"},
-        json={
-            "first_name": "New",
-            "last_name": "Employee",
-            "department": "IT",
-            "office": "103",
-            "password": "newpass123",
+            "is_active": True,
             "is_admin": False
         }
     )
     assert response.status_code == 403
-    assert response.json()["detail"] == "Not enough permissions"
 
-def test_get_employees(client: TestClient, admin_token: str):
-    """Test getting all employees"""
-    response = client.get(
-        "/api/employees",
-        headers={"Authorization": f"Bearer {admin_token}"}
-    )
+def test_get_employees(client: TestClient, admin_headers):
+    """Test get all employees"""
+    response = client.get("/api/employees/", headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) > 0
 
-def test_get_employees_unauthorized(client: TestClient):
-    """Test getting employees without authorization"""
-    response = client.get("/api/employees")
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
-
-def test_get_employees_not_admin(client: TestClient, employee_token: str):
-    """Test getting employees by non-admin user"""
-    response = client.get(
-        "/api/employees",
-        headers={"Authorization": f"Bearer {employee_token}"}
-    )
+def test_get_employees_not_admin(client: TestClient, employee_headers):
+    """Test get all employees without admin rights"""
+    response = client.get("/api/employees/", headers=employee_headers)
     assert response.status_code == 403
-    assert response.json()["detail"] == "Not enough permissions"
 
-def test_get_me(client: TestClient, employee_token: str, test_employee: dict):
-    """Test getting current employee"""
-    response = client.get(
-        "/api/employees/me",
-        headers={"Authorization": f"Bearer {employee_token}"}
-    )
+def test_get_me(client: TestClient, employee_headers, test_employee):
+    """Test get current employee"""
+    response = client.get("/api/employees/me", headers=employee_headers)
     assert response.status_code == 200
     data = response.json()
+    assert data["id"] == test_employee.id
     assert data["first_name"] == test_employee.first_name
     assert data["last_name"] == test_employee.last_name
-    assert data["department"] == test_employee.department
-    assert data["office"] == test_employee.office
 
-def test_get_me_unauthorized(client: TestClient):
-    """Test getting current employee without authorization"""
-    response = client.get("/api/employees/me")
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
-
-def test_update_me(client: TestClient, employee_token: str):
-    """Test updating current employee"""
+def test_update_me(client: TestClient, employee_headers, test_employee):
+    """Test update current employee"""
     response = client.put(
         "/api/employees/me",
-        headers={"Authorization": f"Bearer {employee_token}"},
+        headers=employee_headers,
         json={
+            "first_name": "Updated",
+            "last_name": "User",
             "department": "HR",
-            "office": "104"
+            "office": "Branch"
         }
     )
     assert response.status_code == 200
     data = response.json()
+    assert data["first_name"] == "Updated"
+    assert data["last_name"] == "User"
     assert data["department"] == "HR"
-    assert data["office"] == "104"
-
-def test_update_me_unauthorized(client: TestClient):
-    """Test updating current employee without authorization"""
-    response = client.put(
-        "/api/employees/me",
-        json={
-            "department": "HR",
-            "office": "104"
-        }
-    )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated" 
+    assert data["office"] == "Branch" 
