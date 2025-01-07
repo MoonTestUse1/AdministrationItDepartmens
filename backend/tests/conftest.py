@@ -8,13 +8,15 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.test_config import test_settings
 from app.db.base_class import Base
-from app.models.employee import Employee
-from app.models.request import Request
-from app.models.token import Token
 from app.main import app
 from app.dependencies import get_db
 from app.utils.security import get_password_hash
 from app.utils.jwt import create_and_save_token
+
+# Импортируем модели после Base, чтобы избежать циклических зависимостей
+from app.models.employee import Employee
+from app.models.request import Request
+from app.models.token import Token
 
 # Mock Telegram notifications
 @pytest.fixture(autouse=True)
@@ -33,16 +35,16 @@ def mock_telegram_notify(mocker):
 def engine():
     """Create test database engine"""
     database_url = test_settings.get_database_url()
-    engine = create_engine(
+    test_engine = create_engine(
         database_url,
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10
     )
     # Создаем все таблицы перед тестами
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    return engine
+    Base.metadata.drop_all(bind=test_engine)
+    Base.metadata.create_all(bind=test_engine)
+    return test_engine
 
 @pytest.fixture(scope="function")
 def db_session(engine):
