@@ -8,6 +8,7 @@ cache:
   paths:
     - .pip-cache/
     - venv/
+    - frontend/node_modules/
 
 stages:
   - test
@@ -30,9 +31,15 @@ test-backend:
 test-frontend:
   stage: test
   image: node:18
+  cache:
+    paths:
+      - frontend/node_modules/
+    key:
+      files:
+        - frontend/package-lock.json
   before_script:
     - cd frontend
-    - npm install
+    - npm ci
   script:
     - npm run test
   rules:
