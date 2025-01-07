@@ -11,6 +11,7 @@ variables:
 test-backend:
   image: python:3.11
   stage: test
+  tags: []
   before_script:
     - python -V
     - python -m pip install --upgrade pip
@@ -26,6 +27,7 @@ test-backend:
 test-frontend:
   image: node:18
   stage: test
+  tags: []
   before_script:
     - cd frontend
     - npm install
@@ -38,6 +40,7 @@ test-frontend:
 build-backend:
   stage: build
   image: docker:latest
+  tags: []
   variables:
     DOCKER_TLS_CERTDIR: ""
   services:
@@ -60,6 +63,7 @@ build-backend:
 build-frontend:
   stage: build
   image: docker:latest
+  tags: []
   variables:
     DOCKER_TLS_CERTDIR: ""
   services:
@@ -82,6 +86,7 @@ build-frontend:
 deploy:
   stage: deploy
   image: python:3.11
+  tags: []
   script:
     - apt-get update -qy
     - apt-get install -y sshpass
