@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import settings
+from app.core.test_config import test_settings
 from app.db.base import Base
 from app.main import app
 from app.dependencies import get_db
@@ -29,10 +29,12 @@ def mock_telegram_notify(mocker):
 @pytest.fixture(scope="session")
 def engine():
     """Create test database engine"""
+    database_url = test_settings.get_database_url()
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+        database_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10
     )
     Base.metadata.create_all(bind=engine)
     return engine

@@ -1,8 +1,18 @@
 image: python:3.11
 
+services:
+  - name: postgres:15
+    alias: postgres
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
   PYTHONPATH: "$CI_PROJECT_DIR/backend"
+  POSTGRES_DB: test_app
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_HOST_AUTH_METHOD: trust
+  DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/test_app"
+  TESTING: "1"
 
 cache:
   paths:
@@ -20,6 +30,8 @@ test:
     - source venv/bin/activate
     - cd backend
     - pip install -r requirements.txt
+    # Ждем, пока PostgreSQL будет готов
+    - python -c "import time; time.sleep(5)"
   script:
     - python -m pytest -v --cov=app --cov-report=xml --timeout=30 -n auto
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
