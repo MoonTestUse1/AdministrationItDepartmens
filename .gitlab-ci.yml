@@ -34,12 +34,9 @@ test-frontend:
   cache:
     paths:
       - frontend/node_modules/
-    key:
-      files:
-        - frontend/package-lock.json
   before_script:
     - cd frontend
-    - npm ci
+    - npm install
   script:
     - npm run test
   rules:
