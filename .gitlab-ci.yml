@@ -2,105 +2,21 @@ image: python:3.11
 
 stages:
   - test
-  - build
-  - deploy
-
-variables:
-  SECRET_KEY: "your-super-secret-key-123"
 
 test-backend:
-  image: python:3.11
   stage: test
-  tags: []
-  before_script:
-    - python -V
-    - python -m pip install --upgrade pip
-    - pip install pytest pytest-cov
-    - pip install -r backend/requirements.txt
   script:
+    - python -V
     - cd backend
-    - python -m pytest -v tests/test_health.py
-  only:
-    - main
-    - Testing
+    - pip install -r requirements.txt
+    - python -m pytest tests/test_health.py -v
+  tags: []
 
 test-frontend:
-  image: node:18
   stage: test
-  tags: []
-  before_script:
+  image: node:18
+  script:
     - cd frontend
     - npm install
-  script:
     - npm run test
-  only:
-    - main
-    - Testing
-
-build-backend:
-  stage: build
-  image: docker:latest
-  tags: []
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:dind
-      alias: docker
-      command: ["--tls=false"]
-  before_script:
-    - docker info
-  script:
-    - cd backend
-    - docker build -t backend:latest .
-    - docker save backend:latest > backend.tar
-  artifacts:
-    paths:
-      - backend/backend.tar
-    expire_in: 1 hour
-  only:
-    - main
-
-build-frontend:
-  stage: build
-  image: docker:latest
-  tags: []
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - name: docker:dind
-      alias: docker
-      command: ["--tls=false"]
-  before_script:
-    - docker info
-  script:
-    - cd frontend
-    - docker build -t frontend:latest .
-    - docker save frontend:latest > frontend.tar
-  artifacts:
-    paths:
-      - frontend/frontend.tar
-    expire_in: 1 hour
-  only:
-    - main
-
-deploy:
-  stage: deploy
-  image: python:3.11
-  tags: []
-  script:
-    - apt-get update -qy
-    - apt-get install -y sshpass
-    - sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no backend/backend.tar frontend/frontend.tar docker-compose.yml root@185.139.70.62:/root/app/
-    - |
-      sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no root@185.139.70.62 "bash -c '
-        cd /root/app && 
-        docker load < backend.tar &&
-        docker load < frontend.tar &&
-        export SECRET_KEY=\"your-super-secret-key-123\" && 
-        /usr/bin/docker compose down && 
-        /usr/bin/docker compose up -d
-      '"
-  only:
-    - main
-  environment:
-    name: production 
+  tags: [] 
