@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.config import settings
 from app.db.base import Base
 from app.main import app
-from app.deps import get_db
+from app.dependencies import get_db
 from app.models.employee import Employee
 from app.utils.security import get_password_hash
 
