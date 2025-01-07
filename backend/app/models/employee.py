@@ -9,6 +9,7 @@ class Employee(Base):
     __tablename__ = "employees"
 
     id = Column(Integer, primary_key=True, index=True)
+    login = Column(String, unique=True, nullable=False, index=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     department = Column(String, nullable=False)
