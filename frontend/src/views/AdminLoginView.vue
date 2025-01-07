@@ -3,7 +3,7 @@
     <div class="max-w-md w-full bg-white rounded-xl shadow-2xl p-8">
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-900">
-          Панель администратора1
+          Панель администратора1ы
         </h2>
         <p class="mt-2 text-gray-600">
           Вход в систему управления
