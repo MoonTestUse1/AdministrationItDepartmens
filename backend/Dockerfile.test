@@ -7,7 +7,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install pytest pytest-asyncio pytest-cov
 
-# Копируем код приложения22
+# Копируем код приложения222
 COPY . .
 
 # Ждем доступности базы данных и запускаем тесты
